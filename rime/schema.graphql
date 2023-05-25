@@ -1,0 +1,273 @@
+# This software is released under the terms of the GNU GENERAL PUBLIC LICENSE.
+# See LICENSE.txt for full details.
+# Copyright 2023 Telemarq Ltd
+
+"""
+RIME always uses ISO-8601 format (e.g. 2023-03-14T11:54:59.849067) for dates and times.
+"""
+scalar DateTime
+
+type Query {
+  """
+  Retrieve a list of devices.
+  """
+  devices: [Device]
+
+  """
+  Search for Contacts.
+  """
+  contacts(
+    deviceIds: [String]!,
+    filter: ContactsFilter): ContactsResult!
+
+  """
+  Search for Events -- the main RIME data type.
+  """
+  events(
+    deviceIds: [String]!,
+    filter: EventsFilter): [EventsForDevice]!
+
+  """
+  Search for Providers.
+  """
+  providers(
+    deviceIds: [String]!,
+    filter: ProvidersFilter): [Provider]!
+}
+
+type Mutation {
+  """
+  Create a new device based on a filter. Note that subsetting runs in the background, so the new
+  device will not immediately be available.
+  """
+  createSubset(
+    targets: [DeviceIdPair]!,
+    eventsFilter: EventsFilter,
+    contactsFilter: ContactsFilter,
+    anonymise: Boolean): SubsetResult
+
+  deleteDevice(
+    deviceId: String!): Boolean
+
+  setDeviceProperties(
+    deviceId: String!,
+    deviceProperties: SetDeviceProperties!): Boolean
+}
+
+type ContactsResult {
+  """
+  List of Contacts matching the filter, or all of them if no filter was supplied.
+  """
+  contacts: [Contact]!
+
+  """
+  List of Contacts where contacts with the same phone number are combined into one.
+  """
+  mergedContacts: [MergedContact]!
+}
+
+"""
+Type for result of a subset, i.e. the creation of a new device based on supplied filters.
+
+This is sent back immediately, but the actual subsetting runs in the background.
+"""
+type SubsetResult {
+  success: Boolean!
+  deviceIds: [String]
+  errorMessage: String
+  errorCode: Int
+}
+
+input DeviceIdPair {
+  """
+  The source device for subsetting.
+  """
+  oldDeviceId: String!
+
+  """
+  The new device which will be created. Must not already exist.
+  """
+  newDeviceId: String!
+}
+
+"""
+Represents a single device dump.
+"""
+type Device {
+  """
+  Device name, corresponding to the file system folder containing the device.
+
+  Should only contain filesystem-friendly characters. To be conservative across operating systems, that
+  means [A-Za-z0-9_-]+.
+  """
+  id: String!
+
+  """
+  The 2-digit country code for this device, representing the country in which the device was used.
+
+  This is important for contact merging, because the country code is used to convert a local phone number
+  into a canonical form for comparison.
+  """
+  country_code: String
+
+  """
+  Was this device created as a result of createSubset()?
+  """
+  is_subset: Boolean
+
+  """
+  Is this device locked? This happens during subsetting (particularly with anonymisation). Locked devices can't be accessed.
+  """
+  is_locked: Boolean
+}
+
+input EventsFilter{
+  """
+  The list of Event types we're interested in. Currently only MessageEvent is supported.
+  """
+  typeNames: [String]
+
+  """
+  The list of contact IDs we're interested in.
+  """
+  participantIds: [String]
+
+  """
+  Only return Events which occurred at this time or later.
+  """
+  timestampStart: DateTime
+
+  """
+  Only return Events which occurred at this time or earlier.
+  """
+  timestampEnd: DateTime
+}
+
+"""
+Filter Contacts. Partially supported -- nameRegex only.
+"""
+input ContactsFilter{
+  nameRegex: String
+  emailRegex: String
+  phoneRegex: String
+}
+
+"""
+Filter for provider types. Not yet supported.
+"""
+input ProvidersFilter{
+  nameRegex: String
+}
+
+input SetDeviceProperties {
+  countryCode: String
+  isSelected: Boolean
+}
+
+type Provider {
+  id: ID
+  deviceId: String
+  name: String
+  friendlyName: String
+}
+
+type Name {
+  first: String
+  last: String
+  display: String
+}
+
+"""
+Base interface defining the shared properties for Contacts and MergedContacts.
+"""
+interface ContactInterface {
+  id: ID
+  name: Name
+  phone: String
+  email: String
+}
+
+"""
+A contact, as returned by a Provider.
+
+Note that many apps maintain their own contact lists in addition to whatever is available system-wide. These will
+be returned as separate contacts; use the MergedContact type to get a single contact for each person.
+"""
+type Contact implements ContactInterface {
+  id: ID  # device-global ID for this contact
+  deviceId: String
+  name: Name
+  phone: String
+  email: String
+  providerName: String
+  providerFriendlyName: String
+}
+
+type MergedContact implements ContactInterface {
+  id: ID  # global ID for this contact
+  name: Name
+  phone: String
+  email: String
+  mergedIds: [String]  # device-global IDs for the contacts that were merged into this one
+}
+
+type EventsForDevice {
+  deviceId: String
+  events: [Event]
+}
+
+interface Event {
+  id: ID
+  deviceId: String
+  providerName: String
+  providerFriendlyName: String
+  timestamp: DateTime
+}
+
+"""
+Describes any form of media, such as a picture, video, or audio file.
+"""
+type Media {
+  mime_type: String
+  url: String
+}
+
+"""
+Describes a chat, which may either be one on one or a group. Session ID is only unique per provider and device.
+"""
+type MessageSession {
+  sessionId: String
+  providerName: String
+  providerFriendlyName: String
+  name: String
+  participants: [Contact]
+}
+
+"""
+A type of Event which is a message in a chat.
+
+Currently, a message is a text message. In future, Messages may be pictures, videos, audio, or reactions to other
+Messages.
+"""
+type MessageEvent implements Event {
+  id: ID
+  deviceId: String
+  providerName: String
+  providerFriendlyName: String
+  timestamp: DateTime
+  """
+  The chat session to which this message belongs.
+
+  To avoid unnecessary duplication, "session" is only sent the first time it appears. Subsequent messages in the
+  same session can be identified using the sessionId field, which will always be set.
+  """
+  session: MessageSession
+  """
+  Any attached media.
+  """
+  media: Media
+  sessionId: String
+  sender: Contact
+  text: String
+  fromMe: Boolean
+}

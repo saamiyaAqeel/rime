@@ -1,0 +1,7 @@
+*.pyc
+Session.vim
+example/*
+env
+docs/_build
+.venv
+frontend/node_modules

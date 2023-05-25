@@ -1,0 +1,9 @@
+# Paths are relative to the directory containing the configuration file.
+filesystem:
+  base_path: "../example/"
+session:
+  database: "rime_session.db"
+media_url_prefix: "http://localhost:5000/media/"
+plugins:
+  anonymise:
+    # - "ml_names"

@@ -1,0 +1,4 @@
+torch==2.0.1
+huggingface-hub==0.14.1
+tokenizers==0.13.3
+transformers==4.28.1

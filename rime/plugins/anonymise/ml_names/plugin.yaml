@@ -1,0 +1,4 @@
+name: "Anonymise Names"
+anonymises: "name"
+description: "Identify personal names in text using a machine learning model, and replace them with a placeholder."
+entrypoint: "anonymise_name.do_name_anonymisation"

@@ -1,0 +1,28 @@
+# This software is released under the terms of the GNU GENERAL PUBLIC LICENSE.
+# See LICENSE.txt for full details.
+# Copyright 2023 Telemarq Ltd
+
+version: "3.9"
+
+volumes:
+  node_modules:
+  venv: 
+  rime_dumps:
+  db:
+
+services:
+  rime:
+    build:
+      context: .
+    volumes:
+      - .:/rime
+      - node_modules:/rime/frontend/node_modules
+      - venv:/rime/.venv
+      - db:/db
+
+    ports:
+      - 3000:3000
+      - 5000:5000
+    tty: true
+    environment:
+      RIME_DB_DIR: /db
