@@ -41,6 +41,16 @@ async function toggleDeviceActive(id) {
 			<span class="country_code">{{ device.country_code }}</span>
 			<div class="delete" v-if="device.is_subset && !device.is_locked" @click="deleteDevice(device.id)">&#10060;</div>
 		</div>
+		<div v-if="devices.length === 0">
+			<p>No data detected.</p>
+			<p class="text-box">
+				You can configure the location of the device data in the
+				<code>rime_settings.yaml</code> or
+				<code>rime_settings.local.yaml</code>
+				file and restart the server. Each device in the directory
+				will appear in a list here.
+			</p>
+		</div>
 	</div>
 </template>
 
@@ -67,4 +77,31 @@ label.locked {
 	cursor: default;
 }
 
+/* Github-style inline code formatting: https://stackoverflow.com/a/22997770 */
+pre {
+    border-radius: 5px;
+    -moz-border-radius: 5px;
+    -webkit-border-radius: 5px;
+    border: 1px solid #BCBEC0;
+    background: #F1F3F5;
+    font:12px Monaco,Consolas,"Andale  Mono","DejaVu Sans Mono",monospace
+}
+
+code {
+    border-radius: 5px;
+    -moz-border-radius: 5px;
+    -webkit-border-radius: 5px;
+    border: 1px solid #BCBEC0;
+    padding: 2px;
+    font:12px Monaco,Consolas,"Andale  Mono","DejaVu Sans Mono",monospace
+}
+
+pre code {
+    border-radius: 0px;
+    -moz-border-radius: 0px;
+    -webkit-border-radius: 0px;
+    border: 0px;
+    padding: 2px;
+    font:12px Monaco,Consolas,"Andale  Mono","DejaVu Sans Mono",monospace
+}
 </style>
