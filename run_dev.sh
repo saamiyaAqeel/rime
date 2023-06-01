@@ -1,5 +1,9 @@
 #!/bin/bash
 
+# trap signals to exit processes started by the script and
+# terminate them when the script exits or fails
+trap "trap - SIGTERM && kill -- -$$" SIGINT SIGTERM EXIT
+
 set -e
 
 PYTHON=${PYTHON:-python3.10}
