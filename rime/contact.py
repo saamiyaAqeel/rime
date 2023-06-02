@@ -5,11 +5,12 @@
 from dataclasses import dataclass
 from typing import Any
 
+
 @dataclass
 class Name:
-    first: str|None = None
-    last: str|None = None
-    display: str|None = None
+    first: str | None = None
+    last: str | None = None
+    display: str | None = None
 
     def full_name(self):
         if self.display:
@@ -23,16 +24,17 @@ class Name:
 
         return ''
 
+
 # TODO: a Contact may have more than one phone or email
 @dataclass
 class Contact:
     local_id: str  # Unique to the provider only. The GraphQL layer combines this with providerName for the UI.
     device_id: str
-    name: Name|None = None
-    providerName: str|None = None
-    providerFriendlyName: str|None = None
-    phone: str|None = None
-    email: str|None = None
+    name: Name | None = None
+    providerName: str | None = None
+    providerFriendlyName: str | None = None
+    phone: str | None = None
+    email: str | None = None
     # Provider-specific data to allow the contact to be recreated during subsetting:
     provider_data: Any = None
 
@@ -49,6 +51,7 @@ class Contact:
 
     def __hash__(self):
         return hash((self.device_id, self.local_id))
+
 
 @dataclass(frozen=True)
 class GlobalContactId:

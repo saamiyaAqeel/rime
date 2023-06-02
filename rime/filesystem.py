@@ -3,7 +3,6 @@
 # Copyright 2023 Telemarq Ltd
 
 from abc import ABC, abstractmethod
-import datetime
 import hashlib
 import os
 import shutil
@@ -12,17 +11,22 @@ from .sql import Table, Query, get_field_indices, sqlite3_connect as sqlite3_con
 
 import fs.tempfs
 
-from logging import getLogger, DEBUG
+
+from logging import getLogger
 log = getLogger(__name__)
+
 
 class Error(Exception):
     pass
 
+
 class FilesystemNotFoundError(Error):
     pass
 
+
 class FilesystemTypeUnknownError(Error):
     pass
+
 
 class DeviceSettings:
     def __init__(self, path):
@@ -61,10 +65,12 @@ class DeviceSettings:
     def set_locked(self, is_locked):
         self._set_setting('locked', '1' if is_locked else '0')
 
+
 def _ensuredir(pathname):
     dirname = os.path.dirname(pathname)
     if not os.path.exists(dirname):
         os.makedirs(dirname)
+
 
 class DeviceFilesystem(ABC):
     @classmethod
@@ -160,6 +166,7 @@ class DeviceFilesystem(ABC):
         """
         return False
 
+
 class AndroidDeviceFilesystem(DeviceFilesystem):
     def __init__(self, id_: str, root: str):
         self.id_ = id_
@@ -219,6 +226,7 @@ class AndroidDeviceFilesystem(DeviceFilesystem):
     def is_locked(self) -> bool:
         return self._settings.is_locked()
 
+
 class IosDeviceFilesystem(DeviceFilesystem):
     def __init__(self, id_: str, root: str):
         self.id_ = id_
@@ -230,8 +238,8 @@ class IosDeviceFilesystem(DeviceFilesystem):
     @classmethod
     def is_device_filesystem(cls, path):
         return (
-            os.path.exists(os.path.join(path, 'Manifest.db')) and
-            os.path.exists(os.path.join(path, 'Info.plist'))
+            os.path.exists(os.path.join(path, 'Manifest.db'))
+            and os.path.exists(os.path.join(path, 'Info.plist'))
         )
 
     @classmethod
@@ -253,7 +261,7 @@ class IosDeviceFilesystem(DeviceFilesystem):
         return self._settings.is_subset_fs()
 
     def get_filename(self, path):
-        """ 
+        """
         What's the actual filename, relative to root, of the file represented by path?
         'Path' is formed of the app domain, a hyphen, and then the relative path. Examples from Manifest.db:
 
@@ -279,12 +287,12 @@ class IosDeviceFilesystem(DeviceFilesystem):
         query = Query.from_(self.file_table).select('fileID', 'relativePath')
         query = query.where(self.file_table.relativePath == os.path.join(self.root, path))
         fields = get_field_indices(query)
-        return [row[fields['relativePath']] for row in self.manifest.execute(str(query)) ]
+        return [row[fields['relativePath']] for row in self.manifest.execute(str(query))]
 
     def exists(self, path):
         real_path = self.get_filename(path)
         return os.path.exists(os.path.join(self.root, real_path))
-        
+
     def getsize(self, path):
         return os.path.getsize(os.path.join(self.root, self.get_filename(path)))
 
@@ -301,7 +309,7 @@ class IosDeviceFilesystem(DeviceFilesystem):
         """
         real_path = self.get_filename(path)
         syspath = os.path.join(self.root, real_path)
-        
+
         if self.exists(syspath):
             raise FileExistsError(path)
 
@@ -315,12 +323,15 @@ class IosDeviceFilesystem(DeviceFilesystem):
     def is_locked(self) -> bool:
         return self._settings.is_locked()
 
+
 FILESYSTEM_TYPE_TO_OBJ = {
     'android': AndroidDeviceFilesystem,
     'ios': IosDeviceFilesystem,
 }
 
+
 VALID_DEVICE_ID_REGEX = re.compile(r'^[a-zA-Z0-9_-]+$')
+
 
 class FilesystemRegistry:
     """
@@ -330,7 +341,7 @@ class FilesystemRegistry:
     """
     def __init__(self, base_path):
         self.base_path = base_path
-        self.filesystems = self._find_available_filesystems()  #  maps key to FS object.
+        self.filesystems = self._find_available_filesystems()  # maps key to FS object.
 
     def __getitem__(self, key):
         return self.filesystems[key]
@@ -352,7 +363,7 @@ class FilesystemRegistry:
 
         return filesystems
 
-    def create_empty_subset_of(self, fs: DeviceFilesystem, key: str, locked:bool = False) -> DeviceFilesystem:
+    def create_empty_subset_of(self, fs: DeviceFilesystem, key: str, locked: bool = False) -> DeviceFilesystem:
         """
         Create an empty subset filesystem of the same type as 'fs' named 'key'
         """

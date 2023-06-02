@@ -7,7 +7,6 @@ Provides Apple 'Messages'
 import datetime
 from dataclasses import dataclass
 from typing import Iterable
-from typing_extensions import dataclass_transform
 
 from .provider import Provider
 from .providerutils import LazyContactProvider, LazyContactProviderContacts
@@ -16,14 +15,17 @@ from ..contact import Contact, Name
 from ..sql import Table, Query, get_field_indices
 from ..anonymise import anonymise_phone, anonymise_name
 
+
 @dataclass
 class ImessageContact:
     row_id: str
+
 
 @dataclass
 class ImessageMessage:
     message_row_id: str
     chat_row_id: str
+
 
 class IMessage(Provider, LazyContactProvider):
     NAME = 'ios-com.apple.messages'
@@ -34,7 +36,7 @@ class IMessage(Provider, LazyContactProvider):
 
     # Timestamps in imessage are (I think) stored as nanoseconds since 1/1/2001.
     # I'm guessing UTC?
-    EPOCH = datetime.datetime(2001,1,1,0,0)
+    EPOCH = datetime.datetime(2001, 1, 1, 0, 0)
     EPOCH_TS = int(EPOCH.timestamp())
 
     def __init__(self, fs):
@@ -51,7 +53,7 @@ class IMessage(Provider, LazyContactProvider):
 
     @classmethod
     def _datetime_to_timestamp(cls, dt):
-        return int((dt.timestamp()-cls.EPOCH_TS) * 1_000_000_000)
+        return int((dt.timestamp() - cls.EPOCH_TS) * 1_000_000_000)
 
     def _create_session(self, chat_id):
         # Retrieve contacts

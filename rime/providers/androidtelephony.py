@@ -19,10 +19,12 @@ from ..anonymise import anonymise_phone, anonymise_name
 TYPE_TO_ME = 1
 TYPE_FROM_ME = 2
 
+
 @dataclass
 class AtMessage:
     threads_table_id: str
     address_table_id: str
+
 
 class AndroidTelephony(Provider, LazyContactProvider):
     NAME = "android-com.android.providers.telephony"
@@ -117,8 +119,12 @@ class AndroidTelephony(Provider, LazyContactProvider):
         rows_threads = subsetter.row_subset('threads', '_id')
         rows_address = subsetter.row_subset('canonical_addresses', '_id')
 
-        rows_address.update(contact.local_id for contact in contacts if contact.providerName == self.NAME)
-        rows_threads.update(event.provider_data.threads_table_id for event in events if event.provider.NAME == self.NAME)
+        rows_address.update(
+            contact.local_id for contact in contacts if contact.providerName == self.NAME
+        )
+        rows_threads.update(
+            event.provider_data.threads_table_id for event in events if event.provider.NAME == self.NAME
+        )
         rows_sms.update(event.id_ for event in events if event.provider.NAME == self.NAME)
 
         subsetter.create_db_and_copy_rows(self.db, self.MMSSMS_DB, [

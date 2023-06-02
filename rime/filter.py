@@ -6,9 +6,9 @@ from re import Pattern
 from datetime import datetime
 from dataclasses import dataclass
 
-from .providers import Provider
 from .event import MessageEvent
 from .contact import GlobalContactId
+
 
 class _AlwaysMatchesPattern:
     def search(self, input):
@@ -17,22 +17,25 @@ class _AlwaysMatchesPattern:
     def match(self, input):
         return True
 
+
 TheAlwaysMatchesPattern = _AlwaysMatchesPattern()
+
 
 @dataclass
 class ProvidersFilter:
-    name_regex: Pattern|_AlwaysMatchesPattern
+    name_regex: Pattern | _AlwaysMatchesPattern
 
     @classmethod
     def empty(cls):
         return cls(name_regex=TheAlwaysMatchesPattern)
 
+
 @dataclass
 class EventsFilter:
-    participant_ids: list[GlobalContactId]|None = None
-    timestamp_start: datetime|None = None
-    timestamp_end: datetime|None = None
-    type_names: set[str]|None = None
+    participant_ids: list[GlobalContactId] | None = None
+    timestamp_start: datetime | None = None
+    timestamp_end: datetime | None = None
+    type_names: set[str] | None = None
 
     def accepts_type(self, type_name):
         return self.type_names is None or type_name in self.type_names
@@ -69,9 +72,10 @@ class EventsFilter:
 
         return True
 
+
 @dataclass
 class ContactsFilter:
-    name_regex: Pattern|_AlwaysMatchesPattern
+    name_regex: Pattern | _AlwaysMatchesPattern
 
     @classmethod
     def empty(cls):

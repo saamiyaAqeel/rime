@@ -12,6 +12,7 @@ from .config import Config
 from .plugins import load_plugin
 from .pubsub import broker, Scheduler
 
+
 class Device:
     def __init__(self, device_id: str, fs: DeviceFilesystem, session: Session):
         self.id_ = device_id
@@ -42,14 +43,16 @@ class Device:
     def __repr__(self):
         return f"Device({self.id_})"
 
+
 FILESYSTEM_REGISTRY = threading.local()
 DEVICE_CACHE = threading.local()
 RIME = threading.local()
 
+
 class Rime:
     """
     Top-level RIME object.
-    
+
     Contains per-device sub-objects.
     """
     def __init__(self, session: Session, constants: Config, scheduler: Scheduler):

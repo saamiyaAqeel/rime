@@ -4,6 +4,7 @@ import traceback
 from weakref import WeakMethod
 from threading import Lock
 
+
 class Scheduler(metaclass=ABCMeta):
     @abstractmethod
     def run_on_my_thread(self, fn, *args, **kwargs):
@@ -12,6 +13,7 @@ class Scheduler(metaclass=ABCMeta):
     @abstractmethod
     def run_on_background_thread(self, fn, *args, **kwargs):
         pass
+
 
 class _Broker:
     def __init__(self):
@@ -53,12 +55,13 @@ class _Broker:
                     meth(data)
                 else:
                     callback(data)
-            except Exception as e:
+            except Exception:
                 traceback.print_exc()
 
         if remove:
             with self._lock:
                 for callback in remove:
                     self._subscribers[event].remove(callback)
+
 
 broker = _Broker()

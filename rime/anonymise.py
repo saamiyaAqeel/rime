@@ -5,12 +5,13 @@ Will always return the same anonymised data for the same input data. This may re
 but ensures that phone number, etc, correlations can still be made across anonymised data sets.
 """
 import re
-from warnings import warn
 
 import phonenumbers
 
+
 class AnonymisationFailed(Exception):
     pass
+
 
 RE_PHONE = re.compile(r'\+?[0-9 -]{8,15}')
 RE_EMAIL = re.compile(r'[^@]+@[^@]+\.[^@]+')
@@ -29,6 +30,7 @@ def _canonicalise_phone_number(phone_number, country_code):
     except phonenumbers.phonenumberutil.NumberParseException:
         return phone_number
 
+
 class _AnonMap:
     """
     Stores the mapping between original and anonymised information.
@@ -41,10 +43,10 @@ class _AnonMap:
 
     def anonymise_phone(self, phone):
         if phone not in self._anon_phone:
-            def _same_length(l):
-                # Return 111...<next phone> to a length l (or length of next phone if longer)
+            def _same_length(lgt):
+                # Return 111...<next phone> to a length lgt (or length of next phone if longer)
                 next_phone_str = str(self._next_phone)
-                num_filler = max(0, l - len(next_phone_str))
+                num_filler = max(0, lgt - len(next_phone_str))
                 return '0' * num_filler + next_phone_str
 
             if phone.startswith('+'):
@@ -64,6 +66,7 @@ class _AnonMap:
             self._next_email += 1
 
         return self._anon_email[email]
+
 
 class DBAnonymiser:
     """
@@ -126,6 +129,7 @@ class DBAnonymiser:
                 if new_value != value:
                     self.conn.execute(f'UPDATE {table} SET {column} = ? WHERE rowid = ?', (new_value, rowid))
 
+
 class Anonymiser:
     """
     Stores the anonymous map and can create DBAnonymisers for providers. Instantiated by graphql layer.
@@ -158,9 +162,11 @@ class Anonymiser:
                 for table_name, columns in tables.items():
                     for column_name, field_anonymiser in columns.items():
                         try:
-                            self._anonymise_device_provider_sqlite3_field(db_anonymiser, table_name, column_name, field_anonymiser)
+                            self._anonymise_device_provider_sqlite3_field(db_anonymiser, table_name,
+                                                                          column_name, field_anonymiser)
                         except Exception as e:
-                            raise AnonymisationFailed(f'Failed to anonymise {provider.NAME} {table_name}.{column_name}: {e}')
+                            raise AnonymisationFailed('Failed to anonymise {0} {1}.{2}: {3}'.format(
+                                                        provider.NAME, table_name, column_name, e))
 
     def _anonymise_device_provider_sqlite3_field(self, db_anonymiser, table_name, column_name, field_anonymiser):
         if not isinstance(field_anonymiser, set):
@@ -169,11 +175,14 @@ class Anonymiser:
         for callable in field_anonymiser:
             callable(db_anonymiser, table_name, column_name)
 
+
 def anonymise_phone(db_anonymiser, table_name, column_name):
     db_anonymiser.anonymise_phone(table_name, column_name)
 
+
 def anonymise_email(db_anonymiser, table_name, column_name):
     db_anonymiser.anonymise_email(table_name, column_name)
+
 
 def anonymise_name(db_anonymiser, table_name, column_name):
     db_anonymiser.anonymise_name(table_name, column_name)

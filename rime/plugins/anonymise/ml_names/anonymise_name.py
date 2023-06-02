@@ -1,13 +1,12 @@
-import os
-
 from transformers import pipeline
 
 # There's nothing special about this particular model or revision. They are just what pipeline('ner') gave me by
-# default. 
+# default.
 AI_NER_MODEL = 'dbmdz/bert-large-cased-finetuned-conll03-english'
-AI_NER_REVISION ='f2482bf'
+AI_NER_REVISION = 'f2482bf'
 
 _tokeniser = pipeline('ner', model=AI_NER_MODEL, revision=AI_NER_REVISION, aggregation_strategy='first')
+
 
 def do_name_anonymisation(value):
     """

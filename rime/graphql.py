@@ -12,7 +12,8 @@ from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
 
-from ariadne import ObjectType, QueryType, InterfaceType, MutationType, load_schema_from_path, make_executable_schema, graphql_sync, ScalarType
+from ariadne import ObjectType, QueryType, InterfaceType, MutationType, \
+                    load_schema_from_path, make_executable_schema, graphql_sync, ScalarType
 
 from .filter import EventsFilter, ContactsFilter, ProvidersFilter, TheAlwaysMatchesPattern, GlobalContactId
 from .event import MessageEvent
@@ -21,31 +22,38 @@ from .anonymise import Anonymiser
 from .subset import Subsetter
 from .pubsub import broker
 
+
 # A per-query context which includes RIME. This is what is provided in the per-query context value.
 class QueryContext:
     def __init__(self, rime):
         self.rime = rime
         self.message_sessions_supplied = set()
 
+
 # Convert DateTime objects to ISO strings. (ref https://ariadnegraphql.org/docs/scalars)
 datetime_scalar = ScalarType('DateTime')
+
 
 @datetime_scalar.serializer
 def serialize_datetime(value):
     return value.isoformat()
 
+
 @datetime_scalar.value_parser
 def parse_datetime(value):
     return datetime.fromisoformat(value)
+
 
 @dataclass
 class ContactsResult:
     contacts: list
     mergedContacts: list
 
+
 # Resolving Query commands and producing Events.
 
 query_resolver = QueryType()
+
 
 def _make_events_filter(events_filter):
     if events_filter:
@@ -66,6 +74,7 @@ def _make_events_filter(events_filter):
 
     return EventsFilter.empty()
 
+
 def _make_contacts_filter(contacts_filter):
     if contacts_filter:
         name_regex_str = contacts_filter.get('nameRegex')
@@ -76,9 +85,10 @@ def _make_contacts_filter(contacts_filter):
 
     return ContactsFilter.empty()
 
+
 def _make_providers_filter(providers_filter):
     if providers_filter:
-        name_regex=re.compile(providers_filter.get('nameRegex')) \
+        name_regex = re.compile(providers_filter.get('nameRegex')) \
             if providers_filter.get('nameRegex') \
             else TheAlwaysMatchesPattern
 
@@ -87,6 +97,7 @@ def _make_providers_filter(providers_filter):
         )
 
     return ProvidersFilter.empty()
+
 
 def _get_events_by_provider(rime, devices, filter_obj):
     for device in devices:
@@ -97,6 +108,7 @@ def _get_events_by_provider(rime, devices, filter_obj):
                 event.device_id = device.id_
 
             yield device, provider, provider_events
+
 
 @query_resolver.field('events')
 def resolve_events(parent, info, deviceIds, filter=None):
@@ -116,46 +128,59 @@ def resolve_events(parent, info, deviceIds, filter=None):
 
     return [{'deviceId': device_id, 'events': events} for device_id, events in events_for_device.items()]
 
+
 event_resolver = InterfaceType('Event')
+
+
 @event_resolver.type_resolver
 def resolve_event_type(obj, *_):
     if isinstance(obj, MessageEvent):
         return 'MessageEvent'
     raise TypeError(f'Unknown event type: {obj}')
 
+
 message_event_resolver = ObjectType('MessageEvent')
+
 
 @message_event_resolver.field('timestamp')
 def resolve_timestamp(event, info):
     return event.timestamp
 
+
 @message_event_resolver.field('providerName')
 def resolve_provider_name(event, info):
     return event.provider.NAME
+
 
 @message_event_resolver.field('providerFriendlyName')
 def resolve_provider_friendly_name(event, info):
     return event.provider.FRIENDLY_NAME
 
+
 @message_event_resolver.field('deviceId')
 def resolve_message_event_device_id(event, info):
     return event.provider.fs.id_
+
 
 @message_event_resolver.field('fromMe')
 def resolve_from_me(event, info):
     return event.from_me
 
+
 @message_event_resolver.field('text')
 def resolve_text(event, info):
     return event.text
+
 
 @message_event_resolver.field('sessionId')
 def resolve_session_id(event, info):
     return event.session_id
 
+
 @message_event_resolver.field('sender')
 def resolve_sender(event, info):
     return event.sender
+
 
 @message_event_resolver.field('session')
 def resolve_session(event, info):
@@ -164,6 +189,7 @@ def resolve_session(event, info):
         return event.session
 
     return None
+
 
 @message_event_resolver.field('media')
 def resolve_media(event, info):
@@ -177,14 +203,19 @@ def resolve_media(event, info):
 
 # Message sessions
 
+
 message_session_resolver = ObjectType('MessageSession')
+
+
 @message_session_resolver.field('sessionId')
 def resolve_message_session_id(session, info):
     return session.session_id
 
 # And Providers
 
+
 provider_resolver = ObjectType('Provider')
+
 
 @query_resolver.field('providers')
 def resolve_providers(parent, info, deviceId, filter=None):
@@ -202,33 +233,41 @@ def resolve_providers(parent, info, deviceId, filter=None):
 
     return providers
 
+
 @provider_resolver.field('name')
 def resolve_providerName(provider, info):
     return provider.NAME
+
 
 @provider_resolver.field('friendlyName')
 def resolve_providerFriendlyName(provider, info):
     return provider.FRIENDLY_NAME
 
+
 @provider_resolver.field('id')
 def resolve_id(provider, info):
     return provider.NAME  # We just use the same NAME field for now
+
 
 @provider_resolver.field('deviceId')
 def resolve_providerDevice(provider, info):
     return provider.fs.id_
 
+
 # And Contacts
 
 name_resolver = ObjectType('Name')
+
 
 @name_resolver.field('first')
 def resolve_name_first(name, info):
     return name.first
 
+
 @name_resolver.field('last')
 def resolve_name_last(name, info):
     return name.last
+
 
 @name_resolver.field('display')
 def resolve_name_display(name, info):
@@ -237,10 +276,12 @@ def resolve_name_display(name, info):
 
 contact_resolver = ObjectType('Contact')
 
+
 def _get_contacts_by_provider(rime, devices, filter_obj):
     for device in devices:
         for provider in device.providers.values():
             yield (provider, filter_obj.apply(provider.search_contacts(filter_obj)))
+
 
 @query_resolver.field('contacts')
 def resolve_contacts(parent, info, deviceIds, filter=None):
@@ -256,68 +297,87 @@ def resolve_contacts(parent, info, deviceIds, filter=None):
 
     return ContactsResult(contacts=all_contacts, mergedContacts=merged_contacts)
 
+
 @contact_resolver.field('id')
 def resolve_contact_id(contact, info):
     # Convert the contact local ID into a device-global ID by prepending the provider name.
     return GlobalContactId.make_global_id_str(contact)
 
+
 @contact_resolver.field('deviceId')
 def resolve_contact_deviceId(contact, info):
     return contact.device_id
+
 
 @contact_resolver.field('name')
 def resolve_contact_contactName(contact, info):
     return contact.name
 
+
 @contact_resolver.field('providerName')
 def resolve_contact_providerName(contact, info):
     return contact.providerName
+
 
 @contact_resolver.field('providerFriendlyName')
 def resolve_contact_providerFriendlyName(contact, info):
     return contact.providerFriendlyName
 
+
 @contact_resolver.field('email')
 def resolve_contact_email(contact, info):
     return contact.email
+
 
 @contact_resolver.field('phone')
 def resolve_contact_phone(contact, info):
     return contact.phone
 
+
 merged_contact_resolver = ObjectType('MergedContact')
+
+
 @merged_contact_resolver.field('id')
 def resolve_merged_contact_id(merged_contact, info):
     return f'merged:merged:{merged_contact.local_id}'
+
 
 @merged_contact_resolver.field('mergedIds')
 def resolve_merged_contact_mergedIds(merged_contact, info):
     return [GlobalContactId.make_global_id_str(contact) for contact in merged_contact.contacts]
 
+
 # Devices
 device_resolver = ObjectType('Device')
+
+
 @query_resolver.field('devices')
 def resolve_devices(parent, info):
     rime = info.context.rime
     return rime.devices
 
+
 @device_resolver.field('id')
 def resolve_device_id(device, info):
     return device.id_
+
 
 @device_resolver.field('is_subset')
 def resolve_device_is_subset(device, info):
     return device.is_subset()
 
+
 @device_resolver.field('is_locked')
 def resolve_device_is_locked(device, info):
     return device.is_locked()
+
 
 @device_resolver.field('country_code')
 def resolve_device_country_code(device, info):
     return device.country_code
 
 # Subsetting
+
 
 # Represents the class of errors we can expect callers to manage.
 class CreateSubsetError(Exception):
@@ -331,6 +391,7 @@ class CreateSubsetError(Exception):
     def __init__(self, msg, code):
         super().__init__(msg)
         self.code = code
+
 
 def _create_subset_prepare_device(rime, target):
     device_id = target['oldDeviceId']
@@ -348,6 +409,7 @@ def _create_subset_prepare_device(rime, target):
     new_device = rime.create_empty_subset_of(device, new_device_id, locked=True)
 
     return device, new_device
+
 
 def _create_subset_populate_device(rime, device, new_device, events_filter_obj, contacts_filter_obj):
     """
@@ -383,12 +445,14 @@ def _create_subset_populate_device(rime, device, new_device, events_filter_obj, 
         provider = device.providers[provider_name]
         provider.subset(subsetter, [], contacts_by_provider[provider_name])
 
-
     new_device.reload_providers()
 
     return new_device
 
+
 mutation = MutationType()
+
+
 @mutation.field('createSubset')
 def resolve_create_subset(rime, info, targets, eventsFilter, contactsFilter, anonymise):
     rime = info.context.rime
@@ -445,9 +509,11 @@ def resolve_create_subset(rime, info, targets, eventsFilter, contactsFilter, ano
         'errorCode': 0,
     }
 
+
 @mutation.field('deleteDevice')
 def resolve_delete_device(rime, info, deviceId):
     return info.context.rime.delete_device(deviceId)
+
 
 @mutation.field('setDeviceProperties')
 def resolve_set_device_properties(rime, info, deviceId, deviceProperties):
@@ -466,7 +532,13 @@ def resolve_set_device_properties(rime, info, deviceId, deviceProperties):
 
 # resolvers for subsetresult
 
-RESOLVERS = [datetime_scalar, query_resolver, event_resolver, message_event_resolver, message_session_resolver, provider_resolver, contact_resolver, merged_contact_resolver, name_resolver, device_resolver, mutation]
+
+RESOLVERS = [
+    datetime_scalar, query_resolver, event_resolver, message_event_resolver,
+    message_session_resolver, provider_resolver, contact_resolver,
+    merged_contact_resolver, name_resolver, device_resolver, mutation
+]
+
 
 # Schema global and management
 def _get_schema():
@@ -475,7 +547,9 @@ def _get_schema():
 
     return make_executable_schema(schema_txt, *RESOLVERS)
 
+
 schema = _get_schema()
+
 
 def reload_schema():
     """
@@ -483,6 +557,7 @@ def reload_schema():
     """
     global schema
     schema = _get_schema()
+
 
 # Querying
 def query(rime, query_json):

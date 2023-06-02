@@ -2,6 +2,7 @@ import os.path
 
 from ruamel.yaml import YAML
 
+
 class Config:
     """
     Global configuration for RIME using a YAML file.
