@@ -12,6 +12,7 @@ import tempfile
 
 from .sql import Table, Query, get_field_indices, sqlite3_connect as sqlite3_connect_with_regex_support
 
+import fs.osfs
 import fs.tempfs
 
 
