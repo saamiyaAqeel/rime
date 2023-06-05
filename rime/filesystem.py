@@ -352,10 +352,7 @@ class FilesystemRegistry:
                     if fs_cls.is_device_filesystem(path):
                         filesystems[filename] = fs_cls(filename, path)
         except FileNotFoundError:
-            # display red-colored warning on terminal
-            red = "\x1b[31;20m"
-            reset = "\x1b[0m"
-            log.warning(red + f"Could not find filesystem directory: {self.base_path}" + reset)
+            log.warning(f"Could not find filesystem directory: {self.base_path}")
 
         return filesystems
 
