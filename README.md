@@ -50,6 +50,11 @@ Rime is configured through its YAML configuration file. If you're using `run_dev
 `frontend/rime_settings.yaml`. However, RIME will open and use `frontend/rime_settings.local.yaml` if it exists, so you
 may prefer to copy existing configuration to the `local` version if you wish to make changes.
 
+The `filesystem.base_path` setting specifies the path where the device data
+should be for the rime server to access them and serve them to the frontend.
+If there are no device data under the `base_path` then the UI will
+not show any available devices.
+
 #### Plugins
 
 RIME supports a plugin architecture, currently in development. The only plugin you can use at the moment is `ml_names`,

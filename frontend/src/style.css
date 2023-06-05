@@ -38,6 +38,14 @@ body {
     margin: 0.2em 1em -1em 1em;
 }
 
+.text-box {
+	border-color: #eee;
+	border-style: solid;
+	padding: 4px 8px;
+	border-radius: 4px;
+	margin-left: -8px;
+}
+
 h1 {
 	font-size: 18px;
 	font-weight: normal;

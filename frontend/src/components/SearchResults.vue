@@ -303,10 +303,23 @@ function * eventsRowGenerator() {
 				<div v-else class="event"></div>
 			</template>
 		</div>
+		<div v-if="searchResult.events.length === 0" class="center text-box">
+			Select one or more devices to view the messages.
+			When more than one device is selected the messages will be
+			date- and time-aligned across the selected devices. Messages
+			on one device may appear later than messages on anonther
+			device.
+		</div>
 	</div>
 </template>
 
 <style scoped>
+
+.center {
+	margin: auto;
+	margin-top: 15%;
+	width: 20%;
+}
 
 .rowContainer {
 	display: flex;
