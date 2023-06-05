@@ -31,12 +31,15 @@ JID_TYPE_BROADCAST = 5
 JID_TYPE_ME = 11
 JID_TYPE_USER = 17
 
+
 def _timestamp_to_datetime(timestamp):
     # Timestamps in whatsapp are stored as milliseconds since the epoch
     return datetime.datetime.fromtimestamp(timestamp / 1000)
 
+
 def _datetime_to_timestamp(dt):
     return int(dt.timestamp() * 1000)
+
 
 @dataclass
 class WhatsappJid:
@@ -51,6 +54,7 @@ class WhatsappJid:
     name: str  # jid.display_name, a phone number or group ID
     typ: int  # JID_TYPE_*
 
+
 @dataclass
 class WhatsappContact:
     """
@@ -63,8 +67,10 @@ class WhatsappContact:
     number: str
     display_name: str
     jid_contacts: list[WhatsappJid]
+
     def typ_contains(self, typ):
         return any(wa_contact.typ == typ for wa_contact in self.jid_contacts)
+
 
 @dataclass
 class WhatsappMessageSession:
@@ -74,8 +80,8 @@ class WhatsappMessageSession:
     This goes into MessageSession.provider_data.
     """
     group_participant_user_ids: set[str]
-    group_user_id: str|None
-    group_jid_row_id: str|None
+    group_user_id: str | None
+    group_jid_row_id: str | None
 
 
 CONTACTS_BY_JID_ROW_ID = {}  # Maps FS ID to {jid_row_id: Contact}
@@ -87,12 +93,14 @@ GROUP_USERS = {}  # Maps FS ID to {group jid: list of user jids}
 # group_participant_user table indices, by filesystem ID
 GROUP_PARTICIPANT_USER_IDS = {}  # Maps FS ID to {group jid: list of group participant user _id fields}
 
+
 # Extra information for message events, for recreation during subsetting.
 @dataclass
 class WhatsappMessageEvent:
     # Row IDs in various tables:
     message_row_id: str
     chat_row_id: str
+
 
 class AndroidWhatsApp(Provider):
     NAME = 'android-com.whatsapp.android'
@@ -132,10 +140,10 @@ class AndroidWhatsApp(Provider):
         for row in self.wadb.execute(str(query)):
             jid = row[fields['jid']]
             wa_contact = WhatsappContact(
-                id_ = row[fields['_id']],
-                jid = jid,
-                number = row[fields['number']],
-                display_name = row[fields['display_name']],
+                id_=row[fields['_id']],
+                jid=jid,
+                number=row[fields['number']],
+                display_name=row[fields['display_name']],
                 jid_contacts=[]
             )
             new_contact = Contact(

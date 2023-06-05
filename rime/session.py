@@ -3,6 +3,7 @@
 # Copyright 2023 Telemarq Ltd
 import sqlite3
 
+
 class Session:
     def __init__(self, db_path):
         self.db_path = db_path
@@ -14,7 +15,7 @@ class Session:
         if self.conn:
             try:
                 self.conn.close()
-            except:
+            except Exception:
                 pass
 
     def _create_tables(self):
@@ -36,5 +37,6 @@ class Session:
 
     def set_device_country_code(self, device_id, country_code):
         cursor = self.conn.cursor()
-        cursor.execute("INSERT OR REPLACE INTO device_country_code (id, country_code) VALUES (?, ?)", (device_id, country_code))
+        cursor.execute("INSERT OR REPLACE INTO device_country_code (id, country_code) VALUES (?, ?)",
+                       (device_id, country_code))
         self.conn.commit()

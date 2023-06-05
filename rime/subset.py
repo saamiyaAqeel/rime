@@ -5,16 +5,18 @@
 """
 Trace provider data access for subsetting.
 """
-from contextlib import contextmanager
 import re
 import shutil
 
 from .sql import Table, Query, Parameter
 
 MATCH_COLLATE = re.compile(r'COLLATE \w+', re.IGNORECASE)
+
+
 def _sanitise_create_table_sql(sql):
     # Remove custom collation sequences.
     return MATCH_COLLATE.sub('', sql)
+
 
 def _copy_table(src_conn, dst_conn, table_name, add_where_clause_fn):
     sql = src_conn.execute('select sql from sqlite_master where name = ?', (table_name,)).fetchone()[0]
@@ -37,6 +39,7 @@ def _copy_table(src_conn, dst_conn, table_name, add_where_clause_fn):
         insert_query = Query.into(table_name).insert(*parameters)
         dst_conn.execute(insert_query.get_sql(), row)
 
+
 class RowSubset:
     def __init__(self, table_name, primary_key):
         self.table_name = table_name
@@ -56,12 +59,14 @@ class RowSubset:
             self.table_name,
             lambda query, table: query.where(table[self.primary_key].isin(self.rows)))
 
+
 class CompleteTable:
     def __init__(self, table_name):
         self.table_name = table_name
 
     def copy(self, src_conn, dst_conn):
         _copy_table(src_conn, dst_conn, self.table_name, None)
+
 
 class Subsetter:
     def __init__(self, fs_dest):

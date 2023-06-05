@@ -17,23 +17,27 @@ MESSAGE_TYPE_TEXT = 0
 # WhatsApp iOS stores its timestamps as seconds since 1/1/2001.
 WA_IOS_TS_OFFSET = 978307200
 
+
 def _jid_to_phone(jid):
     if jid and '@' in jid:
         return jid.split('@')[0]
     return ''
+
 
 @dataclass
 class IosWhatsappMessageEvent:
     group_member: str  # ZWAMESSAGE.ZGROUPMEMBER
     chat_session_id: str
 
+
 @dataclass
 class IosWhatsappContact:
     chat_session_ids: list[str]  # ZWACHATSESSION.Z_PK
-    profile_push_name_id: str|None  # ZWAPROFILEPUSHNAME.Z_PK
+    profile_push_name_id: str | None  # ZWAPROFILEPUSHNAME.Z_PK
     group_member_pks: list[str]  # [ZWAZGROUPMEMBER.Z_PK]
-    partner_name: str|None
-    push_name: str|None
+    partner_name: str | None
+    push_name: str | None
+
 
 class IOSWhatsApp(Provider):
     NAME = 'ios-net.whatsapp.WhatsApp'
@@ -187,7 +191,8 @@ class IOSWhatsApp(Provider):
 
         chat = self.msgdb.execute(str(query)).fetchone()
         if not chat:
-            return MessageSession(session_id=session_id, provider=self, name="Unknown wa-ios session", participants=tuple())
+            return MessageSession(session_id=session_id, provider=self,
+                                  name="Unknown wa-ios session", participants=tuple())
 
         if chat[field_names['ZGROUPINFO']] is not None:
             # Group chat
@@ -199,7 +204,7 @@ class IOSWhatsApp(Provider):
             participants = [self._jid_to_contact(member[0]) for member in self.msgdb.execute(str(query))]
         else:
             # Private chat
-            participants = [self._jid_to_contact(chat[field_names['ZCONTACTJID']]),]
+            participants = [self._jid_to_contact(chat[field_names['ZCONTACTJID']])]
 
         return MessageSession(
             session_id=session_id,
@@ -248,7 +253,7 @@ class IOSWhatsApp(Provider):
                     push_name=row[field_names['ZPUSHNAME']],
                     chat_session_id=row[field_names['Z_PK']],
                     profile_push_name_id=row[field_names['PUSH_PK']],
-                    )
+                )
 
         # Search for missing group chat members.
         group_member_table = Table('ZWAGROUPMEMBER')

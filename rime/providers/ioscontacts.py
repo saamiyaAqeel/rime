@@ -5,7 +5,6 @@
 """
 Provides ios contacts
 """
-from dataclasses import dataclass
 from typing import Iterable
 
 from .provider import Provider
@@ -13,6 +12,7 @@ from ..contact import Contact, Name
 from ..sql import Table, Query, get_field_indices
 from ..event import Event
 from ..anonymise import anonymise_phone, anonymise_email, anonymise_name
+
 
 class IOSContacts(Provider):
     NAME = 'ios-AddressBook'
@@ -27,7 +27,6 @@ class IOSContacts(Provider):
 
     def __del__(self):
         self.conn.close()
-
 
     def is_version_compatible(self):
         return True
@@ -44,7 +43,7 @@ class IOSContacts(Provider):
         # Phone numbers will have property=3, emails will have property=4
         # Some may have neither.
         query = Query.from_(person_table).left_join(mvtable).on(person_table.ROWID == mvtable.record_id).select(
-            person_table.ROWID, person_table.First, person_table.Last, 
+            person_table.ROWID, person_table.First, person_table.Last,
             mvtable.property, mvtable.label, mvtable.value
         ).orderby(person_table.ROWID)
         fields = get_field_indices(query)
@@ -54,7 +53,7 @@ class IOSContacts(Provider):
         # We'll get several rows per contact.
         # These will be ordered by ROWID, so we should get all the values for one contact together.
         for row in self.conn.execute(str(query)):
-            rowid=row[fields['ROWID']]
+            rowid = row[fields['ROWID']]
             if rowid != prev_id and prev_id is not None:
                 # Moving on to new contact; return the last one
                 # with whatever we've found
@@ -63,9 +62,9 @@ class IOSContacts(Provider):
                     device_id=self.fs.id_,
                     providerName=self.NAME,
                     providerFriendlyName=self.FRIENDLY_NAME,
-                    name = Name(first = first, last=last),
-                    phone = phone,
-                    email = email
+                    name=Name(first=first, last=last),
+                    phone=phone,
+                    email=email
                 )
                 email = phone = first = last = ""
             first, last = row[fields['First']], row[fields['Last']]
@@ -81,11 +80,11 @@ class IOSContacts(Provider):
                 device_id=self.fs.id_,
                 providerName=self.NAME,
                 providerFriendlyName=self.FRIENDLY_NAME,
-                name = Name(first = first, last=last),
-                phone = phone,
-                email = email
+                name=Name(first=first, last=last),
+                phone=phone,
+                email=email
             )
-        
+
     PII_FIELDS = {
         'sqlite3': {
             DB_PATH: {
@@ -116,7 +115,7 @@ class IOSContacts(Provider):
             obj = cls(fs)
             if obj.is_version_compatible():
                 return obj
-        
+
         return None
 
     def get_media(self, local_id):

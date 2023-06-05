@@ -29,6 +29,7 @@ else:
     print("Configuration file not found. Create rime_settings.yaml or set RIME_CONFIG.")
     sys.exit(1)
 
+
 class RimeScheduler(Scheduler):
     def __init__(self, my_thread_executor, bg_thread_executor):
         super().__init__()
@@ -46,6 +47,7 @@ class RimeScheduler(Scheduler):
         Schedule a function to run on the background thread. Returns a future.
         """
         return self._bg_thread_executor.submit(fn, *args, **kwargs)
+
 
 class RimeSingleton:
     """
@@ -75,7 +77,9 @@ class RimeSingleton:
     def get_media(self, media_id):
         return self._run(self._rime.get_media, media_id)
 
+
 rime = RimeSingleton(rime_config)
+
 
 @app.after_request
 def add_cors_headers(response):
@@ -84,14 +88,17 @@ def add_cors_headers(response):
     response.headers['Access-Control-Allow-Methods'] = 'GET, POST, OPTIONS'
     return response
 
+
 @app.route('/media/<path:media_id>', methods=['GET'])
 def handle_media(media_id):
     media_id = urllib.parse.unquote(media_id)
     return handle_get_media(media_id)
 
+
 @app.route('/graphql', methods=['POST'])
 def handle_graphql():
     return handle_post_graphql(request)
+
 
 def handle_get_media(media_id):
     media_data = rime.get_media(media_id)
@@ -99,6 +106,7 @@ def handle_get_media(media_id):
     response = make_response(send_file(media_data.handle, mimetype=media_data.mime_type))
     response.headers['Content-Length'] = str(media_data.length)
     return response
+
 
 def handle_post_graphql(request):
     query_json = request.get_json()

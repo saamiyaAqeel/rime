@@ -26,10 +26,12 @@ from ..sql import Table, Query, get_field_indices
 from ..contact import Contact, Name
 from ..anonymise import anonymise_phone, anonymise_email, anonymise_name
 
+
 @dataclass
 class AndroidContact:
     contact_row_id: str
     raw_contact_row_ids: set[str]
+
 
 # Maps filesystem identifier to {id: mime type}
 MIMETYPE_TO_ID = {}
@@ -41,12 +43,14 @@ MIMETYPES = {
     'vnd.android.cursor.item/email_v2': 'email',
 }
 
+
 def filter_contacts(filter, contacts_iterable):
     if not filter:
         return contacts_iterable
 
     return [contact for contact in contacts_iterable
             if filter.name_regex.match(contact.name.display)]
+
 
 class AndroidContacts(Provider):
     NAME = 'android-com.android.providers.contacts'
@@ -97,8 +101,8 @@ class AndroidContacts(Provider):
             if contact_id not in contacts:
                 provider_data = AndroidContact(contact_row_id=contact_id, raw_contact_row_ids=set())
                 contacts[contact_id] = Contact(
-                    local_id=contact_id, 
-                    device_id=self.fs.id_, 
+                    local_id=contact_id,
+                    device_id=self.fs.id_,
                     name=Name(),
                     providerName=self.NAME,
                     providerFriendlyName=self.FRIENDLY_NAME,
@@ -180,7 +184,7 @@ class AndroidContacts(Provider):
             obj = cls(fs)
             if obj.is_version_compatible():
                 return obj
-        
+
         return None
 
     def get_media(self, local_id):

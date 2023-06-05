@@ -7,6 +7,7 @@ from ruamel.yaml import YAML
 
 BASE_PATH = os.path.dirname(os.path.abspath(__file__))
 
+
 @dataclass
 class Plugin:
     name: str
@@ -14,7 +15,7 @@ class Plugin:
     config: dict
     module_name: str
     func_name: str
-    _fn: Callable|None
+    _fn: Callable | None
 
     @property
     def fn(self):
@@ -26,6 +27,7 @@ class Plugin:
             self._fn = getattr(module, self.func_name)
 
         return self._fn
+
 
 def load_plugin(category, name):
     plugin_dir = os.path.join(BASE_PATH, category)

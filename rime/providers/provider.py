@@ -6,12 +6,13 @@ from abc import ABC, abstractmethod
 
 from ..media import MediaData
 
+
 class Provider(ABC):
     NAME = None
     FRIENDLY_NAME = None  # for displaying to users
 
     PII_FIELDS = NotImplemented
-    
+
     @classmethod
     @abstractmethod
     def from_filesystem(cls, fs):
@@ -51,6 +52,7 @@ class Provider(ABC):
         Remove PII from databases known to this provider.
         """
         raise NotImplementedError
+
 
 def find_providers(fs) -> dict[str, Provider]:
     """

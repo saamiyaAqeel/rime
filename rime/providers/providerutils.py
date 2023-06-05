@@ -4,6 +4,7 @@
 
 from abc import ABC, abstractmethod
 
+
 class LazyContactProvider(ABC):
     @abstractmethod
     def contact_load_all(self):
@@ -27,6 +28,7 @@ class LazyContactProvider(ABC):
         Return None if the contact could not be created (will raise KeyError in LazyContactProviderContacts)
         """
         raise NotImplementedError()
+
 
 class LazyContactProviderContacts(dict):
     """

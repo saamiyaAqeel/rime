@@ -8,13 +8,16 @@ import phonenumbers
 
 from .contact import Contact, Name
 
+
 @dataclass
 class MergedContact:
-    local_id: str  # Unique to the provider only. The GraphQL layer combines this with device ID and providerName for the UI.
+    # local_id: Unique to the provider only. The GraphQL layer combines this with device ID and providerName for the UI.
+    local_id: str
     contacts: list[Contact]
-    name: Name|None = None
-    phone: str|None = None
-    email: str|None = None
+    name: Name | None = None
+    phone: str | None = None
+    email: str | None = None
+
 
 def _hash_contact_ids(contacts) -> str:
     hasher = hashlib.sha256()
@@ -24,6 +27,7 @@ def _hash_contact_ids(contacts) -> str:
         hasher.update(contact.providerName.encode('utf-8'))
 
     return hasher.hexdigest()
+
 
 def merge_contacts(rime, contacts: list[Contact]) -> list[MergedContact]:
     """
