@@ -343,12 +343,16 @@ class FilesystemRegistry:
         Return a mapping of key -> filesystem type for each valid filesystem under base_path.
         """
         filesystems = {}
-        for filename in os.listdir(self.base_path):
-            path = os.path.join(self.base_path, filename)
 
-            for fs_cls in FILESYSTEM_TYPE_TO_OBJ.values():
-                if fs_cls.is_device_filesystem(path):
-                    filesystems[filename] = fs_cls(filename, path)
+        try:
+            for filename in os.listdir(self.base_path):
+                path = os.path.join(self.base_path, filename)
+
+                for fs_cls in FILESYSTEM_TYPE_TO_OBJ.values():
+                    if fs_cls.is_device_filesystem(path):
+                        filesystems[filename] = fs_cls(filename, path)
+        except FileNotFoundError:
+            log.warning(f"Could not find filesystem directory: {self.base_path}")
 
         return filesystems
 
