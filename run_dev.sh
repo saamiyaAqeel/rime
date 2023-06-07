@@ -13,7 +13,7 @@ NO_AI=0
 DEPS_ONLY=0
 VITE_OPTS=
 FLASK_HOST="localhost"
-FLASK_OPTS=
+FLASK_OPTS="$FLASK_OPTS --port 5001"
 
 while [[ $# -gt 0 ]]; do
 	key="$1"

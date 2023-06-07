@@ -26,7 +26,7 @@ RIME is then accessible at http://localhost:8000.
 Running directly
 ----------------
 
-The simplest method is to run the `run_dev.sh` script. This starts up the RIME backend on port 5000, and the frontend
+The simplest method is to run the `run_dev.sh` script. This starts up the RIME backend on port 5001, and the frontend
 (served by Vite) on port 3000. You can then access RIME at http://localhost:3000.
 
 You'll need Python (3.10 recommended), and node.js (18 or above) with npm. The run_dev script will create a Python

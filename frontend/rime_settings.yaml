@@ -3,7 +3,7 @@ filesystem:
   base_path: "../example/"
 session:
   database: "rime_session.db"
-media_url_prefix: "http://localhost:5000/media/"
+media_url_prefix: "http://localhost:5001/media/"
 plugins:
   anonymise:
     # - "ml_names"

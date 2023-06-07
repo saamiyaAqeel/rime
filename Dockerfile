@@ -19,7 +19,7 @@ RUN npm install --location=global npm@latest
 RUN mkdir -p /rime
 
 WORKDIR /rime
-EXPOSE 3000 5000
+EXPOSE 3000 5001
 
 ENV PYTHONUNBUFFERED=1
 CMD ["/bin/bash", "/rime/run_dev.sh", "--host"]
