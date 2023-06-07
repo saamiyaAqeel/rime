@@ -1,6 +1,5 @@
 *.pyc
 Session.vim
-example/*
 env
 docs/_build
 .venv
