@@ -12,6 +12,7 @@ PYTHON=${PYTHON:-python3.10}
 NO_AI=0
 DEPS_ONLY=0
 VITE_OPTS=
+FLASK_HOST="localhost"
 FLASK_OPTS=
 
 while [[ $# -gt 0 ]]; do
@@ -28,7 +29,7 @@ while [[ $# -gt 0 ]]; do
 			;;
 		--host)
 			VITE_OPTS="$VITE_OPTS --host"
-			FLASK_OPTS="$FLASK_OPTS --host 0.0.0.0"
+			FLASK_HOST="0.0.0.0"
 			shift
 			;;
 		*)
@@ -37,6 +38,8 @@ while [[ $# -gt 0 ]]; do
 		;;
 	esac
 done
+
+FLASK_OPTS="$FLASK_OPTS --host $FLASK_HOST"
 
 # Create a virtualenv, install dependencies, and run the dev server.
 if [ ! -f .venv/bin/activate ]; then
