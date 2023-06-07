@@ -7,6 +7,9 @@ import hashlib
 import os
 import shutil
 import re
+import zipfile
+import tempfile
+
 from .sql import Table, Query, get_field_indices, sqlite3_connect as sqlite3_connect_with_regex_support
 
 import fs.tempfs
@@ -29,8 +32,8 @@ class FilesystemTypeUnknownError(Error):
 
 
 class DeviceSettings:
-    def __init__(self, path):
-        self._db_name = os.path.join(path, '_rime_settings.db')
+    def __init__(self, path, settings_filename='_rime_settings.db'):
+        self._db_name = os.path.join(path, settings_filename)
         self.conn = sqlite3_connect_with_regex_support(self._db_name)
         self._init_tables()
 
@@ -90,7 +93,7 @@ class DeviceFilesystem(ABC):
         raise NotImplementedError()
 
     @abstractmethod
-    def is_subset_filesystem(cls) -> bool:
+    def is_subset_filesystem(self) -> bool:
         """
         Is this a temporary filesystem?
         """
@@ -324,9 +327,192 @@ class IosDeviceFilesystem(DeviceFilesystem):
         return self._settings.is_locked()
 
 
+class IosZippedDeviceFilesystem(DeviceFilesystem):
+    """
+    Zipped filesystem of an iOS device. Currently supports only read mode
+    for the data.
+
+    The class assumes there is only one directory in the .zip file
+    and all the other files are located within that directory.
+
+        file.zip
+            |- main_dir
+                |- Manifest.db
+                |- Info.plist
+                |- 7c
+                    |- 7c7fba66680ef796b916b067077cc246adacf01d
+    """
+
+    @staticmethod
+    def get_main_dir(zp: zipfile.ZipFile) -> zipfile.Path:
+        """
+        Get the main directory from within the zip file. The zip file
+        should contain one directory and all other files should be in
+        that directory.
+        """
+        root = zipfile.Path(zp)
+        main_dir, = root.iterdir()
+        return main_dir
+
+    def __init__(self, id_: str, root: str):
+        self.id_ = id_
+
+        # store the path of the root
+        self.root = root
+
+        # keep a reference to the tempfile in the object
+        self.temp_manifest = tempfile.NamedTemporaryFile(mode='w+b')
+        self.temp_settings = tempfile.NamedTemporaryFile(mode='w+b')
+
+        with zipfile.ZipFile(self.root) as zp:
+            # get the main directory contained in the .zip container file
+            main_dir = self.get_main_dir(zp)
+
+            with zp.open(os.path.join(main_dir.name, 'Manifest.db')) as zf:
+                self.temp_manifest.write(zf.read())
+
+            with zp.open(os.path.join(main_dir.name, '_rime_settings.db')) as zf:
+                self.temp_settings.write(zf.read())
+
+        self.manifest = sqlite3_connect_with_regex_support(self.temp_manifest.name)
+        self.file_table = Table('Files')
+
+        settings_dir, settings_file = os.path.split(self.temp_settings.name)
+        self._settings = DeviceSettings(settings_dir, settings_file)
+
+    @classmethod
+    def is_device_filesystem(cls, path) -> bool:
+
+        if not zipfile.is_zipfile(path):
+            return False
+
+        with zipfile.ZipFile(path) as zp:
+            # get the main directory contained in the .zip container file
+            main_dir = cls.get_main_dir(zp)
+            return (
+                zipfile.Path(zp, os.path.join(main_dir.name, 'Manifest.db')).exists()
+                and zipfile.Path(zp, os.path.join(main_dir.name, 'Info.plist')).exists()
+            )
+
+    @classmethod
+    def create(cls, id_: str, root: str):
+        raise NotImplementedError
+
+    def is_subset_filesystem(self) -> bool:
+        return self._settings.is_subset_fs()
+
+    def listdir(self, path) -> list[str]:
+        """
+        As os.listdir().
+        """
+        return []
+
+    def get_filename(self, path):
+        """
+        What's the actual filename, relative to root, of the file represented by path?
+        'Path' is formed of the app domain, a hyphen, and then the relative path. Examples from Manifest.db:
+
+        domain: AppDomainGroup-group.net.whatsapp.WhatsApp.shared
+        relativePath: ChatStorage.sqlite
+        path: AppDomainGroup-group.net.whatsapp.WhatsApp.shared-ChatStorage.sqlite
+
+        domain: HomeDomain
+        relativePath: Library/SMS/sms.db
+        path: HomeDomain-Library/SMS/sms.db
+        """
+
+        # TODO: some files are stored in blobs in the manifest. Need to deal with that.
+        file_id = hashlib.sha1(path.encode()).hexdigest()
+        return os.path.join(file_id[:2], file_id)
+
+    def exists(self, path) -> bool:
+        """
+        As os.path.exists().
+        """
+        real_path = self.get_filename(path)
+
+        # open the zipfile stored in `self.root` and find out if it
+        # contains the `real_path
+        with zipfile.ZipFile(self.root) as zp:
+            # get the main directory contained in the .zip container file
+            main_dir = self.get_main_dir(zp)
+            return zipfile.Path(zp, os.path.join(main_dir.name, real_path)).exists()
+
+    def getsize(self, path) -> int:
+        """
+        As os.path.getsize().
+        """
+        with zipfile.ZipFile(self.root) as zp:
+            # get the main directory contained in the .zip container file
+            main_dir = self.get_main_dir(zp)
+            return zp.getinfo(os.path.join(main_dir, self.get_filename(path))).file_size
+
+    def open(self, path):
+        """
+        As open().
+        """
+        tmp_copy = tempfile.NamedTemporaryFile(mode='w+b')
+        with zipfile.ZipFile(self.root) as zp:
+            # get the main directory contained in the .zip container file
+            main_dir = self.get_main_dir(zp)
+            with zp.open(os.path.join(main_dir.name, self.get_filename(path))) as zf:
+                tmp_copy.write(zf.read())
+        return tmp_copy
+
+    def create_file(self, path):
+        """
+        As open(path, 'wb').
+        """
+        raise NotImplementedError
+
+    def sqlite3_uri(self, path, read_only=True):
+        """
+        Return a URI suitable for passing to sqlite3_connect
+        """
+        params = "?mode=ro&immutable=1" if read_only else ""
+        return f"file:{path}{params}"
+
+    def sqlite3_connect(self, path, read_only=True):
+        """
+        Return an opened sqlite3 connection to the database at 'path'.
+        """
+        tmp_copy = tempfile.NamedTemporaryFile(mode='w+b')
+
+        with zipfile.ZipFile(self.root) as zp:
+            # get the main directory contained in the .zip container file
+            main_dir = self.get_main_dir(zp)
+            with zp.open(os.path.join(main_dir.name, self.get_filename(path))) as zf:
+                tmp_copy.write(zf.read())
+
+        db_url = self.sqlite3_uri(tmp_copy.name)
+        log.debug(f"iOS connecting to {db_url} ({path})")
+        return sqlite3_connect_with_regex_support(db_url, uri=True)
+
+    def sqlite3_create(self, path):
+        """
+        Create a new sqlite3 database at 'path' and return an opened connection read-write to it.
+        """
+        raise NotImplementedError
+
+    def lock(self, locked: bool):
+        self._settings.set_locked(locked)
+
+        # update the settings file back in the zipped file
+        # for persistent settings preferenses
+        with zipfile.ZipFile(self.root, 'w') as zp:
+            # get the main directory contained in the .zip container file
+            main_dir = self.get_main_dir(zp)
+            with zp.open(os.path.join(main_dir, '_rime_settings.db'), 'w') as zf:
+                zf.write(self.temp_settings.read())
+
+    def is_locked(self) -> bool:
+        return self._settings.is_locked()
+
+
 FILESYSTEM_TYPE_TO_OBJ = {
     'android': AndroidDeviceFilesystem,
     'ios': IosDeviceFilesystem,
+    'ios-zipped': IosZippedDeviceFilesystem,
 }
 
 
