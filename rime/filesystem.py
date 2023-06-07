@@ -315,7 +315,7 @@ class IosZippedDeviceFilesystem(DeviceFilesystem):
     for the data.
 
     The class assumes there is only one directory in the .zip file
-    and all the other files are located within that directory.
+    and all the other files and directories are located withn that directory.
 
         file.zip
             |- main_dir
@@ -339,7 +339,8 @@ class IosZippedDeviceFilesystem(DeviceFilesystem):
     def __init__(self, id_: str, root: str):
         self.id_ = id_
 
-        # store the path of the root
+        # store the path of the root for other functions
+        # to be able to open the zipfile
         self.root = root
 
         # keep a reference to the tempfile in the object
@@ -384,15 +385,10 @@ class IosZippedDeviceFilesystem(DeviceFilesystem):
         return self._settings.is_subset_fs()
 
     def listdir(self, path) -> list[str]:
-        """
-        As os.listdir().
-        """
-        return []
+        raise NotImplementedError
 
     def exists(self, path) -> bool:
-        """
-        As os.path.exists().
-        """
+
         real_path = _get_ios_filename(path)
 
         # open the zipfile stored in `self.root` and find out if it
@@ -403,18 +399,12 @@ class IosZippedDeviceFilesystem(DeviceFilesystem):
             return zipfile.Path(zp, os.path.join(main_dir.name, real_path)).exists()
 
     def getsize(self, path) -> int:
-        """
-        As os.path.getsize().
-        """
         with zipfile.ZipFile(self.root) as zp:
             # get the main directory contained in the .zip container file
             main_dir = self.get_main_dir(zp)
             return zp.getinfo(os.path.join(main_dir, _get_ios_filename(path))).file_size
 
     def open(self, path):
-        """
-        As open().
-        """
         tmp_copy = tempfile.NamedTemporaryFile(mode='w+b')
         with zipfile.ZipFile(self.root) as zp:
             # get the main directory contained in the .zip container file
@@ -424,22 +414,13 @@ class IosZippedDeviceFilesystem(DeviceFilesystem):
         return tmp_copy
 
     def create_file(self, path):
-        """
-        As open(path, 'wb').
-        """
         raise NotImplementedError
 
     def sqlite3_uri(self, path, read_only=True):
-        """
-        Return a URI suitable for passing to sqlite3_connect
-        """
         params = "?mode=ro&immutable=1" if read_only else ""
         return f"file:{path}{params}"
 
     def sqlite3_connect(self, path, read_only=True):
-        """
-        Return an opened sqlite3 connection to the database at 'path'.
-        """
         tmp_copy = tempfile.NamedTemporaryFile(mode='w+b')
 
         with zipfile.ZipFile(self.root) as zp:
@@ -453,9 +434,6 @@ class IosZippedDeviceFilesystem(DeviceFilesystem):
         return sqlite3_connect_with_regex_support(db_url, uri=True)
 
     def sqlite3_create(self, path):
-        """
-        Create a new sqlite3 database at 'path' and return an opened connection read-write to it.
-        """
         raise NotImplementedError
 
     def lock(self, locked: bool):
