@@ -263,26 +263,8 @@ class IosDeviceFilesystem(DeviceFilesystem):
     def is_subset_filesystem(self) -> bool:
         return self._settings.is_subset_fs()
 
-    def get_filename(self, path):
-        """
-        What's the actual filename, relative to root, of the file represented by path?
-        'Path' is formed of the app domain, a hyphen, and then the relative path. Examples from Manifest.db:
-
-        domain: AppDomainGroup-group.net.whatsapp.WhatsApp.shared
-        relativePath: ChatStorage.sqlite
-        path: AppDomainGroup-group.net.whatsapp.WhatsApp.shared-ChatStorage.sqlite
-
-        domain: HomeDomain
-        relativePath: Library/SMS/sms.db
-        path: HomeDomain-Library/SMS/sms.db
-        """
-
-        # TODO: some files are stored in blobs in the manifest. Need to deal with that.
-        file_id = hashlib.sha1(path.encode()).hexdigest()
-        return os.path.join(file_id[:2], file_id)
-
     def sqlite3_connect(self, path, read_only=True):
-        db_url = self.sqlite3_uri(os.path.join(self.root, self.get_filename(path)), read_only)
+        db_url = self.sqlite3_uri(os.path.join(self.root, _get_ios_filename(path)), read_only)
         log.debug(f"iOS connecting to {db_url} ({path})")
         return sqlite3_connect_with_regex_support(db_url, uri=True)
 
@@ -293,15 +275,15 @@ class IosDeviceFilesystem(DeviceFilesystem):
         return [row[fields['relativePath']] for row in self.manifest.execute(str(query))]
 
     def exists(self, path):
-        real_path = self.get_filename(path)
+        real_path = _get_ios_filename(path)
         return os.path.exists(os.path.join(self.root, real_path))
 
     def getsize(self, path):
-        return os.path.getsize(os.path.join(self.root, self.get_filename(path)))
+        return os.path.getsize(os.path.join(self.root, _get_ios_filename(path)))
 
     def open(self, path):
         # TODO: Should cope with blobs in the manifest too
-        return open(os.path.join(self.root, self.get_filename(path), 'rb'))
+        return open(os.path.join(self.root, _get_ios_filename(path), 'rb'))
 
     def create_file(self, path):
         raise NotImplementedError
@@ -310,7 +292,7 @@ class IosDeviceFilesystem(DeviceFilesystem):
         """
         Create a new sqlite3 database at the given path and fail if it already exists.
         """
-        real_path = self.get_filename(path)
+        real_path = _get_ios_filename(path)
         syspath = os.path.join(self.root, real_path)
 
         if self.exists(syspath):
@@ -407,29 +389,11 @@ class IosZippedDeviceFilesystem(DeviceFilesystem):
         """
         return []
 
-    def get_filename(self, path):
-        """
-        What's the actual filename, relative to root, of the file represented by path?
-        'Path' is formed of the app domain, a hyphen, and then the relative path. Examples from Manifest.db:
-
-        domain: AppDomainGroup-group.net.whatsapp.WhatsApp.shared
-        relativePath: ChatStorage.sqlite
-        path: AppDomainGroup-group.net.whatsapp.WhatsApp.shared-ChatStorage.sqlite
-
-        domain: HomeDomain
-        relativePath: Library/SMS/sms.db
-        path: HomeDomain-Library/SMS/sms.db
-        """
-
-        # TODO: some files are stored in blobs in the manifest. Need to deal with that.
-        file_id = hashlib.sha1(path.encode()).hexdigest()
-        return os.path.join(file_id[:2], file_id)
-
     def exists(self, path) -> bool:
         """
         As os.path.exists().
         """
-        real_path = self.get_filename(path)
+        real_path = _get_ios_filename(path)
 
         # open the zipfile stored in `self.root` and find out if it
         # contains the `real_path
@@ -445,7 +409,7 @@ class IosZippedDeviceFilesystem(DeviceFilesystem):
         with zipfile.ZipFile(self.root) as zp:
             # get the main directory contained in the .zip container file
             main_dir = self.get_main_dir(zp)
-            return zp.getinfo(os.path.join(main_dir, self.get_filename(path))).file_size
+            return zp.getinfo(os.path.join(main_dir, _get_ios_filename(path))).file_size
 
     def open(self, path):
         """
@@ -455,7 +419,7 @@ class IosZippedDeviceFilesystem(DeviceFilesystem):
         with zipfile.ZipFile(self.root) as zp:
             # get the main directory contained in the .zip container file
             main_dir = self.get_main_dir(zp)
-            with zp.open(os.path.join(main_dir.name, self.get_filename(path))) as zf:
+            with zp.open(os.path.join(main_dir.name, _get_ios_filename(path))) as zf:
                 tmp_copy.write(zf.read())
         return tmp_copy
 
@@ -481,7 +445,7 @@ class IosZippedDeviceFilesystem(DeviceFilesystem):
         with zipfile.ZipFile(self.root) as zp:
             # get the main directory contained in the .zip container file
             main_dir = self.get_main_dir(zp)
-            with zp.open(os.path.join(main_dir.name, self.get_filename(path))) as zf:
+            with zp.open(os.path.join(main_dir.name, _get_ios_filename(path))) as zf:
                 tmp_copy.write(zf.read())
 
         db_url = self.sqlite3_uri(tmp_copy.name)
@@ -580,3 +544,24 @@ class FilesystemRegistry:
 
         shutil.rmtree(os.path.join(self.base_path, key))
         del self.filesystems[key]
+
+
+def _get_ios_filename(path):
+    """
+    For iOS filesystems.
+
+    What's the actual filename, relative to root, of the file represented by path?
+    'Path' is formed of the app domain, a hyphen, and then the relative path. Examples from Manifest.db:
+
+    domain: AppDomainGroup-group.net.whatsapp.WhatsApp.shared
+    relativePath: ChatStorage.sqlite
+    path: AppDomainGroup-group.net.whatsapp.WhatsApp.shared-ChatStorage.sqlite
+
+    domain: HomeDomain
+    relativePath: Library/SMS/sms.db
+    path: HomeDomain-Library/SMS/sms.db
+    """
+
+    # TODO: some files are stored in blobs in the manifest. Need to deal with that.
+    file_id = hashlib.sha1(path.encode()).hexdigest()
+    return os.path.join(file_id[:2], file_id)
