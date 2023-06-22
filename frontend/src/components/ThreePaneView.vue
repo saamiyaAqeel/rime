@@ -63,6 +63,10 @@ function showPopover(message) {
 #left {
 	width: 18em;
 	border-right: 1px solid #ccc;
+	align-self: flex-start;
+	position: sticky;
+	top: 0;
+	overflow: auto;
 }
 
 #right {
