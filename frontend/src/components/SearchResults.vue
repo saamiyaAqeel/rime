@@ -304,11 +304,7 @@ function * eventsRowGenerator() {
 			</template>
 		</div>
 		<div v-if="searchResult.events.length === 0" class="center text-box">
-			Select one or more devices to view the messages.
-			When more than one device is selected the messages will be
-			date- and time-aligned across the selected devices. Messages
-			on one device may appear later than messages on anonther
-			device.
+			Select one or more devices at the top left to begin.
 		</div>
 	</div>
 </template>
@@ -318,7 +314,8 @@ function * eventsRowGenerator() {
 .center {
 	margin: auto;
 	margin-top: 15%;
-	width: 20%;
+	width: 30em;
+	text-align: center;
 }
 
 .rowContainer {

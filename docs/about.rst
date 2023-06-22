@@ -11,3 +11,5 @@ RIME's key differentiating feature is its ability to **filter** the mobile devic
 time range, or to include only a specific set of people, and then to create a **subset** of the device dump containing only
 the information supplied by the filter. These features both streamline data investigation and allow data owners to keep
 unnecessary information private.
+
+In the GUI, you begin by selecting one or more devices at the top left. Device data is displayed in the right pane. Filtering can be performed underneath the device selector. Multiple devices can be selected; RIME will attempt to align data correctly, but this may have slight variations between devices.
