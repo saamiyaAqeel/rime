@@ -349,7 +349,7 @@ class IosDeviceFilesystem(DeviceFilesystem):
         return self._settings.is_subset_fs()
 
     def sqlite3_connect(self, path, read_only=True):
-        db_url = self.sqlite3_uri(os.path.join(self.root, _get_ios_filename(path)), read_only)
+        db_url = self.sqlite3_uri(os.path.join(self.root, _get_ios_backup_pathname(path)), read_only)
         log.debug(f"iOS connecting to {db_url} ({path})")
         return sqlite3_connect_with_regex_support(db_url, uri=True)
 
@@ -360,15 +360,15 @@ class IosDeviceFilesystem(DeviceFilesystem):
         return [row[fields['relativePath']] for row in self.manifest.execute(str(query))]
 
     def exists(self, path):
-        real_path = _get_ios_filename(path)
+        real_path = _get_ios_backup_pathname(path)
         return os.path.exists(os.path.join(self.root, real_path))
 
     def getsize(self, path):
-        return os.path.getsize(os.path.join(self.root, _get_ios_filename(path)))
+        return os.path.getsize(os.path.join(self.root, _get_ios_backup_pathname(path)))
 
     def open(self, path):
         # TODO: Should cope with blobs in the manifest too
-        return open(os.path.join(self.root, _get_ios_filename(path), 'rb'))
+        return open(os.path.join(self.root, _get_ios_backup_pathname(path), 'rb'))
 
     def create_file(self, path):
         raise NotImplementedError
@@ -377,7 +377,7 @@ class IosDeviceFilesystem(DeviceFilesystem):
         """
         Create a new sqlite3 database at the given path and fail if it already exists.
         """
-        real_path = _get_ios_filename(path)
+        real_path = _get_ios_backup_pathname(path)
         syspath = os.path.join(self.root, real_path)
 
         if self.exists(syspath):
@@ -474,7 +474,7 @@ class IosZippedDeviceFilesystem(DeviceFilesystem):
 
     def exists(self, path) -> bool:
 
-        real_path = _get_ios_filename(path)
+        real_path = _get_ios_backup_pathname(path)
 
         # open the zipfile stored in `self.root` and find out if it
         # contains the `real_path
@@ -487,14 +487,14 @@ class IosZippedDeviceFilesystem(DeviceFilesystem):
         with zipfile.ZipFile(self.root) as zp:
             # get the main directory contained in the .zip container file
             main_dir = self.get_main_dir(zp)
-            return zp.getinfo(os.path.join(main_dir, _get_ios_filename(path))).file_size
+            return zp.getinfo(os.path.join(main_dir, _get_ios_backup_pathname(path))).file_size
 
     def open(self, path):
         tmp_copy = tempfile.NamedTemporaryFile(mode='w+b')
         with zipfile.ZipFile(self.root) as zp:
             # get the main directory contained in the .zip container file
             main_dir = self.get_main_dir(zp)
-            with zp.open(os.path.join(main_dir.name, _get_ios_filename(path))) as zf:
+            with zp.open(os.path.join(main_dir.name, _get_ios_backup_pathname(path))) as zf:
                 tmp_copy.write(zf.read())
         return tmp_copy
 
@@ -511,7 +511,7 @@ class IosZippedDeviceFilesystem(DeviceFilesystem):
         with zipfile.ZipFile(self.root) as zp:
             # get the main directory contained in the .zip container file
             main_dir = self.get_main_dir(zp)
-            with zp.open(os.path.join(main_dir.name, _get_ios_filename(path))) as zf:
+            with zp.open(os.path.join(main_dir.name, _get_ios_backup_pathname(path))) as zf:
                 tmp_copy.write(zf.read())
 
         db_url = self.sqlite3_uri(tmp_copy.name)
@@ -609,23 +609,23 @@ class FilesystemRegistry:
         shutil.rmtree(os.path.join(self.base_path, key))
         del self.filesystems[key]
 
-
-def _get_ios_filename(path):
+def _get_ios_backup_pathname(path):
     """
-    For iOS filesystems.
+    Return the pathname inside an iOS backup of path 'path'. Used by providers when accessing iOS files.
 
-    What's the actual filename, relative to root, of the file represented by path?
-    'Path' is formed of the app domain, a hyphen, and then the relative path. Examples from Manifest.db:
+    path is of the form domain/relativePath.
 
-    domain: AppDomainGroup-group.net.whatsapp.WhatsApp.shared
-    relativePath: ChatStorage.sqlite
-    path: AppDomainGroup-group.net.whatsapp.WhatsApp.shared-ChatStorage.sqlite
-
-    domain: HomeDomain
-    relativePath: Library/SMS/sms.db
-    path: HomeDomain-Library/SMS/sms.db
+    For example, the SMS database, in domain HomeDomain and with relative path Library/SMS/sms.db, is
+    referenced by the path HomeDomain/Library/SMS/sms.db.
     """
+    domain, relative_path = path.split('/', 1)
+
+    # Construct a hashable path from the domain and relative path.
+    # The string used for hashing is of the form domain-relativePath, i.e. the same as 'path' with the first
+    # slash replaced with a hyphen. We don't use this form in the rest of RIME because domains can contain hyphens,
+    # so we wouldn't know where to split.
+    hashable_path = f"{domain}-{relative_path}"
 
     # TODO: some files are stored in blobs in the manifest. Need to deal with that.
-    file_id = hashlib.sha1(path.encode()).hexdigest()
+    file_id = hashlib.sha1(hashable_path.encode()).hexdigest()
     return os.path.join(file_id[:2], file_id)

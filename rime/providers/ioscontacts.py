@@ -18,8 +18,7 @@ class IOSContacts(Provider):
     NAME = 'ios-AddressBook'
     FRIENDLY_NAME = 'Apple Contacts'
 
-    # iOS filenames should be specified beginning DOMAIN-
-    DB_PATH = 'HomeDomain-Library/AddressBook/AddressBook.sqlitedb'
+    DB_PATH = 'HomeDomain/Library/AddressBook/AddressBook.sqlitedb'
 
     def __init__(self, fs):
         self.fs = fs

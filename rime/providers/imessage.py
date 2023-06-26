@@ -32,7 +32,7 @@ class IMessage(Provider, LazyContactProvider):
     FRIENDLY_NAME = 'Apple Messages'
 
     # iOS filenames should be specified beginning DOMAIN-
-    MESSAGE_DB = "HomeDomain-Library/SMS/sms.db"
+    MESSAGE_DB = "HomeDomain/Library/SMS/sms.db"
 
     # Timestamps in imessage are (I think) stored as nanoseconds since 1/1/2001.
     # I'm guessing UTC?

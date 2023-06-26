@@ -43,7 +43,7 @@ class IOSWhatsApp(Provider):
     NAME = 'ios-net.whatsapp.WhatsApp'
     FRIENDLY_NAME = 'WhatsApp'
 
-    CHATSTORAGE_DB = 'AppDomainGroup-group.net.whatsapp.WhatsApp.shared-ChatStorage.sqlite'
+    CHATSTORAGE_DB = 'AppDomainGroup-group.net.whatsapp.WhatsApp.shared/ChatStorage.sqlite'
 
     def __init__(self, fs):
         self.fs = fs
