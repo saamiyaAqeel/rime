@@ -3,11 +3,85 @@ This software is released under the terms of the GNU GENERAL PUBLIC LICENSE.
 See LICENSE.txt for full details.
 Copyright 2023 Telemarq Ltd
 -->
+<template>
+	<div>
+		<button id="refresh" @click="eventsRefetch()">&#128472;</button>
+		<div class="searchResultsTable">
+			<div class="header">
+				<div v-for="device in activeDevices" class="event eventHeader"><span class="deviceName">{{ device }}</span></div>
+			</div>
+			<div v-if="searchResult" v-for="eventRow in eventsRowGenerator()" class="row">
+				<template v-for="event in eventRow">
+					<div v-if="event !== null" class="event" :class="event.__typename">
+						<SearchResultMessageEvent v-if="event.__typename == 'MessageEvent'" :event="event" />
+					</div>
+					<div v-else class="event"></div>
+				</template>
+			</div>
+		</div>
+		<div v-if="searchResult.events.length === 0" class="center text-box">
+			Select one or more devices at the top left to begin.
+		</div>
+	</div>
+</template>
+<style scoped>
+
+.searchResultsTable {
+	display: grid;
+	grid-template-columns: v-bind(grid_template_columns);
+}
+
+.seachResultsTable>.header {
+	font-weight: bold;
+	display: contents;
+}
+
+.searchResultsTable>.row {
+	display: contents;
+}
+
+.center {
+	margin: auto;
+	margin-top: 15%;
+	width: 30em;
+	text-align: center;
+}
+
+.event {
+	display: inline-block;
+}
+
+.eventHeader {
+	background: white;
+}
+
+.eventHeader .deviceName {
+	padding: 0.5em;
+	font-weight: bold;
+}
+
+.device {
+	font-size: 12px;
+	color: #aaa;
+}
+
+#refresh {
+	position: fixed;
+	top: 2px;
+	right: 2px;
+	width: 3em;
+	z-index: 1;
+}
+
+</style>
+
 <script setup>
 import { ref, watch, computed } from 'vue'
 import { eventsFilter, activeDevices } from '../store.js'
 import { useQuery } from '@vue/apollo-composable'
 import gql from 'graphql-tag'
+
+import SearchResultMessageEvent from './SearchResultMessageEvent.vue'
 
 const { result: rawSearchResult, refetch: eventsRefetch } = useQuery( gql`
   query getEvents($deviceIds: [String]!, $filter: EventsFilter) {
@@ -47,6 +121,55 @@ const { result: rawSearchResult, refetch: eventsRefetch } = useQuery( gql`
 	filter: eventsFilter
 });
 
+class ChatSession {
+	constructor(sessionId, name, participants, providerFriendlyName) {
+		this.sessionId = sessionId;
+		this.name = name;
+		this.participants = participants;
+		this.providerFriendlyName = providerFriendlyName;
+	}
+
+	/* Helper to retrieve chat session participants formatted for display. */
+	getParticipantsString() {
+		let sessionText = [];
+
+		for(let participant of this.participants) {
+			let name;
+			if(participant.name.display != null)
+				name = participant.name.display;
+			else if(participant.name.first != null && participant.name.last != null)
+				name = participant.name.first + ' ' + participant.name.last;
+			else
+				name = 'Unknown';
+
+			let text = name;
+			if(participant.phone != null)
+				text += ' (' + participant.phone + ')';
+			else if(participant.email != null)
+				text += ' (' + participant.email + ')';
+
+			sessionText.push(text);
+		}
+
+		let participant_info = "";
+		if(this.participants.length == 1) {
+			participant_info += "Chat with " + sessionText[0];
+		} else {
+			if (this.name) {
+				participant_info += "Group chat '" + this.name + "' with " + sessionText.join(', ');
+			} else {
+				participant_info += "Group chat with " + sessionText.join(', ');
+			}
+		}
+		participant_info += " on " + this.providerFriendlyName;
+		return participant_info;
+	}
+
+	isPrivateChat() {
+		return this.participants.length == 1;
+	}
+}
+
 /* list of {typename: ..., events: ...} in order received. */
 const chatSessions = ref({});  // Maps chat session key to list of participants
 
@@ -54,8 +177,8 @@ function getSessionKey(event) {
 	return event.deviceId + ":" + event.providerName + ":" + event.sessionId;
 }
 
-const flex_basis = ref("100%");
 const column_gap = ref("2px");
+const grid_template_columns = ref("repeat(1, 1fr)");
 
 /* Computed property on the search results, to provide transformed data to be consumed by the UI:
  * - convert timestamps to DateTimes;
@@ -85,13 +208,23 @@ const searchResult = computed(() => {
 					newEvent.previousTimestamp = null;
 				}
 
-				/* We want to show chat participants in message sessions, but only once per run of
-				 * messages -- so null out the session info if it's the same as the previous message.
-				*/
 				if(newEvent.__typename == "MessageEvent") {
 					const key = getSessionKey(newEvent);
-					if(key == lastSessionKey)
+
+					/* Create the chat session if it doesn't exist */
+					if(!(key in chatSessions.value)) {
+						chatSessions.value[key] = new ChatSession(newEvent.sessionId, newEvent.session.name,
+																  newEvent.session.participants, newEvent.providerFriendlyName);
+					}
+
+					if(key == lastSessionKey) {
+						/* We've seen this session, so don't store it again. The GUI uses this to determine
+						   when a new session starts */
 						newEvent.session = null;
+					} else {
+						/* Overwrite it with the session object */
+						newEvent.session = chatSessions.value[key];
+					}
 
 					lastSessionKey = key;
 				}
@@ -112,87 +245,13 @@ const searchResult = computed(() => {
  * - set the column width of the per-device columns based on the number of devices.
 */
 watch(rawSearchResult, (result) => {
-	if (result) {
-		for(let events_for_device of result.events) {
-			for(let event of events_for_device.events) {
-				/* Extract sessions from MessageEvents because they only appear once. */
-				if(event.__typename == 'MessageEvent' && event.session != null) {
-					/* This event includes a session reference so store it for later use. */
-					chatSessions.value[getSessionKey(event)] = event.session;
-				}
-			}
-		}
-		/* Set the width of the GUI columns based on the number of devices being viewed. */
-		flex_basis.value = "calc(" + 100 / activeDevices.value.length + "%" + " - " + column_gap.value + ")";
-	}
+	if (!result)
+		return;
+
+	/* Set the width of the GUI columns based on the number of devices being viewed. */
+	/* TODO just put this at outer level? Yes, and/or use CSS grid. */
+	grid_template_columns.value = `repeat(${activeDevices.value.length}, 1fr)`;
 });
-
-function getSessionForMessageEvent(event) {
-	return chatSessions.value[getSessionKey(event)];
-}
-
-/* Helper to retrieve chat session participants formatted for display. */
-function getSessionParticipantsString(event) {
-	const session = getSessionForMessageEvent(event);
-	if(session == null) {
-		return 'Unknown session';
-	}
-
-	let sessionText = [];
-
-	for(let participant of session.participants) {
-		let name;
-		if(participant.name.display != null)
-			name = participant.name.display;
-		else if(participant.name.first != null && participant.name.last != null)
-			name = participant.name.first + ' ' + participant.name.last;
-		else
-			name = 'Unknown';
-
-		let text = name;
-		if(participant.phone != null)
-			text += ' (' + participant.phone + ')';
-		else if(participant.email != null)
-			text += ' (' + participant.email + ')';
-
-		sessionText.push(text);
-	}
-
-	let participant_info = "";
-	if(session.participants.length == 1) {
-		participant_info += "Chat with " + sessionText[0];
-	} else {
-		if (session.name) {
-			participant_info += "Group chat '" + session.name + "' with " + sessionText.join(', ');
-		} else {
-			participant_info += "Group chat with " + sessionText.join(', ');
-		}
-	}
-	participant_info += " on " + event.providerFriendlyName
-	return participant_info;
-}
-
-/* Is this MessageEvent a chat between the phone owner and a single other person? */
-function isPrivateChat(event) {
-	const session = getSessionForMessageEvent(event);
-	if(session == null) {
-		return false;
-	}
-
-	return session.participants.length == 1;
-}
-
-function formatEventTimestamp(event) {
-	/* Show the full date and time if the time delta is null or greater than 24 hours, otherwise just the time. */
-	const delta = event.previousTimestamp ? event.timestamp - event.previousTimestamp : null;
-
-	if(event.previousTimestamp == null || delta == null || delta > 24 * 60 * 60 * 1000
-			|| event.previousTimestamp.getDate() != event.timestamp.getDate()) {
-		return event.timestamp.toLocaleDateString() + " " + event.timestamp.toLocaleTimeString();
-	} else {
-		return event.timestamp.toLocaleTimeString();
-	}
-}
 
 const roughly_the_same_ms = 1000;
 
@@ -264,149 +323,3 @@ function * eventsRowGenerator() {
 }
 
 </script>
-
-<template>
-	<div id="view">
-		<button id="refresh" @click="eventsRefetch()">&#128472;</button>
-		<div class="rowContainer rowHeader">
-			<div v-for="device in activeDevices" class="event eventHeader"><span class="deviceName">{{ device }}</span></div>
-		</div>
-		<div v-if="searchResult" v-for="eventRow in eventsRowGenerator()" class="rowContainer">
-			<template v-for="event in eventRow">
-				<div v-if="event !== null" class="event">
-					<div :class="event.__typename">
-						<div v-if="event.__typename == 'MessageEvent' && event.session !== null" class="sessioninfo">
-							{{ getSessionParticipantsString(event) }}
-						</div>
-						<div class="message" v-if="event.__typename == 'MessageEvent'" :class="{ from_me: event.fromMe }">
-							<div class="message_body">
-								<div v-if="event.media" class="message_media">
-									<video v-if="event.media.mime_type.startsWith('video')" controls>
-										<source :src="event.media.url" :type="event.media.mime_type"/>
-									</video>
-									<img v-else :src="event.media.url" />
-								</div>
-								{{ event.text }}
-							</div>
-							<div class="metadata">
-								<span class="sender" v-if="!event.fromMe && event.sender && !isPrivateChat(event)">
-									<span v-if="event.sender.name.display">{{ event.sender.name.display }}</span>
-									<span v-else-if="event.sender.name.first">{{ event.sender.name.first }} {{ event.sender.name.last }}</span>
-									<span v-if="event.sender.phone"> ({{ event.sender.phone }})</span>
-									&nbsp;
-								</span>
-								<span class="timestamp"> {{formatEventTimestamp(event)}}</span>
-							</div>
-						</div>
-					</div>
-				</div>
-				<div v-else class="event"></div>
-			</template>
-		</div>
-		<div v-if="searchResult.events.length === 0" class="center text-box">
-			Select one or more devices at the top left to begin.
-		</div>
-	</div>
-</template>
-
-<style scoped>
-
-.center {
-	margin: auto;
-	margin-top: 15%;
-	width: 30em;
-	text-align: center;
-}
-
-.rowContainer {
-	display: flex;
-	flex-direction: row;
-	column-gap: v-bind(column_gap);
-}
-
-.rowHeader {
-	font-weight: bold;
-	position: sticky;
-	top: 0;
-}
-
-.event {
-	display: inline-block;
-	flex-basis: v-bind(flex_basis);
-	flex-grow: 0;
-	flex-shrink: 0;
-}
-
-.eventHeader {
-	background: white;
-}
-
-.eventHeader .deviceName {
-	padding: 0.5em;
-	font-weight: bold;
-}
-
-.MessageEvent {
-	display: flex;
-	flex-direction: column;
-	align-items: flex-start;
-}
-
-.MessageEvent>.from_me {
-	align-self: flex-end;
-}
-
-.sender {
-	font-size: 0.8em;
-	color: #666;
-}
-
-.sessioninfo {
-	font-size: 0.8em;
-	margin: 0.5em;
-	padding-left: 0;
-	color: #444;
-}
-
-.message {
-	margin: 0.5em;
-	flex: 0;
-	padding-left: 1em;
-}
-
-.message_body {
-	padding: 1em;
-	background-color: var(--theme-message-bg);
-	color: var(--theme-message-fg);
-	border-radius: 20px;
-}
-
-.from_me>.message_body {
-	background-color: var(--theme-message-from_me-bg);
-	color: var(--theme-message-from_me-fg);
-}
-
-.timestamp {
-	font-size: 12px;
-	color: #888;
-}
-
-
-.device {
-	font-size: 12px;
-	color: #aaa;
-}
-
-#refresh {
-	position: fixed;
-	top: 2px;
-	right: 2px;
-	width: 3em;
-	z-index: 1;
-}
-
-.message_media img {
-	max-width: 100%;
-}
-
-</style>
