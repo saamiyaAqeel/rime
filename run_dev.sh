@@ -12,8 +12,8 @@ PYTHON=${PYTHON:-python3.10}
 NO_AI=0
 DEPS_ONLY=0
 VITE_OPTS=
-FLASK_HOST="localhost"
-FLASK_OPTS="$FLASK_OPTS --port 5001"
+UVICORN_HOST="localhost"
+UVICORN_OPTS="$UVICORN_OPTS --port 5001"
 
 while [[ $# -gt 0 ]]; do
 	key="$1"
@@ -29,7 +29,7 @@ while [[ $# -gt 0 ]]; do
 			;;
 		--host)
 			VITE_OPTS="$VITE_OPTS --host"
-			FLASK_HOST="0.0.0.0"
+			UVICORN_HOST="0.0.0.0"
 			shift
 			;;
 		*)
@@ -39,7 +39,7 @@ while [[ $# -gt 0 ]]; do
 	esac
 done
 
-FLASK_OPTS="$FLASK_OPTS --host $FLASK_HOST"
+UVICORN_OPTS="$UVICORN_OPTS --host $UVICORN_HOST"
 
 # Create a virtualenv, install dependencies, and run the dev server.
 if [ ! -f .venv/bin/activate ]; then
@@ -71,6 +71,6 @@ fi
 npm run dev -- $VITE_OPTS &
 VITE_PID=$!
 
-# Start Flask in the foreground.
-flask --app rimeserver --debug run $FLASK_OPTS
+# Start Uvicorn in the foreground, running the backend.
+uvicorn --reload --reload-dir ../rime --interface asgi3 $UVICORN_OPTS --factory rimeserver:create_app
 

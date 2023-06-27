@@ -388,7 +388,7 @@ class _IosHashedFileConverter:
             # File hash in database, but for a different file.
             raise FileExistsError(path)
 
-        # File hash in database for the same file. Do nothing.
+        # If we get here, the hash and matching path are already in the database, which is fine.
 
 class IosDeviceFilesystem(DeviceFilesystem):
     def __init__(self, id_: str, root: str):

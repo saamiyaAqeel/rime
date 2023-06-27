@@ -1,12 +1,17 @@
 """
 Serve GraphQL on a socket.
 """
+
+import asyncio
 import os
 import urllib.parse
 import concurrent.futures
 import sys
 
-from flask import Flask, request, jsonify, send_file, make_response
+from fastapi import FastAPI
+from fastapi.responses import JSONResponse, StreamingResponse
+from fastapi.middleware.cors import CORSMiddleware
+from starlette.requests import Request
 
 # Assume RIME is in the directory above this one.
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -14,8 +19,6 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from rime import Rime
 from rime.config import Config
 from rime.pubsub import Scheduler
-
-app = Flask(__name__)
 
 FILE_CHUNK_SIZE = 1024 * 1024
 
@@ -29,6 +32,11 @@ else:
     print("Configuration file not found. Create rime_settings.yaml or set RIME_CONFIG.")
     sys.exit(1)
 
+
+# CORS Middleware
+origins = [
+    f"http://{frontend_host}:{frontend_port}",
+]
 
 class RimeScheduler(Scheduler):
     def __init__(self, my_thread_executor, bg_thread_executor):
@@ -53,8 +61,8 @@ class RimeSingleton:
     """
     Serialise access to RIME so all DB access is done from the same thread.
 
-    We provide a single thread for the frontend, and another thread for background tasks
-    such as subsetting with anonymisation.
+    We use concurrent.futures to provide a single thread for the frontend,
+    and another thread for background tasks such as subsetting with anonymisation.
     """
     def __init__(self, config):
         super().__init__()
@@ -67,51 +75,49 @@ class RimeSingleton:
         bg_scheduler = RimeScheduler(self._bg_executor, self._bg_executor)
         self._bg_rime = self._bg_executor.submit(lambda: Rime.create(config, bg_scheduler)).result()
 
-    def _run(self, fn, *args, **kwargs):
-        future = self._executor.submit(fn, *args, **kwargs)
-        return future.result()
+    async def _run(self, fn, *args, **kwargs):
+        loop = asyncio.get_running_loop()
+        return await loop.run_in_executor(self._executor, fn, *args, **kwargs)
 
-    def query(self, query_json):
-        return self._run(self._rime.query, query_json)
+    async def query(self, query_json):
+        return await self._run(self._rime.query, query_json)
 
-    def get_media(self, media_id):
-        return self._run(self._rime.get_media, media_id)
-
-
-rime = RimeSingleton(rime_config)
+    async def get_media(self, media_id):
+        return await self._run(self._rime.get_media, media_id)
 
 
-@app.after_request
-def add_cors_headers(response):
-    response.headers['Access-Control-Allow-Origin'] = f'http://{frontend_host}:{frontend_port}'
-    response.headers['Access-Control-Allow-Headers'] = 'Content-Type'
-    response.headers['Access-Control-Allow-Methods'] = 'GET, POST, OPTIONS'
-    return response
+def create_app():
+    rime = RimeSingleton(rime_config)
+
+    app = FastAPI()
+
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=origins,
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
 
 
-@app.route('/media/<path:media_id>', methods=['GET'])
-def handle_media(media_id):
-    media_id = urllib.parse.unquote(media_id)
-    return handle_get_media(media_id)
+
+    @app.get("/media/{media_id:path}")
+    async def handle_media(media_id: str):
+        media_id = urllib.parse.unquote(media_id)
+        media_data = await rime.get_media(media_id)
+
+        response = StreamingResponse(media_data.handle, media_type=media_data.mime_type)
+        response.headers['Content-Length'] = str(media_data.length)
+        return response
 
 
-@app.route('/graphql', methods=['POST'])
-def handle_graphql():
-    return handle_post_graphql(request)
+    @app.post("/graphql")
+    async def handle_graphql(request: Request):
+        query_json = await request.json()
 
+        success, result = await rime.query(query_json)
+        status = 200 if success else 400
 
-def handle_get_media(media_id):
-    media_data = rime.get_media(media_id)
+        return JSONResponse(content=result, status_code=status)
 
-    response = make_response(send_file(media_data.handle, mimetype=media_data.mime_type))
-    response.headers['Content-Length'] = str(media_data.length)
-    return response
-
-
-def handle_post_graphql(request):
-    query_json = request.get_json()
-
-    success, result = rime.query(query_json)
-    status = 200 if success else 400
-
-    return jsonify(result), status, {'Content-Type': 'application/json'}
+    return app
