@@ -7,7 +7,7 @@ import threading
 from .providers import find_providers
 from .filesystem import FilesystemRegistry, DeviceFilesystem
 from .session import Session
-from .graphql import query as _graphql_query
+from .graphql import query as _graphql_query, query_async as _graphql_query_async, subscribe_async as _graphql_subscribe_async
 from .config import Config
 from .plugins import load_plugin
 from .pubsub import broker, Scheduler
@@ -72,7 +72,7 @@ class Rime:
     def _devices_changed(self, *args):
         # Callback from broker; ensure we do the device rescan on our own thread as it will close and open
         # DB connections.
-        self.scheduler.run_on_my_thread(lambda: Rime.get().rescan_devices())
+        self.scheduler.run_next(lambda: Rime.get().rescan_devices())
 
     def rescan_devices(self):
         registry = FILESYSTEM_REGISTRY.registry
@@ -120,6 +120,12 @@ class Rime:
 
     def query(self, query_json: dict):
         return _graphql_query(self, query_json)
+
+    async def query_async(self, query_json: dict):
+        return await _graphql_query_async(self, query_json)
+
+    async def subscribe_async(self, query_json: dict):
+        return _graphql_subscribe_async(self, query_json)
 
     def get_media(self, media_path):
         """

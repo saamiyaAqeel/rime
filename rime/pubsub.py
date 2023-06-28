@@ -7,11 +7,11 @@ from threading import Lock
 
 class Scheduler(metaclass=ABCMeta):
     @abstractmethod
-    def run_on_my_thread(self, fn, *args, **kwargs):
+    def run_next(self, fn, *args, **kwargs):
         pass
 
     @abstractmethod
-    def run_on_background_thread(self, fn, *args, **kwargs):
+    def run_in_background(self, fn, *args, **kwargs):
         pass
 
 

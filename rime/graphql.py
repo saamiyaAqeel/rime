@@ -13,7 +13,8 @@ from datetime import datetime
 from pathlib import Path
 
 from ariadne import ObjectType, QueryType, InterfaceType, MutationType, \
-                    load_schema_from_path, make_executable_schema, graphql_sync, ScalarType
+                    load_schema_from_path, make_executable_schema, graphql_sync, ScalarType, graphql as graphql_async,\
+                    SubscriptionType, subscribe as _ariadne_subscribe_async
 
 from .filter import EventsFilter, ContactsFilter, ProvidersFilter, TheAlwaysMatchesPattern, GlobalContactId
 from .event import MessageEvent
@@ -500,7 +501,7 @@ def resolve_create_subset(rime, info, targets, eventsFilter, contactsFilter, ano
         broker.publish('devices_changed', None)
 
     # Perform subsetting in the background.
-    rime.scheduler.run_on_background_thread(_create_subset_impl)
+    rime.scheduler.run_in_background(_create_subset_impl)
 
     return {
         'success': True,
@@ -563,3 +564,11 @@ def reload_schema():
 def query(rime, query_json):
     context = QueryContext(rime)
     return graphql_sync(schema, query_json, context_value=context)
+
+async def query_async(rime, query_json):
+    context = QueryContext(rime)
+    return await graphql_async(schema, query_json, context_value=context)
+
+async def subscribe_async(rime, query_json):
+    context = QueryContext(rime)
+    return await _ariadne_subscribe_async(schema, query_json, context_value=context)
