@@ -5,6 +5,7 @@
 """
 Support for GraphQL querying in RIME.
 """
+import asyncio
 import re
 import traceback
 from dataclasses import dataclass
@@ -531,13 +532,29 @@ def resolve_set_device_properties(rime, info, deviceId, deviceProperties):
 
     return True
 
-# resolvers for subsetresult
+
+# Subscriptions
+devices_subscription = SubscriptionType()
+@devices_subscription.source("devicesChanged")
+async def devices_generator(obj, info):
+    rime = info.context.rime
+
+    yield rime.devices
+
+    async for evt in broker.subscribe_async('devices_changed'):
+        yield rime.devices
+        await asyncio.sleep(0.1)
+
+@devices_subscription.field("devicesChanged")
+def devices_resolver(payload, info):
+    return payload
 
 
 RESOLVERS = [
     datetime_scalar, query_resolver, event_resolver, message_event_resolver,
     message_session_resolver, provider_resolver, contact_resolver,
-    merged_contact_resolver, name_resolver, device_resolver, mutation
+    merged_contact_resolver, name_resolver, device_resolver, mutation,
+    devices_subscription,
 ]
 
 

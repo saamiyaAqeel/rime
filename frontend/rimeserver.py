@@ -12,7 +12,9 @@ from fastapi import FastAPI
 from fastapi.responses import JSONResponse, StreamingResponse
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.requests import Request
+from starlette.websockets import WebSocket
 from ariadne.asgi import GraphQL as AriadneGraphQL
+from ariadne.asgi.handlers import GraphQLTransportWSHandler
 
 # Assume RIME is in the directory above this one.
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -68,13 +70,6 @@ class RimeSingleton:
     def get_context_value(self, request, data):
         return QueryContext(self._rime)
 
-    async def query(self, query_json):
-        result = await self._rime.query_async(query_json)
-        return result
-
-    async def subscribe(self, query_json):
-        return self._rime.subscribe_async(query_json)
-
     async def get_media(self, media_id):
         return self._rime.get_media(media_id)
 
@@ -116,17 +111,21 @@ def create_app():
         response.headers['Content-Length'] = str(media_data.length)
         return response
 
-    graphql_app = AriadneGraphQL(schema, context_value=rime.get_context_value)
+    graphql_app = AriadneGraphQL(
+        schema,
+        websocket_handler=GraphQLTransportWSHandler(),
+        context_value=rime.get_context_value
+    )
 
     # Use a separate endpoint, rather than app.mount, because Starlette doesn't support root mounts not ending in /.
     # See https://github.com/encode/starlette/issues/869 .
     @app.post("/graphql")
-    @app.websocket("/graphql")
-    async def handle_graphql(request: Request):
-        if request.scope['type'] == 'websocket':
-            # Subscriptions.
-            return await graphql_app.handle_websocket(request)
-
+    async def handle_graphql_post(request: Request):
+        # Queries and mutations.
         return await graphql_app.handle_request(request)
+
+    @app.websocket("/graphql-ws")
+    async def handle_graphql_ws(websocket: WebSocket):
+        return await graphql_app.handle_websocket(websocket)
 
     return app

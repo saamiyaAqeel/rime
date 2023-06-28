@@ -7,7 +7,7 @@ Copyright 2023 Telemarq Ltd
 <script setup>
 import { watch, ref, nextTick } from 'vue'
 import { useQuery, useMutation } from '@vue/apollo-composable'
-import { devices, activeDevices, deleteDevice, setDeviceSelected, devicesGqlRefetch } from '../store.js'
+import { devices, activeDevices, deleteDevice, setDeviceSelected } from '../store.js'
 import gql from 'graphql-tag'
 
 /* When activeDevices changes, update the check boxes. */

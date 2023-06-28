@@ -7,7 +7,7 @@ import threading
 from .providers import find_providers
 from .filesystem import FilesystemRegistry, DeviceFilesystem
 from .session import Session
-from .graphql import query as _graphql_query, query_async as _graphql_query_async, subscribe_async as _graphql_subscribe_async
+from .graphql import query as _graphql_query, query_async as _graphql_query_async
 from .config import Config
 from .plugins import load_plugin
 from .pubsub import broker, Scheduler
@@ -123,9 +123,6 @@ class Rime:
 
     async def query_async(self, query_json: dict):
         return await _graphql_query_async(self, query_json)
-
-    async def subscribe_async(self, query_json: dict):
-        return _graphql_subscribe_async(self, query_json)
 
     def get_media(self, media_path):
         """

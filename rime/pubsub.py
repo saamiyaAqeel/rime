@@ -1,4 +1,5 @@
 from abc import ABCMeta, abstractmethod
+import asyncio
 from collections import defaultdict
 import traceback
 from weakref import WeakMethod
@@ -31,6 +32,21 @@ class _Broker:
 
         with self._lock:
             self._subscribers[event].add(callback)
+
+    async def subscribe_async(self, event):
+        queue = asyncio.Queue()
+
+        def callback(data):
+            queue.put_nowait(data)
+
+        self.subscribe(event, callback)
+
+        try:
+            while True:
+                yield await queue.get()
+        finally:
+            self.unsubscribe(event, callback)
+
 
     def unsubscribe(self, event, callback):
         with self._lock:

@@ -7,7 +7,7 @@ import './style.css'
 import { createPinia } from 'pinia'
 import { DefaultApolloClient } from '@vue/apollo-composable'
 import App from './App.vue'
-import { apolloClient, enableWatchers } from './store'
+import { apolloClient } from './store'
 
 const app = createApp(App);
 
@@ -18,6 +18,3 @@ app.use(pinia);
 app.provide(DefaultApolloClient, apolloClient);
 
 app.mount('#app');
-
-/* Get the store to periodically refresh the backend. In future, we should use a Subscription instead. */
-enableWatchers();

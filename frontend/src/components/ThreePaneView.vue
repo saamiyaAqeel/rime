@@ -11,7 +11,6 @@ import SearchRefinements from './SearchRefinements.vue'
 import Search from './Search.vue'
 import Subsetter from './Subsetter.vue'
 import SearchResults from './SearchResults.vue'
-import { devicesGqlRefetch } from '../store.js'
 
 const showRefinements = ref(false);
 
@@ -38,7 +37,7 @@ function showPopover(message) {
 			<img id="logo" src="logo.png" />
 			<DeviceChooser id="deviceChooser"/>
 			<Search id="search"/>
-			<Subsetter id="subsetter" @createdNewSubset="devicesGqlRefetch()" @showPopover="showPopover" />
+			<Subsetter id="subsetter" @showPopover="showPopover" />
 		</div>
 
 		<div id="right">

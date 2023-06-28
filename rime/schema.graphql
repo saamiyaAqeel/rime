@@ -54,6 +54,10 @@ type Mutation {
     deviceProperties: SetDeviceProperties!): Boolean
 }
 
+type Subscription {
+  devicesChanged: [Device]
+}
+
 type ContactsResult {
   """
   List of Contacts matching the filter, or all of them if no filter was supplied.
