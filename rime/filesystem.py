@@ -5,6 +5,7 @@
 from abc import ABC, abstractmethod
 import hashlib
 import os
+import plistlib
 import re
 import sqlite3
 import zipfile
@@ -31,6 +32,10 @@ class FilesystemNotFoundError(Error):
 
 
 class FilesystemTypeUnknownError(Error):
+    pass
+
+
+class FilesystemIsEncryptedError(Error):
     pass
 
 
@@ -390,6 +395,16 @@ class _IosHashedFileConverter:
 
         # If we get here, the hash and matching path are already in the database, which is fine.
 
+def _ios_filesystem_is_encrypted(path):
+    manifest_bplist = os.path.join(path, 'Manifest.plist')
+    if not os.path.exists(manifest_bplist):
+        return False
+
+    with open(manifest_bplist, 'rb') as f:
+        manifest = plistlib.load(f)
+
+    return manifest.get('IsEncrypted', False)
+
 class IosDeviceFilesystem(DeviceFilesystem):
     def __init__(self, id_: str, root: str):
         self.id_ = id_
@@ -404,6 +419,7 @@ class IosDeviceFilesystem(DeviceFilesystem):
         return (
             os.path.exists(os.path.join(path, 'Manifest.db'))
             and os.path.exists(os.path.join(path, 'Info.plist'))
+            and not _ios_filesystem_is_encrypted(path)
         )
 
     @classmethod
@@ -615,11 +631,62 @@ class IosZippedDeviceFilesystem(DeviceFilesystem):
         return self._settings.is_locked()
 
 
+class IosEncryptedDeviceFilesystem(DeviceFilesystem):
+    def __init__(self, id_: str, root: str):
+        self.id_ = id_
+        self.root = root
+
+    @classmethod
+    def is_device_filesystem(cls, path):
+        return (
+            os.path.exists(os.path.join(path, 'Manifest.db'))
+            and os.path.exists(os.path.join(path, 'Info.plist'))
+            and _ios_filesystem_is_encrypted(path)
+        )
+
+    @classmethod
+    def create(cls, id_: str, root: str) -> 'DeviceFilesystem':
+        return cls(id_, root)
+
+    def is_subset_filesystem(self) -> bool:
+        return False
+
+    def listdir(self, path) -> list[str]:
+        return []
+
+    def exists(self, path) -> bool:
+        return False
+
+    def getsize(self, path) -> int:
+        raise NotImplementedError
+
+    def open(self, path):
+        raise NotImplementedError
+
+    def create_file(self, path):
+        raise NotImplementedError
+
+    def sqlite3_uri(self, path, read_only=True):
+        raise NotImplementedError
+
+    def sqlite3_connect(self, path, read_only=True):
+        raise NotImplementedError
+
+    def sqlite3_create(self, path):
+        raise NotImplementedError
+
+    def lock(self, locked: bool):
+        raise NotImplementedError
+
+    def is_locked(self) -> bool:
+        return True
+
 FILESYSTEM_TYPE_TO_OBJ = {
     'android': AndroidDeviceFilesystem,
     'android-zipped': AndroidZippedDeviceFilesystem,
     'ios': IosDeviceFilesystem,
     'ios-zipped': IosZippedDeviceFilesystem,
+    'ios-encrypted': IosEncryptedDeviceFilesystem,
 }
 
 
