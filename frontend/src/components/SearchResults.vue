@@ -7,9 +7,7 @@ Copyright 2023 Telemarq Ltd
 	<div>
 		<button id="refresh" @click="eventsRefetch()">&#128472;</button>
 		<div class="searchResultsTable">
-			<div class="header">
-				<div v-for="device in activeDevices" class="event eventHeader"><span class="deviceName">{{ device }}</span></div>
-			</div>
+			<div v-for="device in activeDevices" class="header"><span class="deviceName">{{ device }}</span></div>
 			<div v-if="searchResult" v-for="eventRow in eventsRowGenerator()" class="row">
 				<template v-for="event in eventRow">
 					<div v-if="event !== null" class="event" :class="event.__typename">
@@ -31,9 +29,11 @@ Copyright 2023 Telemarq Ltd
 	grid-template-columns: v-bind(grid_template_columns);
 }
 
-.seachResultsTable>.header {
+.searchResultsTable .header {
 	font-weight: bold;
-	display: contents;
+	top: 0;
+	position: sticky;
+	background: white;
 }
 
 .searchResultsTable>.row {
@@ -250,7 +250,7 @@ watch(rawSearchResult, (result) => {
 
 	/* Set the width of the GUI columns based on the number of devices being viewed. */
 	/* TODO just put this at outer level? Yes, and/or use CSS grid. */
-	grid_template_columns.value = `repeat(${activeDevices.value.length}, 1fr)`;
+	grid_template_columns.value = `repeat(${activeDevices.value.length}, minmax(0, 1fr))`;
 });
 
 const roughly_the_same_ms = 1000;
