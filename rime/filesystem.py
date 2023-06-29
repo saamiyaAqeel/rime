@@ -742,7 +742,6 @@ class FilesystemRegistry:
             raise ValueError(f"Invalid device ID: {key}")
 
         self.filesystems[key] = fs.__class__.create(key, path)
-        print('locked', locked)
         self.filesystems[key].lock(locked)
 
         return self[key]

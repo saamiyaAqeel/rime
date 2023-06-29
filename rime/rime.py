@@ -2,6 +2,9 @@
 # See LICENSE.txt for full details.
 # Copyright 2023 Telemarq Ltd
 
+import asyncio
+from collections import defaultdict
+import os
 import threading
 
 from .providers import find_providers
@@ -10,8 +13,6 @@ from .session import Session
 from .graphql import query as _graphql_query, query_async as _graphql_query_async
 from .config import Config
 from .plugins import load_plugin
-from .pubsub import broker, Scheduler
-
 
 class Device:
     def __init__(self, device_id: str, fs: DeviceFilesystem, session: Session):
@@ -55,34 +56,64 @@ class Rime:
 
     Contains per-device sub-objects.
     """
-    def __init__(self, session: Session, constants: Config, scheduler: Scheduler):
+    def __init__(self, session: Session, constants: Config, bg_call):
         self.devices = []
         self.session = session
         self.constants = constants
-        self.scheduler = scheduler
+        self.bg_call = bg_call
         media_prefix = constants.get('media_url_prefix', '/media/')
+        self._event_listeners_lock = threading.Lock()
+        self._event_listeners = defaultdict(set)  # event_name -> {listener}
 
         self.rescan_devices()
 
         self.media_prefix = media_prefix
         self.plugins = self._load_plugins()
 
-        broker.subscribe('devices_changed', self._devices_changed)
-
-    def _devices_changed(self, *args):
-        # Callback from broker; ensure we do the device rescan on our own thread as it will close and open
-        # DB connections.
-        self.scheduler.run_next(lambda: Rime.get().rescan_devices())
+        self._file_watcher_stop_event = asyncio.Event()
 
     def rescan_devices(self):
         registry = FILESYSTEM_REGISTRY.registry
         registry.rescan()
 
         if not hasattr(DEVICE_CACHE, 'devices'):
-            DEVICE_CACHE.devices = [Device(fs_id, fs, self.session) for fs_id, fs in registry.filesystems.items()]
+            DEVICE_CACHE.devices = []
+
+        new_devices = []
+        old_devices = {}
+        for device in DEVICE_CACHE.devices:
+            if device.id_ in registry.filesystems:
+                old_devices[device.id_] = device
+
+        for device_id, fs in registry.filesystems.items():
+            if device_id not in old_devices:
+                device = Device(device_id, fs, self.session)
+                new_devices.append(device)
+
+        DEVICE_CACHE.devices = new_devices + list(old_devices.values())
 
         self.devices = DEVICE_CACHE.devices
         self._device_for_id = {device.id_: device for device in self.devices}
+
+    # TODO: Need a synchronous version of this (or, better, a single version that can be used in both contexts)
+    async def start_background_tasks_async(self):
+        event_loop = asyncio.get_running_loop()
+        self._file_watcher_stop_event = asyncio.Event()
+
+        async def watch_files_async(base_path):
+            old_files = set()
+            while not self._file_watcher_stop_event.is_set():
+                files = set(os.listdir(base_path))
+                if files != old_files:
+                    old_files = files
+                    self.rescan_devices()
+
+                await asyncio.sleep(0.5)
+
+        event_loop.create_task(watch_files_async(self.filesystem_registry.base_path))
+
+    async def stop_background_tasks_async(self):
+        self._file_watcher_stop_event.set()
 
     def devices_for_ids(self, device_ids: list[str]) -> list[Device]:
         return [device for device in self.devices if device.id_ in device_ids]
@@ -104,25 +135,41 @@ class Rime:
         return new_device
 
     def delete_device(self, device_id: str):
-        devices_remaining = []
-        for device in self.devices:
-            if device.id_ == device_id:
-                self.filesystem_registry.delete(device_id)
-            else:
-                devices_remaining.append(device)
+        self.filesystem_registry.delete(device_id)
 
-        did_delete = len(devices_remaining) != len(self.devices)
+        self.publish_event('device_list_updated')
 
-        self.devices = devices_remaining
-        self._device_for_id = {device.id_: device for device in self.devices}
-
-        return did_delete
+        return True
 
     def query(self, query_json: dict):
         return _graphql_query(self, query_json)
 
     async def query_async(self, query_json: dict):
         return await _graphql_query_async(self, query_json)
+
+    def publish_event(self, event_name, *args):
+        async def handle_event_async(aqueue):
+            if event_name == 'device_list_updated':
+                self.rescan_devices()
+
+            await aqueue.put_nowait(args)
+
+        for loop, aqueue in self._event_listeners[event_name]:
+            asyncio.run_coroutine_threadsafe(handle_event_async(aqueue), loop=loop)
+
+    async def wait_for_events(self, event_name):
+        loop = asyncio.get_running_loop()
+        aqueue = asyncio.Queue()
+        with self._event_listeners_lock:
+            self._event_listeners[event_name].add((loop, aqueue))
+
+        try:
+            while True:
+                args = await aqueue.get()
+                yield args
+        finally:
+            with self._event_listeners_lock:
+                self._event_listeners[event_name].remove((loop, aqueue))
 
     def get_media(self, media_path):
         """
@@ -154,22 +201,14 @@ class Rime:
         return FILESYSTEM_REGISTRY.registry
 
     @classmethod
-    def create(cls, config: Config, scheduler: Scheduler):
-        if hasattr(RIME, 'rime'):
-            raise RuntimeError("Rime already created on this thread")
-
+    def create(cls, config: Config, bg_call):
         if not hasattr(FILESYSTEM_REGISTRY, 'registry'):
             FILESYSTEM_REGISTRY.registry = FilesystemRegistry(base_path=config.get_pathname('filesystem.base_path'))
 
         session = Session(config.get_pathname('session.database'))
-        obj = cls(session, config, scheduler)
+        obj = cls(session, config, bg_call)
 
-        RIME.rime = obj
         return obj
-
-    @classmethod
-    def get(cls):
-        return RIME.rime
 
     def _load_plugins(self):
         plugins = {}

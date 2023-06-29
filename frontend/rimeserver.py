@@ -22,56 +22,67 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from rime import Rime
 from rime.graphql import schema, QueryContext
 from rime.config import Config
-from rime.pubsub import Scheduler
 
 
-class RimeScheduler(Scheduler):
-    def __init__(self, bg_thread_executor):
+class RimeBGCall:
+    """
+    When invoked, run the given function in the background, passing as a first argument 'rime'
+    (which should correspond to the background RIME instance).
+    """
+    def __init__(self, bg_rime, bg_executor):
         super().__init__()
-        self._bg_thread_executor = bg_thread_executor
-        self.tasks = set()
+        self._bg_rime = bg_rime
+        self._bg_executor = bg_executor
 
-    def run_next(self, fn, *args, **kwargs):
-        """
-        Run "fn" after all other scheduled tasks have completed.
+    def __call__(self, fn, *args, **kwargs):
+        return self._bg_executor.submit(fn, self._bg_rime, *args, **kwargs)
 
-        This will run on the web server thread, so can't block (for long).
-        """
-        loop = asyncio.get_running_loop()
-        task = loop.create_task(fn(*args, **kwargs))
-        self.tasks.add(task)
-        task.add_done_callback(lambda _: self.tasks.remove(task))
-        return task
 
-    def run_in_background(self, fn, *args, **kwargs):
-        """
-        Run "fn" on a separate thread in the background.
-        """
-        return self._bg_thread_executor.submit(fn, *args, **kwargs)
+class NullBGCall:
+    """
+    Acts like a BG Executor, but is passed to the background RIME and just runs things immediately.
+    """
+    def __init__(self):
+        super().__init__()
+        self._rime = None
+
+    def set_rime(self, rime):
+        self._rime = rime
+
+    def __call__(self, fn, *args, **kwargs):
+        return fn(self._rime, *args, **kwargs)
 
 
 class RimeSingleton:
     """
     Serialise access to RIME so all DB access is done from the same thread.
 
-    We use concurrent.futures to provide a single thread for the frontend,
-    and another thread for background tasks such as subsetting with anonymisation.
+    We use the current thread for foreground tasks, and create a separate background
+    thread for background tasks such as subsetting with anonymisation.
     """
     def __init__(self, config):
         super().__init__()
+
+        # Create the background RIME.
         self._bg_executor = concurrent.futures.ThreadPoolExecutor(max_workers=1)
+        null_bg_call = NullBGCall()
+        self._bg_rime = self._bg_executor.submit(Rime.create, config, null_bg_call).result()
 
-        fg_scheduler = RimeScheduler(self._bg_executor)
-        self._rime = Rime.create(config, fg_scheduler)
-
-        bg_scheduler = RimeScheduler(self._bg_executor)
-        self._bg_rime = self._bg_executor.submit(lambda: Rime.create(config, bg_scheduler)).result()
+        # Create the foreground RIME.
+        fg_bg_call = RimeBGCall(self._bg_rime, self._bg_executor)
+        self._rime = Rime.create(config, fg_bg_call)
 
     def get_context_value(self, request, data):
         return QueryContext(self._rime)
 
     async def get_media(self, media_id):
         return self._rime.get_media(media_id)
+
+    async def startup(self):
+        await self._rime.start_background_tasks_async()
+
+    async def shutdown(self):
+        await self._rime.stop_background_tasks_async()
 
 
 def create_app():
@@ -101,6 +112,14 @@ def create_app():
         allow_methods=["*"],
         allow_headers=["*"],
     )
+
+    @app.on_event("startup")
+    async def startup():
+        await rime.startup()
+
+    @app.on_event("shutdown")
+    async def shutdown():
+        await rime.shutdown()
 
     @app.get("/media/{media_id:path}")
     async def handle_media(media_id: str):

@@ -22,7 +22,6 @@ from .event import MessageEvent
 from .mergedcontact import merge_contacts
 from .anonymise import Anonymiser
 from .subset import Subsetter
-from .pubsub import broker
 
 
 # A per-query context which includes RIME. This is what is provided in the per-query context value.
@@ -461,23 +460,17 @@ def resolve_create_subset(rime, info, targets, eventsFilter, contactsFilter, ano
 
     devices = []  # list of (old device, new device)
 
-    def _create_subset_impl():
-        bg_rime = rime.get()
-
+    def _create_subset_impl(bg_rime):
         # TODO: Error reporting, status updates
         errorMessage = None
         errorCode = 0
         anonymiser = Anonymiser(bg_rime) if anonymise else None
         events_filter_obj = _make_events_filter(eventsFilter)
         contacts_filter_obj = _make_contacts_filter(contactsFilter)
-        print('events filter', events_filter_obj)
-        print('contacts filter', contacts_filter_obj)
 
         for target in targets:
             old_device, new_device = _create_subset_prepare_device(rime, target)
             devices.append((old_device, new_device))
-
-        broker.publish('devices_changed', None)
 
         try:
             for old_device, new_device in devices:
@@ -499,10 +492,14 @@ def resolve_create_subset(rime, info, targets, eventsFilter, contactsFilter, ano
             for old_device, new_device in devices:
                 bg_rime.delete_device(new_device.id_)
 
-        broker.publish('devices_changed', None)
+        # Notify the caller that we're done -- this will reload devices in the correct thread.
+        rime.publish_event('device_list_updated')
+
+        # Rescan our own device list.
+        bg_rime.reload_devices()
 
     # Perform subsetting in the background.
-    rime.scheduler.run_in_background(_create_subset_impl)
+    rime.bg_call(_create_subset_impl)
 
     return {
         'success': True,
@@ -541,7 +538,7 @@ async def devices_generator(obj, info):
 
     yield rime.devices
 
-    async for evt in broker.subscribe_async('devices_changed'):
+    async for evt in rime.wait_for_events('device_list_updated'):
         yield rime.devices
         await asyncio.sleep(0.1)
 

@@ -72,7 +72,6 @@ export async function setDeviceSelected(id, isSelected) {
 
 export async function deleteDevice(id) {
     await deleteDeviceMutation({ "id": id });
-    await devicesGqlRefetch();
 }
 
 export const contactsFilter = ref({ });
