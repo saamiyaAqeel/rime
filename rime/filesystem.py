@@ -8,10 +8,9 @@ import os
 import plistlib
 import re
 import sqlite3
+import shutil
 import zipfile
 import tempfile
-
-from pypika.functions import Count as PypikaCount
 
 from .sql import Table, Query, get_field_indices, sqlite3_connect as sqlite3_connect_with_regex_support
 
@@ -379,7 +378,7 @@ class _IosHashedFileConverter:
             .where(self.file_table.fileID == ios_hash)
 
         result = self.manifest_conn.execute(str(query)).fetchone()
-        
+
         if not result:
             # File not in database.
             query = Query.into(self.file_table)\
@@ -395,6 +394,7 @@ class _IosHashedFileConverter:
 
         # If we get here, the hash and matching path are already in the database, which is fine.
 
+
 def _ios_filesystem_is_encrypted(path):
     manifest_bplist = os.path.join(path, 'Manifest.plist')
     if not os.path.exists(manifest_bplist):
@@ -404,6 +404,7 @@ def _ios_filesystem_is_encrypted(path):
         manifest = plistlib.load(f)
 
     return manifest.get('IsEncrypted', False)
+
 
 class IosDeviceFilesystem(DeviceFilesystem):
     def __init__(self, id_: str, root: str):
@@ -681,6 +682,7 @@ class IosEncryptedDeviceFilesystem(DeviceFilesystem):
     def is_locked(self) -> bool:
         return True
 
+
 FILESYSTEM_TYPE_TO_OBJ = {
     'android': AndroidDeviceFilesystem,
     'android-zipped': AndroidZippedDeviceFilesystem,
@@ -754,4 +756,3 @@ class FilesystemRegistry:
 
         shutil.rmtree(os.path.join(self.base_path, key))
         del self.filesystems[key]
-
