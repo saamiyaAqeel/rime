@@ -430,9 +430,22 @@ class IosDeviceFilesystem(DeviceFilesystem):
 
         os.makedirs(root)
 
-        for filename in {'Manifest.db', 'Info.plist'}:
-            with open(os.path.join(root, filename), 'wb'):
-                pass  # touch the file to ensure it exists
+        # Create Manifest for file hashing. Do this manually because we don't have a device yet.
+        syspath = os.path.join(root, 'Manifest.db')
+
+        with sqlite3_connect_with_regex_support(syspath) as conn:
+            conn.execute("""CREATE TABLE Files (
+                fileID TEXT PRIMARY KEY,
+                domain TEXT,
+                relativePath TEXT,
+                flags INTEGER,
+                file BLOB)
+            """)
+            conn.execute('CREATE TABLE Properties (key TEXT PRIMARY KEY, value BLOB)')
+
+        # Create Info.plist.
+        with open(os.path.join(root, 'Info.plist'), 'wb'):
+            pass  # touch the file to ensure it exists
 
         obj = cls(id_, root)
         obj._settings.set_subset_fs(True)
