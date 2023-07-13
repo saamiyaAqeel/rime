@@ -17,12 +17,7 @@ const emit = defineEmits(['createdNewSubset', 'showPopover']);
 
 const { mutate: createSubset } = useMutation( gql`
   mutation createSubset($targets: [DeviceIdPair]!, $eventsFilter: EventsFilter, $contactsFilter: ContactsFilter, $anonymise: Boolean) {
-	  createSubset(targets: $targets, eventsFilter: $eventsFilter, contactsFilter: $contactsFilter, anonymise: $anonymise) {
-		 success
-		 deviceIds
-		 errorMessage
-		 errorCode
-	  }
+	  createSubset(targets: $targets, eventsFilter: $eventsFilter, contactsFilter: $contactsFilter, anonymise: $anonymise)
   }
 `);
 
@@ -60,8 +55,8 @@ async function createFilter() {
 			anonymise: anonymise.value
 		});
 
-		if(result.data.createSubset.success) {
-			emit('createdNewSubset', result.data.createSubset.deviceIds);
+		if(result.data.createSubset) {
+			emit('createdNewSubset', targets);
 		}
 	} catch(e) {
 		if(e.graphQLErrors) {
