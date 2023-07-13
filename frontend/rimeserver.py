@@ -34,9 +34,13 @@ class RimeBGCall:
         self._bg_rime = bg_rime
         self._bg_executor = bg_executor
 
-    def __call__(self, fn, *args, **kwargs):
-        return self._bg_executor.submit(fn, self._bg_rime, *args, **kwargs)
+    def __call__(self, fn, *args, bg_call_complete_fn=None, **kwargs):
+        result = self._bg_executor.submit(fn, self._bg_rime, *args, **kwargs)
 
+        if bg_call_complete_fn:
+            result.add_done_callback(bg_call_complete_fn)
+
+        return result
 
 class NullBGCall:
     """

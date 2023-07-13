@@ -20,7 +20,7 @@ will take several minutes. You'll know that RIME is ready to use when you see th
 http://localhost:3000/`.
 
 ### Starting the servers (Linux / Unix / Macos / Windows Subsystem for Linux)
-Set the PYTHON variable to your version of Python and run `run_dev.sh`.
+You can run RIME directly without Docker. Set the PYTHON variable to your version of Python and run `run_dev.sh`.
 
     $ PYTHON=python3 ./run_dev.sh
 
@@ -33,9 +33,7 @@ By default, `run_dev` will, in addition to the base requirements, install module
 RIME. If you want to omit them (they take up about 4.4GiB of space on for me) pass `--no-ai` to `run_dev.sh`.
 
 ### Starting the servers (Docker)
-
-Finally, if you're a Docker user, you can run RIME in a container. The Docker Compose file exposes port 3000 to the
-local machine.
+Alternatively, you can run RIME in a Docker container. The Docker Compose file exposes port 3000 to the local machine.
 
     $ docker compose build
 	$ docker compose up

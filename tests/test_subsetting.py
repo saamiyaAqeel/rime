@@ -1,12 +1,14 @@
 import datetime
 import os
 import pprint
+import time
 
 import gql
 from gql.transport.aiohttp import AIOHTTPTransport
 
-TEST_DEVICE_NAMES = os.environ.get('RIME_TEST_DEVICE_NAMES', 'android;iphone-6;iphone-8').split(';')
-GQL_ENDPOINT = os.environ.get('RIME_GQL_ENDPOINT', 'http://localhost:8080/graphql')
+TEST_DEVICE_NAMES = os.environ.get('RIME_TEST_DEVICE_NAMES',
+        'anon-android.zip;anon-iphone-6.zip;anon-iphone-8.zip').split(';')
+GQL_ENDPOINT = os.environ.get('RIME_GQL_ENDPOINT', 'http://localhost:5001/graphql')
 
 client = gql.Client(transport=AIOHTTPTransport(url=GQL_ENDPOINT))
 
@@ -43,54 +45,66 @@ filter_events = gql.gql("""
 """)
 
 filter_contacts = gql.gql("""
-	query getContacts($deviceIds: [String]!, $filter: ContactsFilter) {
-		contacts(deviceIds: $deviceIds, filter: $filter) {
+    query getContacts($deviceIds: [String]!, $filter: ContactsFilter) {
+        contacts(deviceIds: $deviceIds, filter: $filter) {
             contacts {
-				id
-				deviceId
-				providerName
-				providerFriendlyName
-				name{first last display}
-				email
-				phone
-			}
-			mergedContacts {
-				id
-				name{first last display}
-				phone
-				mergedIds
-			}
-		}
-	}
-""")
+                id
+                deviceId
+                providerName
+                providerFriendlyName
+                name{first last display}
+                email
+                phone
+            }
+            mergedContacts {
+                id
+                name{first last display}
+                phone
+                mergedIds
+            }
+        }
+    }
+    """)
 
 create_subset = gql.gql("""
-    mutation createSubset($target: DeviceIdPair!, $eventsFilter: EventsFilter, $contactsFilter: ContactsFilter) {
-      createSubset(target: $target, eventsFilter: $eventsFilter, contactsFilter: $contactsFilter) {
-         success
-         deviceId
-         errorMessage
-         errorCode
-      }
+    mutation createSubset($targets: [DeviceIdPair]!, $eventsFilter: EventsFilter, $contactsFilter: ContactsFilter,
+        $anonymise: Boolean) {
+      createSubset(targets: $targets, eventsFilter: $eventsFilter, contactsFilter: $contactsFilter,
+        anonymise: $anonymise)
     }
 """)
 
 delete_device = gql.gql("""
-	mutation deleteDevice($deviceId: String!) {
-		deleteDevice(deviceId: $deviceId)
-	}
+    mutation deleteDevice($deviceId: String!) {
+        deleteDevice(deviceId: $deviceId)
+    }
 """)
+
+get_devices = gql.gql("""
+    query devices {
+        devices {
+            id
+            country_code
+            is_subset
+            is_locked
+        }
+    }
+""")
+
 
 def call(query, **kw):
     return client.execute(query, variable_values=kw)
 
+
 def _looks_like_global_contact_id(contact_id):
     return isinstance(contact_id, str) and contact_id.count(':') == 2
+
 
 def _normalise_contact_id(contact_id):
     assert _looks_like_global_contact_id(contact_id), 'Contact ID does not look like a global ID'
     device_id, provider_name, local_id = contact_id.split(':')
     return f'_normalised_:{provider_name}:{local_id}'
+
 
 class CompareFailed(Exception):
     def __init__(self, message, context):
@@ -99,6 +113,7 @@ class CompareFailed(Exception):
 
     def __str__(self):
         return f'{self.args[0]} (context: {"->".join(str(elem) for elem in self.context)})'
+
 
 def _compare_event_ignoring_device_ids(event_a, event_b, context=None):
     assert type(event_a) == type(event_b), f'Classes do not match: {type(event_a)} != {type(event_b)}'
@@ -111,8 +126,11 @@ def _compare_event_ignoring_device_ids(event_a, event_b, context=None):
             if key == 'deviceId':
                 continue
             elif key == 'id' and _looks_like_global_contact_id(event_a[key]):
-                _compare_event_ignoring_device_ids(_normalise_contact_id(event_a[key]), _normalise_contact_id(event_b[key]),
-                    context=context + (key,))
+                _compare_event_ignoring_device_ids(
+                    _normalise_contact_id(event_a[key]),
+                    _normalise_contact_id(event_b[key]),
+                    context=context + (key,)
+                )
             else:
                 _compare_event_ignoring_device_ids(event_a[key], event_b[key], context=context + (key,))
     elif isinstance(event_a, list):
@@ -129,17 +147,19 @@ def _compare_event_ignoring_device_ids(event_a, event_b, context=None):
     elif event_a != event_b:
         raise CompareFailed(f'Values do not match: {event_a} != {event_b}', context=context)
 
+
 def _compare_events_ignoring_device_ids(events_a, events_b):
     for event_a, event_b in zip(events_a, events_b):
         assert event_a['__typename'] == event_b['__typename'], 'Event type names do not match'
         try:
             _compare_event_ignoring_device_ids(event_a, event_b)
-        except CompareFailed as e:
+        except CompareFailed:
             print("Comparison failed while comparing events. Event A:")
             pprint.pprint(event_a)
             print("Event B:")
             pprint.pprint(event_b)
             raise
+
 
 def test_maximal_filter():
     """
@@ -179,6 +199,19 @@ def test_maximal_filter():
 
         assert all_events == filtered_events
 
+
+def _wait_for_device(device_name, timeout_secs=5, retry_secs=0.5):
+    start = time.time()
+    end = start + timeout_secs
+
+    while time.time() < end:
+        devices = call(get_devices)['devices']
+        for device in devices:
+            if device['id'] == device_name:
+                return device
+        time.sleep(retry_secs)
+
+
 def test_improper_subset():
     """
     A subset constructed from the empty filter matches all events.
@@ -186,14 +219,27 @@ def test_improper_subset():
     for device_name in TEST_DEVICE_NAMES:
         subset_name = 'test_improper_subset'
         try:
-            call(create_subset, target={'oldDeviceId': device_name, 'newDeviceId': subset_name}, eventsFilter=None, contactsFilter=None)
+            call(create_subset, targets=[{'oldDeviceId': device_name, 'newDeviceId': subset_name}],
+                eventsFilter=None, contactsFilter=None, anonymise=False)
+
+            # Poll for subset completion. Non-test code would instead subscribe to the subsetComplete event.
+            device_info = _wait_for_device(subset_name)
+            if device_info is None or device_info['is_locked'] or not device_info['is_subset']:
+                raise Exception(f"Subset device {device_info} is not ready")
+
             all_events = call(filter_events, deviceIds=[device_name], filter=None)
             subset_events = call(filter_events, deviceIds=[subset_name], filter=None)
 
             try:
-                _compare_events_ignoring_device_ids(all_events['events'][0]['events'], subset_events['events'][0]['events'])
+                _compare_events_ignoring_device_ids(
+                    all_events['events'][0]['events'],
+                    subset_events['events'][0]['events']
+                )
             except CompareFailed as e:
                 print(f"Comparison failed while subsetting device {device_name}: {e}.")
                 raise
         finally:
-            call(delete_device, deviceId=subset_name)
+            try:
+                call(delete_device, deviceId=subset_name)
+            except Exception as e:
+                print(f"Failed to delete subset device {subset_name}: {e}")

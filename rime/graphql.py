@@ -496,17 +496,35 @@ def resolve_create_subset(rime, info, targets, eventsFilter, contactsFilter, ano
         rime.publish_event('device_list_updated')
 
         # Rescan our own device list.
-        bg_rime.reload_devices()
+        bg_rime.rescan_devices()
+
+    new_device_ids = [new_device.id_ for _old_device, new_device in devices]
+
+    # Callback when the subset task finishes.
+    def subset_complete(future):
+        try:
+            future.result()
+        except Exception as e:
+            print('Error creating subset:', e)
+            traceback.print_exc()
+            rime.publish_event('subset_complete', {
+                'success': False,
+                'deviceIds': new_device_ids,
+                'errorMessage': str(e),
+                'errorCode': CreateSubsetError.ERR_UNKNOWN,
+            })
+        else:
+            rime.publish_event('subset_complete', {
+                'success': True,
+                'deviceIds': new_device_ids,
+                'errorMessage': None,
+                'errorCode': 0,
+            })
 
     # Perform subsetting in the background.
-    rime.bg_call(_create_subset_impl)
+    rime.bg_call(_create_subset_impl, bg_call_complete_fn=subset_complete)
 
-    return {
-        'success': True,
-        'deviceIds': [new_device.id_ for _old_device, new_device in devices],
-        'errorMessage': None,
-        'errorCode': 0,
-    }
+    return True
 
 
 @mutation.field('deleteDevice')
@@ -532,6 +550,8 @@ def resolve_set_device_properties(rime, info, deviceId, deviceProperties):
 
 # Subscriptions
 devices_subscription = SubscriptionType()
+
+
 @devices_subscription.source("devicesChanged")
 async def devices_generator(obj, info):
     rime = info.context.rime
@@ -542,8 +562,26 @@ async def devices_generator(obj, info):
         yield rime.devices
         await asyncio.sleep(0.1)
 
+
 @devices_subscription.field("devicesChanged")
 def devices_resolver(payload, info):
+    return payload
+
+
+subsets_subscription = SubscriptionType()
+
+
+@subsets_subscription.source("subsetComplete")
+async def subsets_generator(obj, info):
+    rime = info.context.rime
+
+    async for subsetResult in rime.wait_for_events('subset_complete'):
+        yield subsetResult
+        await asyncio.sleep(0.1)
+
+
+@subsets_subscription.field("subsetComplete")
+def subsets_resolver(payload, info):
     return payload
 
 
@@ -551,7 +589,7 @@ RESOLVERS = [
     datetime_scalar, query_resolver, event_resolver, message_event_resolver,
     message_session_resolver, provider_resolver, contact_resolver,
     merged_contact_resolver, name_resolver, device_resolver, mutation,
-    devices_subscription,
+    devices_subscription, subsets_subscription,
 ]
 
 
@@ -579,9 +617,11 @@ def query(rime, query_json):
     context = QueryContext(rime)
     return graphql_sync(schema, query_json, context_value=context)
 
+
 async def query_async(rime, query_json):
     context = QueryContext(rime)
     return await graphql_async(schema, query_json, context_value=context)
+
 
 async def subscribe_async(rime, query_json):
     context = QueryContext(rime)
