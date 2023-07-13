@@ -4,8 +4,8 @@ Serve GraphQL on a socket.
 
 import asyncio
 import os
+import threading
 import urllib.parse
-import concurrent.futures
 import sys
 
 from fastapi import FastAPI
@@ -24,24 +24,6 @@ from rime.graphql import schema, QueryContext
 from rime.config import Config
 
 
-class RimeBGCall:
-    """
-    When invoked, run the given function in the background, passing as a first argument 'rime'
-    (which should correspond to the background RIME instance).
-    """
-    def __init__(self, bg_rime, bg_executor):
-        super().__init__()
-        self._bg_rime = bg_rime
-        self._bg_executor = bg_executor
-
-    def __call__(self, fn, *args, bg_call_complete_fn=None, **kwargs):
-        result = self._bg_executor.submit(fn, self._bg_rime, *args, **kwargs)
-
-        if bg_call_complete_fn:
-            result.add_done_callback(bg_call_complete_fn)
-
-        return result
-
 class NullBGCall:
     """
     Acts like a BG Executor, but is passed to the background RIME and just runs things immediately.
@@ -57,6 +39,37 @@ class NullBGCall:
         return fn(self._rime, *args, **kwargs)
 
 
+class RimeBGCall:
+    """
+    When invoked, run the given function in the background, passing as a first argument 'rime'
+    (which should correspond to the background RIME instance).
+    """
+    def __init__(self, config):
+        super().__init__()
+
+        self._loop = asyncio.new_event_loop()
+        self._thread = threading.Thread(target=self._bg_thread, args=(config, self._loop), daemon=True)
+        self._thread.start()
+
+    def _bg_thread(self, config, loop):
+        # Create an asyncio event loop. This will drive the background thread.
+        asyncio.set_event_loop(loop)
+
+        # Create the background RIME.
+        self.rime = Rime.create(config, NullBGCall(), loop)
+
+        # Run the event loop.
+        loop.run_forever()
+
+    def __call__(self, fn, *args, bg_call_complete_fn=None, **kwargs):
+        future = asyncio.run_coroutine_threadsafe(fn(self.rime, *args, **kwargs), self._loop)
+
+        if bg_call_complete_fn:
+            future.add_done_callback(bg_call_complete_fn)
+
+        return future
+
+
 class RimeSingleton:
     """
     Serialise access to RIME so all DB access is done from the same thread.
@@ -64,17 +77,14 @@ class RimeSingleton:
     We use the current thread for foreground tasks, and create a separate background
     thread for background tasks such as subsetting with anonymisation.
     """
-    def __init__(self, config):
+    def __init__(self, config, async_loop):
         super().__init__()
 
-        # Create the background RIME.
-        self._bg_executor = concurrent.futures.ThreadPoolExecutor(max_workers=1)
-        null_bg_call = NullBGCall()
-        self._bg_rime = self._bg_executor.submit(Rime.create, config, null_bg_call).result()
+        self._config = config
+        self._bg_call = RimeBGCall(config)
 
         # Create the foreground RIME.
-        fg_bg_call = RimeBGCall(self._bg_rime, self._bg_executor)
-        self._rime = Rime.create(config, fg_bg_call)
+        self._rime = Rime.create(config, self._bg_call, async_loop)
 
     def get_context_value(self, request, data):
         return QueryContext(self._rime)
@@ -101,7 +111,7 @@ def create_app():
         print("Configuration file not found. Create rime_settings.local.yaml or set RIME_CONFIG.")
         sys.exit(1)
 
-    rime = RimeSingleton(rime_config)
+    rime = RimeSingleton(rime_config, asyncio.get_running_loop())
     app = FastAPI()
 
     # Add CORS middleware to allow the frontend to communicate with the backend on a different port.
@@ -139,6 +149,11 @@ def create_app():
         websocket_handler=GraphQLTransportWSHandler(),
         context_value=rime.get_context_value
     )
+
+    # For checking that the server is up:
+    @app.get("/ping")
+    async def ping():
+        return JSONResponse({"ping": "pong"})
 
     # Use a separate endpoint, rather than app.mount, because Starlette doesn't support root mounts not ending in /.
     # See https://github.com/encode/starlette/issues/869 .

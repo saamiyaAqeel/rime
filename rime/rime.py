@@ -4,6 +4,7 @@
 
 import asyncio
 from collections import defaultdict
+from dataclasses import dataclass
 import os
 import threading
 
@@ -13,6 +14,7 @@ from .session import Session
 from .graphql import query as _graphql_query, query_async as _graphql_query_async
 from .config import Config
 from .plugins import load_plugin
+
 
 class Device:
     def __init__(self, device_id: str, fs: DeviceFilesystem, session: Session):
@@ -50,20 +52,27 @@ DEVICE_CACHE = threading.local()
 RIME = threading.local()
 
 
+@dataclass(frozen=True)
+class AsyncEventListener:
+    loop: asyncio.AbstractEventLoop
+    queue: asyncio.Queue
+
+
 class Rime:
     """
     Top-level RIME object.
 
     Contains per-device sub-objects.
     """
-    def __init__(self, session: Session, constants: Config, bg_call):
+    def __init__(self, session: Session, constants: Config, bg_call, async_loop):
         self.devices = []
         self.session = session
         self.constants = constants
         self.bg_call = bg_call
         media_prefix = constants.get('media_url_prefix', '/media/')
         self._event_listeners_lock = threading.Lock()
-        self._event_listeners = defaultdict(set)  # event_name -> {listener}
+        self._event_listeners = defaultdict(set[AsyncEventListener])  # event_name -> {listener, ...}
+        self._events_queue = asyncio.Queue()
 
         self.rescan_devices()
 
@@ -71,6 +80,13 @@ class Rime:
         self.plugins = self._load_plugins()
 
         self._file_watcher_stop_event = asyncio.Event()
+
+        async_loop.create_task(self._event_handler())
+        async_loop.create_task(self._device_list_updated_watcher())
+
+    async def _device_list_updated_watcher(self):
+        async for args in self.wait_for_events_async('device_list_updated'):
+            self.rescan_devices()
 
     def rescan_devices(self):
         registry = FILESYSTEM_REGISTRY.registry
@@ -147,21 +163,16 @@ class Rime:
     async def query_async(self, query_json: dict):
         return await _graphql_query_async(self, query_json)
 
-    def publish_event(self, event_name, *args):
-        async def handle_event_async(aqueue):
-            if event_name == 'device_list_updated':
-                self.rescan_devices()
-
-            await aqueue.put_nowait(args)
-
-        for loop, aqueue in self._event_listeners[event_name]:
-            asyncio.run_coroutine_threadsafe(handle_event_async(aqueue), loop=loop)
-
-    async def wait_for_events(self, event_name):
+    async def wait_for_events_async(self, event_name):
+        """
+        Async event subscription method.
+        """
         loop = asyncio.get_running_loop()
         aqueue = asyncio.Queue()
+        listener = AsyncEventListener(loop, aqueue)
+
         with self._event_listeners_lock:
-            self._event_listeners[event_name].add((loop, aqueue))
+            self._event_listeners[event_name].add(listener)
 
         try:
             while True:
@@ -169,7 +180,20 @@ class Rime:
                 yield args
         finally:
             with self._event_listeners_lock:
-                self._event_listeners[event_name].remove((loop, aqueue))
+                self._event_listeners[event_name].remove(listener)
+
+    async def _event_handler(self):
+        while True:
+            event_name, args = await self._events_queue.get()
+
+            for listener in self._event_listeners[event_name]:
+                if isinstance(listener, AsyncEventListener):
+                    listener.queue.put_nowait(args)
+                else:
+                    raise ValueError(f"Unknown event listener type {type(listener)}")
+
+    def publish_event(self, event_name, *args):
+        self._events_queue.put_nowait((event_name, args))
 
     def get_media(self, media_path):
         """
@@ -201,12 +225,12 @@ class Rime:
         return FILESYSTEM_REGISTRY.registry
 
     @classmethod
-    def create(cls, config: Config, bg_call):
+    def create(cls, config: Config, bg_call, async_loop):
         if not hasattr(FILESYSTEM_REGISTRY, 'registry'):
             FILESYSTEM_REGISTRY.registry = FilesystemRegistry(base_path=config.get_pathname('filesystem.base_path'))
 
         session = Session(config.get_pathname('session.database'))
-        obj = cls(session, config, bg_call)
+        obj = cls(session, config, bg_call, async_loop)
 
         return obj
 

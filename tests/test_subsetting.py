@@ -200,16 +200,25 @@ def test_maximal_filter():
         assert all_events == filtered_events
 
 
-def _wait_for_device(device_name, timeout_secs=5, retry_secs=0.5):
+class Timeout(Exception):
+    pass
+
+
+def _wait_for_device(device_name, timeout_secs=5, retry_secs=0.5, present=True):
     start = time.time()
     end = start + timeout_secs
 
     while time.time() < end:
         devices = call(get_devices)['devices']
         for device in devices:
-            if device['id'] == device_name:
+            if device['id'] == device_name and present:
                 return device
+        else:
+            if not present:
+                return None
         time.sleep(retry_secs)
+
+    raise Timeout(f"Device {device_name} did not {'dis' if not present else ''}appear in {timeout_secs} seconds")
 
 
 def test_improper_subset():
@@ -243,3 +252,5 @@ def test_improper_subset():
                 call(delete_device, deviceId=subset_name)
             except Exception as e:
                 print(f"Failed to delete subset device {subset_name}: {e}")
+
+            _wait_for_device(subset_name, timeout_secs=2, present=False)

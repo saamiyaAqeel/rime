@@ -460,7 +460,7 @@ def resolve_create_subset(rime, info, targets, eventsFilter, contactsFilter, ano
 
     devices = []  # list of (old device, new device)
 
-    def _create_subset_impl(bg_rime):
+    async def _create_subset_impl(bg_rime):
         # TODO: Error reporting, status updates
         errorMessage = None
         errorCode = 0
@@ -492,9 +492,6 @@ def resolve_create_subset(rime, info, targets, eventsFilter, contactsFilter, ano
             for old_device, new_device in devices:
                 bg_rime.delete_device(new_device.id_)
 
-        # Notify the caller that we're done -- this will reload devices in the correct thread.
-        rime.publish_event('device_list_updated')
-
         # Rescan our own device list.
         bg_rime.rescan_devices()
 
@@ -505,7 +502,6 @@ def resolve_create_subset(rime, info, targets, eventsFilter, contactsFilter, ano
         try:
             future.result()
         except Exception as e:
-            print('Error creating subset:', e)
             traceback.print_exc()
             rime.publish_event('subset_complete', {
                 'success': False,
@@ -520,6 +516,8 @@ def resolve_create_subset(rime, info, targets, eventsFilter, contactsFilter, ano
                 'errorMessage': None,
                 'errorCode': 0,
             })
+
+        rime.publish_event('device_list_updated')
 
     # Perform subsetting in the background.
     rime.bg_call(_create_subset_impl, bg_call_complete_fn=subset_complete)
@@ -558,7 +556,7 @@ async def devices_generator(obj, info):
 
     yield rime.devices
 
-    async for evt in rime.wait_for_events('device_list_updated'):
+    async for evt in rime.wait_for_events_async('device_list_updated'):
         yield rime.devices
         await asyncio.sleep(0.1)
 
@@ -575,7 +573,7 @@ subsets_subscription = SubscriptionType()
 async def subsets_generator(obj, info):
     rime = info.context.rime
 
-    async for subsetResult in rime.wait_for_events('subset_complete'):
+    async for subsetResult in rime.wait_for_events_async('subset_complete'):
         yield subsetResult
         await asyncio.sleep(0.1)
 
