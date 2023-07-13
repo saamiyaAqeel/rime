@@ -286,7 +286,7 @@ class AndroidZippedDeviceFilesystem(DeviceFilesystem):
 
     @classmethod
     def create(cls, id_: str, root: str):
-        raise NotImplementedError
+        return AndroidDeviceFilesystem.create(id_, root)
 
     def is_subset_filesystem(self) -> bool:
         return self._settings.is_subset_fs()
@@ -560,7 +560,7 @@ class IosZippedDeviceFilesystem(DeviceFilesystem):
 
     @classmethod
     def create(cls, id_: str, root: str):
-        raise NotImplementedError
+        return IosDeviceFilesystem.create(id_, root)
 
     def is_subset_filesystem(self) -> bool:
         return self._settings.is_subset_fs()
