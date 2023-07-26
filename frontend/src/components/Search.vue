@@ -123,7 +123,7 @@ watch([searchTypeRestrict, searchTimeRestrict, searchTimeStart, searchTimeEnd, s
 			<!-- Restrict based on message type -->
 			<div class="searchStanza">
 				<input type="checkbox" v-model="searchTypeRestrict" id="searchTypeRestrictCheckbox">
-				<label for="searchTypeRestrictCheckbox"> Limit the type of result</label>
+				<label for="searchTypeRestrictCheckbox"> Type</label>
 
 				<div v-if="searchTypeRestrict" class="searchOption">
 					<div v-for="eventType of eventTypes" :key="eventType.type">
@@ -136,7 +136,7 @@ watch([searchTypeRestrict, searchTimeRestrict, searchTimeStart, searchTimeEnd, s
 			<!-- Restrict based on time -->
 			<div class="searchStanza">
 				<input type="checkbox" v-model="searchTimeRestrict" id="searchTimeRestrictCheckbox">
-				<label for="searchTimeRestrictCheckbox"> Between a time range </label>
+				<label for="searchTimeRestrictCheckbox"> Time range </label>
 				<div v-if="searchTimeRestrict" class="searchOption">
 					<div>
 						<label for="searchTimeRestrictStart">S:</label>
@@ -152,7 +152,7 @@ watch([searchTypeRestrict, searchTimeRestrict, searchTimeStart, searchTimeEnd, s
 			<!-- Restrict based on participants -->
 			<div class="searchStanza">
 				<input type="checkbox" v-model="searchParticipantsRestrict" id="searchParticipantsRestrictCheckbox">
-				<label for="searchParticipantsRestrictCheckbox"> Limit to contacts </label>
+				<label for="searchParticipantsRestrictCheckbox"> People </label>
 				<div v-if="searchParticipantsRestrict" class="searchOption">
 					<ContactCardSmall
 						v-for="mergedContact of mergedContacts"

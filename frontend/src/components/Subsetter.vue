@@ -79,8 +79,8 @@ async function createFilter() {
 	<div id="view">
 		<h1>Subset</h1>
 		<div v-if="canCreateFilter()">
-			<p v-if="activeDevices.length == 1">Create a new device using this filter.</p>
-			<p v-else>Create a new set of devices using this filter.</p>
+			<p v-if="activeDevices.length == 1">Subset to a new device.</p>
+			<p v-else>Subset to new devices.</p>
 			<div v-if="activeDevices.length == 1">
 				Name: <input type="text" v-model="newDeviceId" />
 			</div>
@@ -96,8 +96,7 @@ async function createFilter() {
 			</div>
 		</div>
 		<div v-else>
-			<p>If you select a device or devices and filter the data, you can then create new images
-				based on just that data.</p>
+			<p>Select a device and a filter.</p>
 		</div>
 	</div>
 </template>

@@ -66,13 +66,12 @@ To enable it, add `- ml_names` to the anonymisation configuration, like this:
 
 ## Contributing
 
-Rime's main location is on Github at <https://github.com/horizon-institute/rime>. To contribute, fork this repository
-and create a Github pull request.
+Rime's official location is on Github at <https://github.com/horizon-institute/rime>. To contribute, fork this
+repository and create a Github pull request.
 
 We use Github Actions to test RIME; currently this boils down to running flake8 followed by pytest. If you would like to
-run the Github Action before pushing to Git, you can use the [ACT](https://github.com/nektos/act) tool, which is very
+run the Github Action before pushing to Github, you can use the [ACT](https://github.com/nektos/act) tool, which is very
 easy to use. Install the tool, then run the actions with `act`.
-
 
 ## Background
 
