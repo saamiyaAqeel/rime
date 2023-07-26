@@ -54,7 +54,24 @@ if [ ! -f .venv/bin/activate ]; then
 	fi
 	echo Virtualenv created. To re-create this environment, delete .venv.
 else
+
 	source .venv/bin/activate
+
+	# Check whether the currently installed packages are the same as
+	# the ones specified in the requirements.txt file
+	$PYTHON check_dependencies.py || EXIT_STATUS=$?
+
+	# Ask user whether to update the packages and proceed with installation when
+	# the .venv installed packages do not match the ones in the requirements.txt
+	if [ $EXIT_STATUS -eq 1 ]; then
+		echo "There is a missmatch between the currently installed packages and requirements.txt"
+		echo "Do you want to install the packages from requirements.txt with the specified versions? [y/n]"
+		read -n 1 ANSWER
+
+		if [[ $ANSWER == "y" ]]; then
+			pip install -r requirements.txt
+		fi
+	fi
 fi
 
 cd frontend
