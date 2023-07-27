@@ -36,6 +36,7 @@ class EventsFilter:
     timestamp_start: datetime | None = None
     timestamp_end: datetime | None = None
     type_names: set[str] | None = None
+    provider_names: set[str] | None = None
 
     def accepts_type(self, type_name):
         return self.type_names is None or type_name in self.type_names
@@ -48,6 +49,11 @@ class EventsFilter:
         return list(filter(self.matches, events))
 
     def matches(self, event):
+        assert event.id_
+
+        if self.provider_names is not None and event.provider.NAME not in self.provider_names:
+            return False
+
         if not self.accepts_type(event.__class__.__name__):
             return False
 

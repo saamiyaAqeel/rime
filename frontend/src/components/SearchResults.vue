@@ -17,7 +17,7 @@ Copyright 2023 Telemarq Ltd
 				</template>
 			</div>
 		</div>
-		<div v-if="searchResult.events.length === 0" class="center text-box">
+		<div v-if="activeDevices.length === 0" class="center text-box">
 			Select one or more devices at the top left to begin.
 		</div>
 	</div>
@@ -77,49 +77,11 @@ Copyright 2023 Telemarq Ltd
 
 <script setup>
 import { ref, watch, computed } from 'vue'
-import { eventsFilter, activeDevices } from '../store.js'
+import { eventsFilter, activeDevices, rawEventsSearchResult, eventsRefetch } from '../store.js'
 import { useQuery } from '@vue/apollo-composable'
 import gql from 'graphql-tag'
 
 import SearchResultMessageEvent from './SearchResultMessageEvent.vue'
-
-const { result: rawSearchResult, refetch: eventsRefetch } = useQuery( gql`
-  query getEvents($deviceIds: [String]!, $filter: EventsFilter) {
-	  events(deviceIds: $deviceIds, filter: $filter) {
-	  	deviceId,
-		events {
-		  id
-		  providerName
-		  providerFriendlyName
-		  timestamp
-		  ... on MessageEvent {
-			  deviceId
-			  text
-			  fromMe
-			  sessionId
-			  session {
-			    name
-				participants {
-					name { first last display } phone email
-				}
-			  }
-			  sender {
-				  id
-				  name { first last display }
-				  phone
-			  }
-			  media {
-				  mime_type
-				  url
-			  }
-		  }
-		}
-	  }
-  }
-  `, {
-	deviceIds: activeDevices,
-	filter: eventsFilter
-});
 
 class ChatSession {
 	constructor(sessionId, name, participants, providerFriendlyName) {
@@ -188,8 +150,8 @@ const grid_template_columns = ref("repeat(1, 1fr)");
 const searchResult = computed(() => {
 	let result = {'events': []};
 
-	if (rawSearchResult.value) {
-		for(let events_for_device of rawSearchResult.value.events) {
+	if (rawEventsSearchResult.value) {
+		for(let events_for_device of rawEventsSearchResult.value.events) {
 			let efd = {'deviceId': events_for_device.deviceId, 'events': []};
 			let lastSessionKey = null;
 			let lastEvent = null;
@@ -244,7 +206,7 @@ const searchResult = computed(() => {
  * - extract sessions from GUI events for later reference.
  * - set the column width of the per-device columns based on the number of devices.
 */
-watch(rawSearchResult, (result) => {
+watch(rawEventsSearchResult, (result) => {
 	if (!result)
 		return;
 

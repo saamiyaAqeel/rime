@@ -84,3 +84,45 @@ export function hasEventsFilter() {
 export function setFilter(filter) {
     eventsFilter.value = filter;
 }
+
+export const { result: rawEventsSearchResult, refetch: eventsRefetch } = useQuery( gql`
+  query getEvents($deviceIds: [String]!, $filter: EventsFilter) {
+	  events(deviceIds: $deviceIds, filter: $filter) {
+	  	deviceId,
+		providers {
+			name
+			friendlyName
+		},
+		events {
+		  id
+		  providerName
+		  providerFriendlyName
+		  timestamp
+		  ... on MessageEvent {
+			  deviceId
+			  text
+			  fromMe
+			  sessionId
+			  session {
+			    name
+				participants {
+					name { first last display } phone email
+				}
+			  }
+			  sender {
+				  id
+				  name { first last display }
+				  phone
+			  }
+			  media {
+				  mime_type
+				  url
+			  }
+		  }
+		}
+	  }
+  }
+  `, {
+	deviceIds: activeDevices,
+	filter: eventsFilter
+});

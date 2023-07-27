@@ -60,6 +60,8 @@ def _make_events_filter(events_filter):
     if events_filter:
         type_names = events_filter.get('typeNames')
 
+        provider_names = events_filter.get('providerNames')
+
         # Convert global contact IDs to filterable contact IDs (basically providerName, local ID).
         participant_id_strings = events_filter.get('participantIds')
         participant_ids = [GlobalContactId.from_string(s) for s in participant_id_strings] \
@@ -71,6 +73,7 @@ def _make_events_filter(events_filter):
             timestamp_start=events_filter.get('timestampStart'),
             timestamp_end=events_filter.get('timestampEnd'),
             type_names=set(type_names) if type_names is not None else None,
+            provider_names=set(provider_names) if provider_names is not None else None,
         )
 
     return EventsFilter.empty()
@@ -118,16 +121,18 @@ def resolve_events(parent, info, deviceIds, filter=None):
     devices = rime.devices_for_ids(deviceIds)
 
     events_for_device = {}
+    providers = set()
     for device, provider, provider_events in _get_events_by_provider(rime, devices, filter_obj):
         if device.id_ not in events_for_device:
             events_for_device[device.id_] = []
 
+        providers.add(provider)
         events_for_device[device.id_].extend(provider_events)
 
     for events in events_for_device.values():
         events.sort(key=lambda e: e.timestamp)
 
-    return [{'deviceId': device_id, 'events': events} for device_id, events in events_for_device.items()]
+    return [{'deviceId': device_id, 'providers': providers, 'events': events} for device_id, events in events_for_device.items()]
 
 
 event_resolver = InterfaceType('Event')

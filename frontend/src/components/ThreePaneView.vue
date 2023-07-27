@@ -11,6 +11,7 @@ import SearchRefinements from './SearchRefinements.vue'
 import Search from './Search.vue'
 import Subsetter from './Subsetter.vue'
 import SearchResults from './SearchResults.vue'
+import ProviderChooser from './ProviderChooser.vue'
 
 const showRefinements = ref(false);
 
@@ -57,19 +58,22 @@ function showPopover(message) {
 
 #view {
 	display: flex;
+	width: 100%;
+	height: 100vh;
 }
 
 #left {
 	width: 18em;
 	border-right: 1px solid #ccc;
-	align-self: flex-start;
-	position: sticky;
-	top: 0;
-	overflow: auto;
+	overflow-y: auto;
+	height: 100vh;
+	flex-shrink: 0;
 }
 
 #right {
-	flex: 1;
+	flex-grow: 1;
+	overflow-y: auto;
+	height: 100vh;
 }
 
 #top {

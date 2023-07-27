@@ -10,9 +10,10 @@ import { useQuery } from '@vue/apollo-composable'
 import gql from 'graphql-tag'
 
 import ContactCardSmall from './ContactCardSmall.vue'
-import { activeDevices, contactsFilter, setFilter } from '../store.js'
+import { activeDevices, contactsFilter, setFilter, rawEventsSearchResult } from '../store.js'
 
 const searchTypeRestrict = ref(false);
+const searchProviderRestrict = ref(false);
 const searchTimeRestrict = ref(false);
 const searchTimeStart = ref(null);
 const searchTimeEnd = ref(null);
@@ -79,6 +80,39 @@ function selectMergedContact(mergedContact) {
 	updateGql();  // changing dict entries doesn't trigger watch
 }
 
+const selectedProviders = ref({});
+
+const allProviders = computed(() => {
+	let providers = [];
+	let seenProviders = {};
+
+	if(rawEventsSearchResult.value) {
+		for(let eventsForDevice of rawEventsSearchResult.value.events) {
+			for(let provider of eventsForDevice.providers) {
+				if(!seenProviders[provider.name]) {
+					providers.push(provider);
+					seenProviders[provider.name] = true;
+				}
+			}
+		}
+	}
+	providers.sort((a, b) => a.friendlyName.localeCompare(b.friendlyName));
+	return providers;
+});
+
+watch(allProviders, (newProviders) => {
+	for (let provider of newProviders) {
+		if (!selectedProviders.value[provider.name]) {
+			selectedProviders.value[provider.name] = false;
+		}
+	}
+});
+
+function updateSelectedProviders(provider) {
+	selectedProviders.value[provider.name] = !selectedProviders.value[provider.name];
+	updateGql();
+}
+
 function parseGql() {
 	/* Parse the graphql filter into individual parameters for the UI */
 }
@@ -86,6 +120,15 @@ function parseGql() {
 function updateGql() {
 	/* Update the graphql filter from the UI parameters */
 	let filter = {};
+
+	if (searchProviderRestrict.value) {
+		filter.providerNames = [];
+		for (let providerName of Object.keys(selectedProviders.value)) {
+			if (selectedProviders.value[providerName]) {
+				filter.providerNames.push(providerName);
+			}
+		}
+	}
 
 	if (searchTypeRestrict.value) {
 		filter.typeNames = eventTypes.value.filter((type) => type.selected).map((type) => type.type);
@@ -109,7 +152,7 @@ function updateGql() {
 	setFilter(filter);
 }
 
-watch([searchTypeRestrict, searchTimeRestrict, searchTimeStart, searchTimeEnd, searchParticipantsRestrict, selectedMergedContacts], () => {
+watch([searchProviderRestrict, searchTypeRestrict, searchTimeRestrict, searchTimeStart, searchTimeEnd, searchParticipantsRestrict, selectedMergedContacts], () => {
 	updateGql();
 });
 
@@ -120,6 +163,19 @@ watch([searchTypeRestrict, searchTimeRestrict, searchTimeStart, searchTimeEnd, s
 		<h1>Filter</h1>
 
 		<form>
+			<!-- Restrict based on provider -->
+			<div class="searchStanza">
+				<input type="checkbox" v-model="searchProviderRestrict" id="searchProviderRestrictCheckbox">
+				<label for="searchProviderRestrictCheckbox"> Provider</label>
+
+				<div v-if="searchProviderRestrict" class="searchOption">
+					<div v-for="provider of allProviders" :key="provider.name">
+						<input type="checkbox" :checked="selectedProviders[provider.name]" :value="provider.name" :id="'searchProviderRestrict' + provider.name" @change="updateSelectedProviders(provider)">
+						<label :for="'searchProviderRestrict' + provider.name"> {{ provider.friendlyName }}</label>
+					</div>
+				</div>
+			</div>
+
 			<!-- Restrict based on message type -->
 			<div class="searchStanza">
 				<input type="checkbox" v-model="searchTypeRestrict" id="searchTypeRestrictCheckbox">

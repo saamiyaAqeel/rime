@@ -128,6 +128,11 @@ type Device {
 
 input EventsFilter{
   """
+  The list of Providers we're interested in.
+  """
+  providerNames: [String]
+
+  """
   The list of Event types we're interested in. Currently only MessageEvent is supported.
   """
   typeNames: [String]
@@ -218,6 +223,7 @@ type MergedContact implements ContactInterface {
 
 type EventsForDevice {
   deviceId: String
+  providers: [Provider]
   events: [Event]
 }
 
@@ -232,9 +238,19 @@ interface Event {
 """
 Describes any form of media, such as a picture, video, or audio file.
 """
-type Media {
-  mime_type: String
-  url: String
+interface Media {
+  id: ID!
+  mime_type: String!
+  url: String!
+}
+
+"""
+Media which is attached to something else, such as a message.
+"""
+type AttachedMedia implements Media {
+  id: ID!
+  mime_type: String!
+  url: String!
 }
 
 """
@@ -270,9 +286,24 @@ type MessageEvent implements Event {
   """
   Any attached media.
   """
-  media: Media
+  media: AttachedMedia
   sessionId: String
   sender: Contact
   text: String
   fromMe: Boolean
+}
+
+"""
+A type of Event which is a media file.
+
+These represent standalone media files, such as pictures, videos, or audio files.
+"""
+type MediaEvent implements Media & Event {
+  id: ID!
+  deviceId: String
+  providerName: String
+  providerFriendlyName: String
+  timestamp: DateTime
+  mime_type: String!
+  url: String!
 }
