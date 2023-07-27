@@ -29,7 +29,7 @@ class ImessageMessage:
 
 class IMessage(Provider, LazyContactProvider):
     NAME = 'ios-com.apple.messages'
-    FRIENDLY_NAME = 'Apple Messages'
+    FRIENDLY_NAME = 'iOS Messages'
 
     # iOS filenames should be specified beginning DOMAIN-
     MESSAGE_DB = "HomeDomain/Library/SMS/sms.db"

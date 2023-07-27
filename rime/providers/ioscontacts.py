@@ -16,7 +16,7 @@ from ..anonymise import anonymise_phone, anonymise_email, anonymise_name
 
 class IOSContacts(Provider):
     NAME = 'ios-AddressBook'
-    FRIENDLY_NAME = 'Apple Contacts'
+    FRIENDLY_NAME = 'iOS Contacts'
 
     DB_PATH = 'HomeDomain/Library/AddressBook/AddressBook.sqlitedb'
 

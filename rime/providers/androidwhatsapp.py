@@ -104,7 +104,7 @@ class WhatsappMessageEvent:
 
 class AndroidWhatsApp(Provider):
     NAME = 'android-com.whatsapp.android'
-    FRIENDLY_NAME = 'WhatsApp'
+    FRIENDLY_NAME = 'Android WhatsApp'
 
     MESSAGE_DB = os.path.join('data', 'data', 'com.whatsapp', 'databases', 'msgstore.db')  # chats
     WA_DB = os.path.join('data', 'data', 'com.whatsapp', 'databases', 'wa.db')  # contacts

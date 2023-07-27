@@ -41,7 +41,7 @@ class IosWhatsappContact:
 
 class IOSWhatsApp(Provider):
     NAME = 'ios-net.whatsapp.WhatsApp'
-    FRIENDLY_NAME = 'WhatsApp'
+    FRIENDLY_NAME = 'iOS WhatsApp'
 
     CHATSTORAGE_DB = 'AppDomainGroup-group.net.whatsapp.WhatsApp.shared/ChatStorage.sqlite'
 
