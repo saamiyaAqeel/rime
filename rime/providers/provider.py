@@ -47,12 +47,6 @@ class Provider(ABC):
         return a MediaData object supplying the picture, video, sound, etc identified by 'local_id'.
         """
 
-    def anonymise(self, anonymiser):
-        """
-        Remove PII from databases known to this provider.
-        """
-        raise NotImplementedError
-
 
 def find_providers(fs) -> dict[str, Provider]:
     """
