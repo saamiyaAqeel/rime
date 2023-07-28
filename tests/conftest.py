@@ -62,7 +62,7 @@ def rime_server():
         _install_dependencies()
         server_process = _start_rime_server()
 
-    if not _rime_server_running(timeout=5):
+    if not _rime_server_running(timeout=10):
         raise Exception('Failed to start the test-only RIME server.')
 
     yield
