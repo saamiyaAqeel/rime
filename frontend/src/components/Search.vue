@@ -84,17 +84,8 @@ const selectedProviders = ref({});
 
 const allProviders = computed(() => {
 	let providers = [];
-	let seenProviders = {};
-
 	if(rawEventsSearchResult.value) {
-		for(let eventsForDevice of rawEventsSearchResult.value.events) {
-			for(let provider of eventsForDevice.providers) {
-				if(!seenProviders[provider.name]) {
-					providers.push(provider);
-					seenProviders[provider.name] = true;
-				}
-			}
-		}
+		providers.push(...rawEventsSearchResult.value.events.providers);
 	}
 	providers.sort((a, b) => a.friendlyName.localeCompare(b.friendlyName));
 	return providers;
@@ -127,6 +118,10 @@ function updateGql() {
 			if (selectedProviders.value[providerName]) {
 				filter.providerNames.push(providerName);
 			}
+		}
+		// No providers = all providers, so you can click 'filter by provider' and not immediately lose your data
+		if(filter.providerNames.length == 0) {
+			filter.providerNames = null;
 		}
 	}
 

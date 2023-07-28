@@ -119,6 +119,10 @@ export const { result: rawEventsSearchResult, refetch: eventsRefetch } = useQuer
 				  url
 			  }
 		  }
+          ... on MediaEvent {
+              mime_type
+              url
+          }
 		}
 	  }
   }
@@ -126,3 +130,7 @@ export const { result: rawEventsSearchResult, refetch: eventsRefetch } = useQuer
 	deviceIds: activeDevices,
 	filter: eventsFilter
 });
+
+export const searchView = ref('messages');
+export const setSearchView = (view) => { searchView.value = view; }
+

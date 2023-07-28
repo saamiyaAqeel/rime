@@ -7,11 +7,14 @@ Copyright 2023 Telemarq Ltd
 import { ref } from 'vue'
 
 import DeviceChooser from './DeviceChooser.vue'
-import SearchRefinements from './SearchRefinements.vue'
 import Search from './Search.vue'
 import Subsetter from './Subsetter.vue'
-import SearchResults from './SearchResults.vue'
 import ProviderChooser from './ProviderChooser.vue'
+import SearchViewChooser from './SearchViewChooser.vue'
+import SearchResults from './SearchResults.vue'
+import SearchResultsMedia from './SearchResultsMedia.vue'
+
+import { searchView } from '../store.js'
 
 const showRefinements = ref(false);
 
@@ -42,10 +45,9 @@ function showPopover(message) {
 		</div>
 
 		<div id="right">
-			<div id="top" v-if="showRefinements">
-				<SearchRefinements id="searchRefinements"/>
-			</div>
-			<SearchResults id="searchResults"/>
+			<SearchViewChooser id="searchViewChooser"/>
+			<SearchResults v-show="searchView == 'messages'" id="searchResults"/>
+			<SearchResultsMedia v-show="searchView == 'media'" id="searchResults"/>
 		</div>
 
 		<div id="popover">
@@ -72,13 +74,20 @@ function showPopover(message) {
 
 #right {
 	flex-grow: 1;
-	overflow-y: auto;
 	height: 100vh;
+	display: flex;
+	flex-direction: column;
 }
 
-#top {
-	height: 5em;
+#searchViewChooser {
 	border-bottom: 1px solid #ccc;
+	flex-grow: 0;
+	flex-shrink: 0;
+}
+
+#searchResults {
+	flex-grow: 1;
+	overflow-y: auto;
 }
 
 #deviceChooser {
