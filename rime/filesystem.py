@@ -3,11 +3,13 @@
 # Copyright 2023 Telemarq Ltd
 
 from abc import ABC, abstractmethod
+from dataclasses import dataclass
 import hashlib
 import os
 import plistlib
 import re
 import sqlite3
+import stat
 import shutil
 import zipfile
 import tempfile
@@ -82,6 +84,27 @@ def _ensuredir(pathname):
         os.makedirs(dirname)
 
 
+@dataclass(frozen=True, unsafe_hash=True)
+class DirEntry:
+    """
+    Mimic os.DirEntry for the scandir() method. Stores metadata at time of instantiation rather than
+    querying the filesystem the first time (unlike os.DirEntry).
+    """
+    # Ideally we'd use os.DirEntry, but these can't be instantiated.
+    name: str
+    path: str
+    stat_val: os.stat_result
+
+    def is_dir(self):
+        return stat.S_ISDIR(self.stat_val.st_mode)
+
+    def is_file(self):
+        return stat.S_ISREG(self.stat_val.st_mode)
+
+    def stat(self):
+        return self.stat_val
+
+
 class DeviceFilesystem(ABC):
     @classmethod
     @abstractmethod
@@ -107,9 +130,9 @@ class DeviceFilesystem(ABC):
         return False
 
     @abstractmethod
-    def listdir(self, path) -> list[str]:
+    def scandir(self, path) -> list[DirEntry]:
         """
-        As os.listdir().
+        As os.scandir().
         """
         return []
 
@@ -202,8 +225,15 @@ class AndroidDeviceFilesystem(DeviceFilesystem):
     def is_subset_filesystem(self) -> bool:
         return self._settings.is_subset_fs()
 
-    def listdir(self, path):
-        return self._fs.listdir(path)
+    def scandir(self, path):
+        result = []
+        for name in self._fs.listdir(path):
+            pathname = os.path.join(path, name)  # I love it when a plan comes together
+            syspath = self._fs.getsyspath(pathname)
+            stat_val = os.stat(syspath)
+            result.append(DirEntry(name, pathname, stat_val))
+
+        return result
 
     def exists(self, path):
         return self._fs.exists(path)
@@ -291,8 +321,15 @@ class AndroidZippedDeviceFilesystem(DeviceFilesystem):
     def is_subset_filesystem(self) -> bool:
         return self._settings.is_subset_fs()
 
-    def listdir(self, path):
-        return self._fs.listdir(path)
+    def scandir(self, path):
+        entries = []
+        for name in self._fs.listdir(path):
+            pathname = os.path.join(path, name)
+            syspath = self._fs.getsyspath(pathname)
+            statval = os.stat(syspath)
+            entries.append(DirEntry(name, pathname, statval))
+
+        return entries
 
     def exists(self, path):
         return self._fs.exists(path)
@@ -321,10 +358,11 @@ class AndroidZippedDeviceFilesystem(DeviceFilesystem):
         return self._settings.is_locked()
 
 
-class _IosHashedFileConverter:
+class _IosManifest:
     def __init__(self, manifest_conn):
         self.manifest_conn = manifest_conn
         self.file_table = Table('Files')
+        self._scandir_cache = {}
 
     @staticmethod
     def _get_ios_hash(domain, relative_path):
@@ -394,6 +432,57 @@ class _IosHashedFileConverter:
 
         # If we get here, the hash and matching path are already in the database, which is fine.
 
+    def scandir(self, path):
+        # Retrieving the contents of a directory from an iOS backup is hard, because the file stat info
+        # is stored in a binary plist in the manifest, so cache the result.
+        if path in self._scandir_cache:
+            return self._scandir_cache[path]
+
+        domain, relative_path = path.split('/', 1)
+
+        query = Query.from_(self.file_table).select('fileID', 'relativePath', 'file')
+        query = query.where(self.file_table.domain == domain)
+        fields = get_field_indices(query)
+
+        entries = []
+        for row in self.manifest_conn.execute(str(query)):
+            name = row[fields['relativePath']]
+
+            if not name.startswith(relative_path):
+                # Ignore files in directories above this one.
+                continue
+
+            if name[len(relative_path) + 1:].count('/') > 1:  # skip leading '/'
+                # Ignore files in directories below this one.
+                continue
+
+            blob = row[fields['file']]
+            blob_plist = plistlib.loads(blob)
+
+            file_metadata = blob_plist['$objects'][1]
+
+            stat_info = os.stat_result([
+                file_metadata['Mode'],
+                file_metadata['InodeNumber'],
+                0,  # st_dev
+                0,  # st_nlink
+                file_metadata['UserID'],
+                file_metadata['GroupID'],
+                file_metadata['Size'],
+                0,  # st_atime
+                file_metadata['LastModified'],  # st_mtime
+                file_metadata['Birth'],  # st_ctime
+            ])
+
+            entries.append(DirEntry(
+                name=name,
+                path=f'{path}/{name}',
+                stat_val=stat_info
+            ))
+
+        self._scandir_cache[path] = entries
+        return entries
+
 
 def _ios_filesystem_is_encrypted(path):
     manifest_bplist = os.path.join(path, 'Manifest.plist')
@@ -413,7 +502,7 @@ class IosDeviceFilesystem(DeviceFilesystem):
         self.manifest = sqlite3_connect_with_regex_support(os.path.join(self.root, 'Manifest.db'))
         self.file_table = Table('Files')
         self._settings = DeviceSettings(root)
-        self._converter = _IosHashedFileConverter(self.manifest)
+        self._converter = _IosManifest(self.manifest)
 
     @classmethod
     def is_device_filesystem(cls, path):
@@ -459,11 +548,8 @@ class IosDeviceFilesystem(DeviceFilesystem):
         log.debug(f"iOS connecting to {db_url} ({path})")
         return sqlite3_connect_with_regex_support(db_url, uri=True)
 
-    def listdir(self, path):
-        query = Query.from_(self.file_table).select('fileID', 'relativePath')
-        query = query.where(self.file_table.relativePath == os.path.join(self.root, path))
-        fields = get_field_indices(query)
-        return [row[fields['relativePath']] for row in self.manifest.execute(str(query))]
+    def scandir(self, path):
+        return self._converter.scandir(path)
 
     def exists(self, path):
         real_path = self._converter.get_hashed_pathname(path)
@@ -555,7 +641,7 @@ class IosZippedDeviceFilesystem(DeviceFilesystem):
 
         settings_dir, settings_file = os.path.split(self.temp_settings.name)
         self._settings = DeviceSettings(settings_dir, settings_file)
-        self._converter = _IosHashedFileConverter(self.manifest)
+        self._converter = _IosManifest(self.manifest)
 
     @classmethod
     def is_device_filesystem(cls, path) -> bool:
@@ -578,8 +664,8 @@ class IosZippedDeviceFilesystem(DeviceFilesystem):
     def is_subset_filesystem(self) -> bool:
         return self._settings.is_subset_fs()
 
-    def listdir(self, path) -> list[str]:
-        raise NotImplementedError
+    def scandir(self, path) -> list[str]:
+        return self._converter.scandir(path)
 
     def exists(self, path) -> bool:
 
@@ -665,7 +751,7 @@ class IosEncryptedDeviceFilesystem(DeviceFilesystem):
     def is_subset_filesystem(self) -> bool:
         return False
 
-    def listdir(self, path) -> list[str]:
+    def scandir(self, path) -> list[str]:
         return []
 
     def exists(self, path) -> bool:

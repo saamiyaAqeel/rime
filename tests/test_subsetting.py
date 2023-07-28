@@ -15,15 +15,15 @@ client = gql.Client(transport=AIOHTTPTransport(url=GQL_ENDPOINT))
 filter_events = gql.gql("""
   query getEvents($deviceIds: [String]!, $filter: EventsFilter) {
       events(deviceIds: $deviceIds, filter: $filter) {
-        deviceId,
+        deviceIds,
         events {
           id
           __typename
+          deviceId
           providerName
           providerFriendlyName
           timestamp
           ... on MessageEvent {
-              deviceId
               text
               fromMe
               sessionId
@@ -148,7 +148,11 @@ def _compare_event_ignoring_device_ids(event_a, event_b, context=None):
         raise CompareFailed(f'Values do not match: {event_a} != {event_b}', context=context)
 
 
-def _compare_events_ignoring_device_ids(events_a, events_b):
+def _compare_events_ignoring_device_ids(events_a, events_b, typenames=None):
+    if typenames is not None:
+        events_a = [event for event in events_a if event['__typename'] in typenames]
+        events_b = [event for event in events_b if event['__typename'] in typenames]
+
     for event_a, event_b in zip(events_a, events_b):
         assert event_a['__typename'] == event_b['__typename'], 'Event type names do not match'
         try:
@@ -172,21 +176,24 @@ def test_maximal_filter():
         earliest_timestamp = datetime.datetime(1900, 1, 1)
         latest_timestamp = datetime.datetime(9999, 1, 1)
 
-        for events_for_device in all_events['events']:
-            for event in events_for_device['events']:
-                type_names.add(event['__typename'])
-                if event['__typename'] == 'MessageEvent':
-                    if event['session'] is not None:
-                        for contact in event['session']['participants']:
-                            participant_ids.add(contact['id'])
-                    if event['sender'] is not None:
-                        participant_ids.add(event['sender']['id'])
+        for event in all_events['events']['events']:
+            if event['__typename'] == 'MediaEvent':
+                # Not subsetted yet.
+                continue
 
-                timestamp = datetime.datetime.fromisoformat(event['timestamp'])
-                if earliest_timestamp is None or timestamp < earliest_timestamp:
-                    earliest_timestamp = timestamp
-                if latest_timestamp is None or timestamp > latest_timestamp:
-                    latest_timestamp = timestamp
+            type_names.add(event['__typename'])
+            if event['__typename'] == 'MessageEvent':
+                if event['session'] is not None:
+                    for contact in event['session']['participants']:
+                        participant_ids.add(contact['id'])
+                if event['sender'] is not None:
+                    participant_ids.add(event['sender']['id'])
+
+            timestamp = datetime.datetime.fromisoformat(event['timestamp'])
+            if earliest_timestamp is None or timestamp < earliest_timestamp:
+                earliest_timestamp = timestamp
+            if latest_timestamp is None or timestamp > latest_timestamp:
+                latest_timestamp = timestamp
 
         events_filter = {
             'typeNames': list(type_names),
@@ -197,7 +204,7 @@ def test_maximal_filter():
 
         filtered_events = call(filter_events, deviceIds=[device_name], filter=events_filter)
 
-        assert all_events == filtered_events
+        _compare_events_ignoring_device_ids(all_events['events']['events'], filtered_events['events']['events'])
 
 
 class Timeout(Exception):
@@ -229,7 +236,7 @@ def test_improper_subset():
         subset_name = 'test_improper_subset'
         try:
             call(create_subset, targets=[{'oldDeviceId': device_name, 'newDeviceId': subset_name}],
-                eventsFilter=None, contactsFilter=None, anonymise=False)
+                 eventsFilter={'typeNames': ['MessageEvent']}, contactsFilter=None, anonymise=False)
 
             # Poll for subset completion. Non-test code would instead subscribe to the subsetComplete event.
             device_info = _wait_for_device(subset_name)
@@ -241,8 +248,9 @@ def test_improper_subset():
 
             try:
                 _compare_events_ignoring_device_ids(
-                    all_events['events'][0]['events'],
-                    subset_events['events'][0]['events']
+                    all_events['events']['events'],
+                    subset_events['events']['events'],
+                    typenames={'MessageEvent'}
                 )
             except CompareFailed as e:
                 print(f"Comparison failed while subsetting device {device_name}: {e}.")

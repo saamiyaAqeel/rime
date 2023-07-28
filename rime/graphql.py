@@ -18,7 +18,7 @@ from ariadne import ObjectType, QueryType, InterfaceType, MutationType, \
                     SubscriptionType, subscribe as _ariadne_subscribe_async
 
 from .filter import EventsFilter, ContactsFilter, ProvidersFilter, TheAlwaysMatchesPattern, GlobalContactId
-from .event import MessageEvent
+from .event import MessageEvent, MediaEvent
 from .mergedcontact import merge_contacts
 from .anonymise import Anonymiser
 from .subset import Subsetter
@@ -142,6 +142,8 @@ event_resolver = InterfaceType('Event')
 def resolve_event_type(obj, *_):
     if isinstance(obj, MessageEvent):
         return 'MessageEvent'
+    elif isinstance(obj, MediaEvent):
+        return 'MediaEvent'
     raise TypeError(f'Unknown event type: {obj}')
 
 
@@ -197,13 +199,17 @@ def resolve_session(event, info):
     return None
 
 
+def _media_local_id_to_url(rime, device_id, provider_name, local_id):
+    return f'{rime.media_prefix}{device_id}:{provider_name}:{local_id}'
+
+
 @message_event_resolver.field('media')
 def resolve_media(event, info):
     if event.media is None:
         return None
 
     # Convert local_id to URL.
-    url = f'{info.context.rime.media_prefix}{event.device_id}:{event.provider.NAME}:{event.media.local_id}'
+    url = _media_local_id_to_url(info.context.rime, event.device_id, event.provider.NAME, event.media.local_id)
 
     return {'mime_type': event.media.mime_type, 'url': url}
 
@@ -216,6 +222,18 @@ message_session_resolver = ObjectType('MessageSession')
 @message_session_resolver.field('sessionId')
 def resolve_message_session_id(session, info):
     return session.session_id
+
+
+# Media events
+
+
+media_event_resolver = ObjectType('MediaEvent')
+
+
+@media_event_resolver.field('url')
+def resolve_media_event_url(event, info):
+    return _media_local_id_to_url(info.context.rime, event.device_id, event.provider.NAME, event.local_id)
+
 
 # And Providers
 
@@ -589,10 +607,9 @@ def subsets_resolver(payload, info):
 
 
 RESOLVERS = [
-    datetime_scalar, query_resolver, event_resolver, message_event_resolver,
-    message_session_resolver, provider_resolver, contact_resolver,
-    merged_contact_resolver, name_resolver, device_resolver, mutation,
-    devices_subscription, subsets_subscription,
+    datetime_scalar, query_resolver, event_resolver, message_event_resolver, media_event_resolver,
+    message_session_resolver, provider_resolver, contact_resolver, merged_contact_resolver, name_resolver,
+    device_resolver, mutation, devices_subscription, subsets_subscription,
 ]
 
 

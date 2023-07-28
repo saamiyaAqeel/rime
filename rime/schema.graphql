@@ -133,7 +133,7 @@ input EventsFilter{
   providerNames: [String]
 
   """
-  The list of Event types we're interested in. Currently only MessageEvent is supported.
+  The list of Event types we're interested in: MessageEvent or MediaEvent.
   """
   typeNames: [String]
 
@@ -239,7 +239,7 @@ interface Event {
 Describes any form of media, such as a picture, video, or audio file.
 """
 interface Media {
-  id: ID!
+  id: ID
   mime_type: String!
   url: String!
 }
@@ -299,7 +299,7 @@ A type of Event which is a media file.
 These represent standalone media files, such as pictures, videos, or audio files.
 """
 type MediaEvent implements Media & Event {
-  id: ID!
+  id: ID
   deviceId: String
   providerName: String
   providerFriendlyName: String
