@@ -88,18 +88,18 @@ export function setFilter(filter) {
 export const { result: rawEventsSearchResult, refetch: eventsRefetch } = useQuery( gql`
   query getEvents($deviceIds: [String]!, $filter: EventsFilter) {
 	  events(deviceIds: $deviceIds, filter: $filter) {
-	  	deviceId,
+	  	deviceIds,
 		providers {
 			name
 			friendlyName
 		},
 		events {
 		  id
+          deviceId
 		  providerName
 		  providerFriendlyName
 		  timestamp
 		  ... on MessageEvent {
-			  deviceId
 			  text
 			  fromMe
 			  sessionId

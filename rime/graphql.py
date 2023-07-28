@@ -120,19 +120,19 @@ def resolve_events(parent, info, deviceIds, filter=None):
     filter_obj = _make_events_filter(filter)
     devices = rime.devices_for_ids(deviceIds)
 
-    events_for_device = {}
+    events = []
+    device_ids = set()
     providers = set()
     for device, provider, provider_events in _get_events_by_provider(rime, devices, filter_obj):
-        if device.id_ not in events_for_device:
-            events_for_device[device.id_] = []
-
+        device_ids.add(device.id_)
         providers.add(provider)
-        events_for_device[device.id_].extend(provider_events)
+        events.extend(provider_events)
 
-    for events in events_for_device.values():
-        events.sort(key=lambda e: e.timestamp)
+    device_ids = list(device_ids)
+    device_ids.sort()
+    events.sort(key=lambda e: (e.timestamp, e.device_id))
 
-    return [{'deviceId': device_id, 'providers': providers, 'events': events} for device_id, events in events_for_device.items()]
+    return {'deviceIds': device_ids, 'providers': providers, 'events': events}
 
 
 event_resolver = InterfaceType('Event')

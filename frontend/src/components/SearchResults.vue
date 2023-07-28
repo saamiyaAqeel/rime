@@ -145,57 +145,54 @@ const grid_template_columns = ref("repeat(1, 1fr)");
 /* Computed property on the search results, to provide transformed data to be consumed by the UI:
  * - convert timestamps to DateTimes;
  * - store a delta since the last event;
- * - null out MesageEvent sessions if they're the same as the previous one.
+ * - null out MessageEvent sessions if they're the same as the previous one.
 */
 const searchResult = computed(() => {
-	let result = {'events': []};
+	let result = {'deviceIds': [], 'providers': [], 'events': []};
+	let lastEventForDevice = {};
+	let lastSessionKeyForDevice = {};
 
 	if (rawEventsSearchResult.value) {
-		for(let events_for_device of rawEventsSearchResult.value.events) {
-			let efd = {'deviceId': events_for_device.deviceId, 'events': []};
-			let lastSessionKey = null;
-			let lastEvent = null;
+		result['deviceIds'] = rawEventsSearchResult.value.events.deviceIds;
+		result['providers'] = rawEventsSearchResult.value.events.providers;
 
+		for(let event of rawEventsSearchResult.value.events.events) {
 			/* Post-process the server-supplied response */
-			for(let event of events_for_device.events) {
-				const newEvent = {...event};
+			const newEvent = {...event};
 
-				/* DateTimes arrive as strings. Convert them to Dates for easy manipulation and time comparisons. */
-				newEvent.timestamp = new Date(event.timestamp);
+			/* DateTimes arrive as strings. Convert them to Dates for easy manipulation and time comparisons. */
+			newEvent.timestamp = new Date(event.timestamp);
 
-				/* Remember the timestamp of  the last event, for friendlier date display */
-				if(lastEvent !== null) {
-					newEvent.previousTimestamp = lastEvent.timestamp;
-				} else {
-					newEvent.previousTimestamp = null;
-				}
-
-				if(newEvent.__typename == "MessageEvent") {
-					const key = getSessionKey(newEvent);
-
-					/* Create the chat session if it doesn't exist */
-					if(!(key in chatSessions.value)) {
-						chatSessions.value[key] = new ChatSession(newEvent.sessionId, newEvent.session.name,
-																  newEvent.session.participants, newEvent.providerFriendlyName);
-					}
-
-					if(key == lastSessionKey) {
-						/* We've seen this session, so don't store it again. The GUI uses this to determine
-						   when a new session starts */
-						newEvent.session = null;
-					} else {
-						/* Overwrite it with the session object */
-						newEvent.session = chatSessions.value[key];
-					}
-
-					lastSessionKey = key;
-				}
-
-				efd.events.push(newEvent);
-
-				lastEvent = newEvent;
+			/* Remember the timestamp of  the last event, for friendlier date display */
+			if(lastEventForDevice[event.deviceId] !== undefined) {
+				newEvent.previousTimestamp = lastEventForDevice[event.deviceId].timestamp;
+			} else {
+				newEvent.previousTimestamp = null;
 			}
-			result.events.push(efd);
+
+			if(newEvent.__typename == "MessageEvent") {
+				const key = getSessionKey(newEvent);
+
+				/* Create the chat session if it doesn't exist */
+				if(!(key in chatSessions.value)) {
+					chatSessions.value[key] = new ChatSession(newEvent.sessionId, newEvent.session.name,
+															  newEvent.session.participants, newEvent.providerFriendlyName);
+				}
+
+				if(key == lastSessionKeyForDevice[event.deviceId]) {
+					/* We've seen this session, so don't store it again. The GUI uses this to determine
+					   when a new session starts */
+					newEvent.session = null;
+				} else {
+					/* Overwrite it with the session object */
+					newEvent.session = chatSessions.value[key];
+				}
+
+				lastSessionKeyForDevice[event.deviceId] = key;
+			}
+
+			result.events.push(newEvent);
+			lastEventForDevice[event.deviceId] = newEvent;
 		}
 	}
 
@@ -220,67 +217,40 @@ const roughly_the_same_ms = 1000;
 function * eventsRowGenerator() {
 	/* Repeatedly return a row of Events to display.
 
-	   We want events from different devices to line up chronologically, so we maintain a list of
-	   pointers into the current event from each device. For each row, we find the oldest event timestamp
-	   from the current list and return all device events which have that timestamp, advancing the pointers
-	   for those devices which produced an event this row. We rely on the events for each device being sorted
-	   by timestamp.
+	   We want events from different devices to line up chronologically. RIME guarantees that events
+	   are ordered by timestamp.
 
-	   When we have no events to display from any device we're done.
-
-	   Timestamps are compared roughly (to roughly_the_same_ms) to attempt to group concurrent chats
-	   despite network latency and clock drift.
+	   We generate a row at a time based on the timestamp, and start a new row if:
+	     - the timestamp of the event is more than roughly_the_same_ms after the previous event, or
+		 - the event is for a device we've already seen.
 	*/
 
-	const num_devices = searchResult.value ? searchResult.value.events.length : 0;
-	let pointers = new Array(num_devices).fill(0);
-	let num_empty = 0;
+	if(!searchResult.value)
+		return;
 
-	while(num_empty < num_devices) {
-		let row = [];
-		let minTime = null;
-		num_empty = 0;
+	const empty_row = Array(searchResult.value.deviceIds.length).fill(null);
+	const row_is_empty = (row) => row.every((event) => event == null);
 
-		/* Create a row of events containing one event from each device. */
-		for(let deviceIdx = 0; deviceIdx < num_devices; deviceIdx++) {
-			let deviceEvents = searchResult.value.events[deviceIdx].events;
-			if(pointers[deviceIdx] < deviceEvents.length) {
-				const event = deviceEvents[pointers[deviceIdx]];
-				if(minTime == null || event.timestamp < minTime) {
-					minTime = event.timestamp;
-				}
-				row.push(event);
-				pointers[deviceIdx]++;
-			} else {
-				row.push(null);
-				num_empty++;
-			}
-		}
+	let row = empty_row.slice();
+	let minTime = searchResult.value.events.length > 0 ? searchResult.value.events[0].timestamp : null;
 
-		if(minTime == null) {
-			/* No events found. */
-			break;
-		}
+	for(let event of searchResult.value.events) {
+		const ts_delta = Math.abs(event.timestamp.getTime() - minTime.getTime());
+		const device_idx = searchResult.value.deviceIds.indexOf(event.deviceId);
 
-		const minTime_rough = Math.floor(minTime.getTime() / roughly_the_same_ms) * roughly_the_same_ms;
-
-		/* Null out events that occured before the earliest event in this row. */
-		for(let deviceIdx = 0; deviceIdx < num_devices; deviceIdx++) {
-			const event = row[deviceIdx];
-			if(event !== null) {
-				const eventTime_rough = Math.floor(event.timestamp.getTime() / roughly_the_same_ms) * roughly_the_same_ms;
-				if(eventTime_rough > minTime_rough) {
-					row[deviceIdx] = null;
-
-					/* roll back the pointer so we can re-use this event in the next row. */
-					pointers[deviceIdx]--;
-				}
-			}
-		}
-
-		if(num_empty < num_devices) {
+		if(ts_delta > roughly_the_same_ms || row[device_idx] != null) {
+			/* This event is too far away from the previous one, or we've already seen an event for this device.
+			   Yield the current row and start a new one. */
 			yield row;
+			row = empty_row.slice();
+			minTime = event.timestamp;
 		}
+
+		row[device_idx] = event;
+	}
+
+	if(!row_is_empty(row)) {
+		yield row;
 	}
 }
 

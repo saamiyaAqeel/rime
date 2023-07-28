@@ -25,7 +25,7 @@ type Query {
   """
   events(
     deviceIds: [String]!,
-    filter: EventsFilter): [EventsForDevice]!
+    filter: EventsFilter): EventsResult!
 
   """
   Search for Providers.
@@ -221,8 +221,8 @@ type MergedContact implements ContactInterface {
   mergedIds: [String]  # device-global IDs for the contacts that were merged into this one
 }
 
-type EventsForDevice {
-  deviceId: String
+type EventsResult {
+  deviceIds: [String]
   providers: [Provider]
   events: [Event]
 }
