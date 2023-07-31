@@ -7,16 +7,55 @@ Copyright 2023 Telemarq Ltd
 import { activeDevices, rawEventsSearchResult } from '../store.js'
 import SearchResultMediaEvent from './SearchResultMediaEvent.vue'
 
-import { watch } from 'vue'
+import { watch, ref } from 'vue'
+
+const menuitems = ref(null);
+const menuDownloadUrl = ref(null);
+
+const toggleMenu = function(event) {
+	const menu = event.target.closest('.menu');
+
+	if(menuitems.value.parentNode) {
+		menuitems.value.parentNode.removeChild(menuitems.value);
+		menuitems.value.style.display = 'none';
+	}
+
+	if(menu) {
+		if(menu.classList.contains('open')) {
+			menu.classList.remove('open');
+		} else {
+			menu.classList.add('open');
+			menu.appendChild(menuitems.value);
+			menuitems.value.style.display = 'block';
+
+			menuDownloadUrl.value = menu.dataset.url;
+		}
+
+	}
+	/* Close all other menus */
+	const menus = document.querySelectorAll('.menu.open');
+	for(const otherMenu of menus) {
+		if(otherMenu == menu) {
+			continue;
+		}
+		otherMenu.classList.remove('open');
+	}
+}
 
 </script>
 
 <template>
 	<div class="grid" v-if="rawEventsSearchResult">
+		<div id="menuitems" ref="menuitems">
+			<ul>
+				<li><a :href="menuDownloadUrl" target="_blank">Download</a></li>
+			</ul>
+		</div>
 		<template v-for = "event in rawEventsSearchResult.events.events">
 			<div v-if="event && event.__typename == 'MediaEvent'" class="gridElement">
+				<div class="menu" :data-url="event.url"><div class="burger" @click="toggleMenu"> &vellip; </div></div>
 				<video v-if="event.mime_type.startsWith('video')" controls>
-					<source :src="event.url" :type="event.media.mime_type"/>
+					<source :src="event.url" :type="event.mime_type"/>
 				</video>
 				<img v-else :src="event.url" />
 			</div>
@@ -32,7 +71,43 @@ import { watch } from 'vue'
 	grid-gap: 1px;
 }
 
+.gridElement {
+	position: relative; /* for the menu */
+}
+
+.menu {
+	position: absolute;
+	top: 0;
+	right: 0;
+	text-align: right;
+	cursor: pointer;
+	z-index: 1;
+}
+
+.menu.open {
+	background-color: #eeea;
+}
+
+#menuitems {
+	display: none;
+	position: relative;
+	top: 0;
+	right: 0;
+	padding: 0.5em;
+	z-index: 1;
+}
+
+#menuitems ul {
+	list-style-type: none;
+	margin: 0;
+	padding: 0;
+}
+
 img {
+	max-width: 100%;
+}
+
+video {
 	max-width: 100%;
 }
 
