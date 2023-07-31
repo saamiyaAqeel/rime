@@ -83,7 +83,7 @@ class AndroidGenericMedia(Provider):
             if metadata is None:
                 continue
 
-            if metadata.mime.startswith('image/'):
+            if metadata.mime.startswith('image/') or metadata.mime.startswith('video/'):
                 yield MediaEvent(
                     mime_type=metadata.mime,
                     local_id=direntry.path,
