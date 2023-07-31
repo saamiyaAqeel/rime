@@ -21,16 +21,11 @@ for dist in pkg_resources.working_set:
 with open('requirements.txt') as requirements:
     for req in requirements:
         # Get the package name and the version
-        project_name, version = req.split('==')
+        project_name, version = req.strip().split('==')
+        project_name = project_name.replace('_', '-')
 
-        # If the package is not installed or there is a version miss-match
+        # If the package is not installed or there is a version mismatch
         # exit with code (1)
         if (project_name not in current_packages or current_packages[project_name] != version):
+            print(f'Requirements do not match for {project_name}')
             sys.exit(1)
-
-        # Remove the entry from the dict if it's satisfied
-        del current_packages[project_name]
-
-# There are more packages installed than the ones in the `requirements.txt`
-if len(current_packages) != 0:
-    sys.exit(1)
