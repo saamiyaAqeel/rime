@@ -41,6 +41,18 @@ def _build_metadata_cache(fs):
                 _metadata_cache[fs.id_][direntry.path] = (direntry, filetype.guess(first_bytes))
 
 
+def _dirname(filename):
+    """
+    Return the directory containing 'filename', which is assumed to be a file.
+
+    Not using os.path because there's no guarantee that the OS we're on behaves like Android.
+    """
+    if '/' not in filename:
+        return '/'
+
+    return filename[:filename.rindex('/')]
+
+
 class AndroidGenericMedia(Provider):
     NAME = 'android-generic-media'
     FRIENDLY_NAME = 'Android Generic Media'
@@ -77,6 +89,7 @@ class AndroidGenericMedia(Provider):
                     local_id=direntry.path,
                     id_=direntry.path,
                     timestamp=datetime.fromtimestamp(direntry.stat().st_ctime),
+                    source=_dirname(direntry.path),
                     provider=self
                 )
 

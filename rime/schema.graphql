@@ -133,6 +133,11 @@ input EventsFilter{
   providerNames: [String]
 
   """
+  A regular expression matching Source.
+  """
+  sourceRegex: String
+
+  """
   The list of Event types we're interested in: MessageEvent or MediaEvent.
   """
   typeNames: [String]
@@ -229,6 +234,7 @@ type EventsResult {
 
 interface Event {
   id: ID
+  source: String
   deviceId: String
   providerName: String
   providerFriendlyName: String
@@ -272,6 +278,7 @@ Messages.
 """
 type MessageEvent implements Event {
   id: ID
+  source: String
   deviceId: String
   providerName: String
   providerFriendlyName: String
@@ -300,6 +307,7 @@ These represent standalone media files, such as pictures, videos, or audio files
 """
 type MediaEvent implements Media & Event {
   id: ID
+  source: String
   deviceId: String
   providerName: String
   providerFriendlyName: String
