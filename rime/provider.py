@@ -52,12 +52,12 @@ def find_providers(fs) -> dict[str, Provider]:
     """
     Return a list of providers that recognise data on this filesystem.
     """
-    from . import providers
+    from . import providers  # noqa: F401
 
-    providers = {}
+    providers_dict = {}
     for provider in Provider.__subclasses__():
         instance = provider.from_filesystem(fs)
         if instance:
-            providers[provider.NAME] = instance
+            providers_dict[provider.NAME] = instance
 
-    return providers
+    return providers_dict

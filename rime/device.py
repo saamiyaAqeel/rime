@@ -2,6 +2,7 @@ from .filesystem import DeviceFilesystem
 from .session import Session
 from .provider import find_providers
 
+
 class Device:
     def __init__(self, device_id: str, fs: DeviceFilesystem, session: Session):
         self.id_ = device_id
@@ -31,5 +32,3 @@ class Device:
 
     def __repr__(self):
         return f"Device({self.id_})"
-
-

@@ -158,6 +158,8 @@ def resolve_events(parent, info, deviceIds, filter=None):
 
 
 events_result_resolver = ObjectType('EventsResult')
+
+
 @events_result_resolver.field('messageSessions')
 def resolve_message_sessions(events_result, info):
     # Augment message sessions with device ID.
@@ -634,7 +636,7 @@ def subsets_resolver(payload, info):
 RESOLVERS = [
     datetime_scalar, query_resolver, event_resolver, message_event_resolver, media_event_resolver,
     message_session_resolver, provider_resolver, contact_resolver, merged_contact_resolver, name_resolver,
-    device_resolver, mutation, devices_subscription, subsets_subscription, events_result_resolver 
+    device_resolver, mutation, devices_subscription, subsets_subscription, events_result_resolver
 ]
 
 
