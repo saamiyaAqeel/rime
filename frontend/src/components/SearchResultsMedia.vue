@@ -4,7 +4,7 @@ See LICENSE.txt for full details.
 Copyright 2023 Telemarq Ltd
 -->
 <script setup>
-import { activeDevices, rawEventsSearchResult } from '../store.js'
+import { activeDevices, rawEventsSearchResult, eventsSearchResultById } from '../store.js'
 import SearchResultMediaEvent from './SearchResultMediaEvent.vue'
 
 import { watch, ref } from 'vue'
@@ -28,7 +28,7 @@ const toggleMenu = function(event) {
 			menu.appendChild(menuitems.value);
 			menuitems.value.style.display = 'block';
 
-			menuDownloadUrl.value = menu.dataset.url;
+			menuDownloadUrl.value = eventsSearchResultById.value[menu.dataset.eventid].url;
 		}
 
 	}
@@ -53,7 +53,7 @@ const toggleMenu = function(event) {
 		</div>
 		<template v-for = "event in rawEventsSearchResult.events.events">
 			<div v-if="event && event.__typename == 'MediaEvent'" class="gridElement">
-				<div class="menu" :data-url="event.url"><div class="burger" @click="toggleMenu"> &vellip; </div></div>
+				<div class="menu" :data-eventid="event.id"><div class="burger" @click="toggleMenu"> &vellip; </div></div>
 				<video v-if="event.mime_type.startsWith('video')" controls>
 					<source :src="event.url" :type="event.mime_type"/>
 				</video>
