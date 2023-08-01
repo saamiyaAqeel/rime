@@ -121,6 +121,7 @@ export const { result: rawEventsSearchResult, refetch: eventsRefetch } = useQuer
         messageSessions {
             sessionId
             name
+            providerFriendlyName
             participants {
                 name { first last display } phone email
             }

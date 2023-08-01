@@ -162,7 +162,6 @@ events_result_resolver = ObjectType('EventsResult')
 
 @events_result_resolver.field('messageSessions')
 def resolve_message_sessions(events_result, info):
-    # Augment message sessions with device ID.
     return events_result['messageSessions']
 
 
@@ -249,6 +248,16 @@ message_session_resolver = ObjectType('MessageSession')
 @message_session_resolver.field('sessionId')
 def resolve_message_session_id(session, info):
     return session.global_id
+
+
+@message_session_resolver.field('providerName')
+def resolve_message_session_provider_name(session, info):
+    return session.provider.NAME
+
+
+@message_session_resolver.field('providerFriendlyName')
+def resolve_message_session_provider_friendly_name(session, info):
+    return session.provider.FRIENDLY_NAME
 
 
 # Media events
