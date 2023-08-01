@@ -9,4 +9,3 @@ from .imessage import IMessage
 from .androidcontacts import AndroidContacts
 from .ioscontacts import IOSContacts
 from .androidgenericmedia import AndroidGenericMedia
-from .provider import Provider, find_providers

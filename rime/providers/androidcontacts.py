@@ -20,7 +20,7 @@ IDs. For each collection, look for MIME types of interest in the data table.
 from typing import Iterable
 from dataclasses import dataclass
 
-from .provider import Provider
+from ..provider import Provider
 from ..event import Event
 from ..sql import Table, Query, get_field_indices
 from ..contact import Contact, Name

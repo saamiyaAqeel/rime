@@ -4,7 +4,7 @@
 
 from abc import ABC, abstractmethod
 
-from ..media import MediaData
+from .media import MediaData
 
 
 class Provider(ABC):
@@ -52,6 +52,8 @@ def find_providers(fs) -> dict[str, Provider]:
     """
     Return a list of providers that recognise data on this filesystem.
     """
+    from . import providers
+
     providers = {}
     for provider in Provider.__subclasses__():
         instance = provider.from_filesystem(fs)

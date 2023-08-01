@@ -5,7 +5,7 @@
 from dataclasses import dataclass
 import datetime
 
-from .provider import Provider
+from ..provider import Provider
 from ..sql import Table, Query, get_field_indices
 from ..event import MessageEvent, MessageSession
 from ..contact import Contact, Name

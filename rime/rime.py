@@ -8,43 +8,12 @@ from dataclasses import dataclass
 import os
 import threading
 
-from .providers import find_providers
-from .filesystem import FilesystemRegistry, DeviceFilesystem
+from .filesystem import FilesystemRegistry
 from .session import Session
 from .graphql import query as _graphql_query, query_async as _graphql_query_async
 from .config import Config
 from .plugins import load_plugin
-
-
-class Device:
-    def __init__(self, device_id: str, fs: DeviceFilesystem, session: Session):
-        self.id_ = device_id
-        self.fs = fs
-        self.providers = find_providers(self.fs)
-        self.session = session
-
-    def reload_providers(self):
-        self.providers = find_providers(self.fs)
-
-    @property
-    def country_code(self) -> str:
-        return self.session.get_device_country_code(self.id_, 'GB')
-
-    @country_code.setter
-    def country_code(self, value: str):
-        self.session.set_device_country_code(self.id_, value)
-
-    def is_subset(self) -> bool:
-        return self.fs.is_subset_filesystem()
-
-    def is_locked(self) -> bool:
-        return self.fs.is_locked()
-
-    def lock(self, locked):
-        self.fs.lock(locked)
-
-    def __repr__(self):
-        return f"Device({self.id_})"
+from .device import Device
 
 
 FILESYSTEM_REGISTRY = threading.local()

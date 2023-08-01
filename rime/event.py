@@ -12,7 +12,7 @@ from datetime import datetime
 from typing import Any
 
 from .contact import Contact
-from .providers.provider import Provider
+from .provider import Provider
 
 
 @dataclass

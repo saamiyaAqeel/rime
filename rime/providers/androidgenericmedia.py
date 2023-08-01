@@ -9,7 +9,7 @@ from datetime import datetime
 
 import filetype
 
-from .provider import Provider
+from ..provider import Provider
 from ..event import MediaEvent
 from ..media import MediaData
 

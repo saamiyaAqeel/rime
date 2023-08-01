@@ -8,7 +8,7 @@ import datetime
 from dataclasses import dataclass
 from typing import Iterable
 
-from .provider import Provider
+from ..provider import Provider
 from .providerutils import LazyContactProvider, LazyContactProviderContacts
 from ..event import Event, MessageEvent, MessageSession
 from ..contact import Contact, Name

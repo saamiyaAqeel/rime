@@ -7,7 +7,7 @@ import datetime
 from typing import Iterable
 from dataclasses import dataclass
 
-from .provider import Provider
+from ..provider import Provider
 from ..event import Event, MessageEvent, Media, MessageSession
 from ..contact import Contact, Name
 from ..sql import Table, Query, get_field_indices

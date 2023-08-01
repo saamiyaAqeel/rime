@@ -7,7 +7,7 @@ Provides ios contacts
 """
 from typing import Iterable
 
-from .provider import Provider
+from ..provider import Provider
 from ..contact import Contact, Name
 from ..sql import Table, Query, get_field_indices
 from ..event import Event

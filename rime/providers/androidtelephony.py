@@ -9,7 +9,7 @@ import datetime
 from dataclasses import dataclass
 import os.path
 
-from .provider import Provider
+from ..provider import Provider
 from .providerutils import LazyContactProvider, LazyContactProviderContacts
 from ..event import MessageEvent, MessageSession
 from ..sql import Table, Query, get_field_indices
