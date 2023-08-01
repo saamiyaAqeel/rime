@@ -136,10 +136,6 @@ class ChatSession {
 /* list of {typename: ..., events: ...} in order received. */
 const chatSessions = ref({});  // Maps chat session key to list of participants
 
-function getSessionKey(event) {
-	return event.deviceId + ":" + event.providerName + ":" + event.sessionId;
-}
-
 const column_gap = ref("2px");
 const grid_template_columns = ref("repeat(1, 1fr)");
 
@@ -156,6 +152,11 @@ const searchResult = computed(() => {
 	if (rawEventsSearchResult.value) {
 		result['deviceIds'] = rawEventsSearchResult.value.events.deviceIds;
 		result['providers'] = rawEventsSearchResult.value.events.providers;
+		result['messageSessions'] = rawEventsSearchResult.value.events.messageSessions;
+
+		for(let session of rawEventsSearchResult.value.events.messageSessions) {
+			chatSessions.value[session.sessionId] = new ChatSession(session.sessionId, session.name, session.participants, session.providerFriendlyName);
+		}
 
 		for(let event of rawEventsSearchResult.value.events.events) {
 			/* Post-process the server-supplied response */
@@ -172,24 +173,17 @@ const searchResult = computed(() => {
 			}
 
 			if(newEvent.__typename == "MessageEvent") {
-				const key = getSessionKey(newEvent);
-
 				/* Create the chat session if it doesn't exist */
-				if(!(key in chatSessions.value)) {
-					chatSessions.value[key] = new ChatSession(newEvent.sessionId, newEvent.session.name,
-															  newEvent.session.participants, newEvent.providerFriendlyName);
-				}
-
-				if(key == lastSessionKeyForDevice[event.deviceId]) {
+				if(newEvent.sessionId == lastSessionKeyForDevice[event.deviceId]) {
 					/* We've seen this session, so don't store it again. The GUI uses this to determine
 					   when a new session starts */
 					newEvent.session = null;
 				} else {
 					/* Overwrite it with the session object */
-					newEvent.session = chatSessions.value[key];
+					newEvent.session = chatSessions.value[newEvent.sessionId];
 				}
 
-				lastSessionKeyForDevice[event.deviceId] = key;
+				lastSessionKeyForDevice[event.deviceId] = newEvent.sessionId;
 			}
 
 			result.events.push(newEvent);

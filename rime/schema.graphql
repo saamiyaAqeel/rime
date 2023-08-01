@@ -230,6 +230,7 @@ type EventsResult {
   deviceIds: [String]
   providers: [Provider]
   events: [Event]
+  messageSessions: [MessageSession]
 }
 
 interface Event {
@@ -283,16 +284,6 @@ type MessageEvent implements Event {
   providerName: String
   providerFriendlyName: String
   timestamp: DateTime
-  """
-  The chat session to which this message belongs.
-
-  To avoid unnecessary duplication, "session" is only sent the first time it appears. Subsequent messages in the
-  same session can be identified using the sessionId field, which will always be set.
-  """
-  session: MessageSession
-  """
-  Any attached media.
-  """
   media: AttachedMedia
   sessionId: String
   sender: Contact

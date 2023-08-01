@@ -191,7 +191,7 @@ class IOSWhatsApp(Provider):
 
         chat = self.msgdb.execute(str(query)).fetchone()
         if not chat:
-            return MessageSession(session_id=session_id, provider=self,
+            return MessageSession(local_id=session_id, provider=self,
                                   name="Unknown wa-ios session", participants=tuple())
 
         if chat[field_names['ZGROUPINFO']] is not None:
@@ -207,7 +207,7 @@ class IOSWhatsApp(Provider):
             participants = [self._jid_to_contact(chat[field_names['ZCONTACTJID']])]
 
         return MessageSession(
-            session_id=session_id,
+            local_id=session_id,
             provider=self,
             name=chat[field_names['ZPARTNERNAME']],
             participants=tuple(participants))

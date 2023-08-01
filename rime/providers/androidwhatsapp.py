@@ -311,7 +311,7 @@ class AndroidWhatsApp(Provider):
         )
 
         return MessageSession(
-            session_id=chat_id,
+            local_id=chat_id,
             provider=self,
             name=subject,
             participants=tuple(contacts),

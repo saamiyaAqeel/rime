@@ -64,7 +64,7 @@ class AndroidTelephony(Provider, LazyContactProvider):
 
             yield MessageEvent(
                 id_=row[fields['sms_id']],
-                session_id=session.session_id,
+                session_id=session.local_id,
                 session=session,
                 from_me=row[fields['type']] == TYPE_FROM_ME,
                 timestamp=self._timestamp_to_datetime(row[fields['date']]),
@@ -82,7 +82,7 @@ class AndroidTelephony(Provider, LazyContactProvider):
         # TODO: group chats
         if thread_id not in self.sessions:
             self.sessions[thread_id] = MessageSession(
-                session_id=thread_id,
+                local_id=thread_id,
                 provider=self,
                 name='',
                 participants=(self.contacts[sender_address_id],),

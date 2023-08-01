@@ -27,14 +27,15 @@ class Event:
 
 @dataclass(kw_only=True)
 class MessageSession:
-    session_id: str
+    local_id: str
     provider: Provider
     name: str
     participants: tuple[Contact]
     provider_data: Any = None
+    global_id: str | None = None  # Added by graphql layer, no need to set in Provider
 
     def __hash__(self):
-        key = f'{self.session_id}:{self.provider.NAME}'
+        key = f'{self.local_id}:{self.provider.NAME}'
         return hash(key)
 
 

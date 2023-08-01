@@ -103,12 +103,6 @@ export const { result: rawEventsSearchResult, refetch: eventsRefetch } = useQuer
 			  text
 			  fromMe
 			  sessionId
-			  session {
-			    name
-				participants {
-					name { first last display } phone email
-				}
-			  }
 			  sender {
 				  id
 				  name { first last display }
@@ -123,13 +117,31 @@ export const { result: rawEventsSearchResult, refetch: eventsRefetch } = useQuer
               mime_type
               url
           }
-		}
+		},
+        messageSessions {
+            sessionId
+            name
+            participants {
+                name { first last display } phone email
+            }
+        }
 	  }
   }
   `, {
 	deviceIds: activeDevices,
 	filter: eventsFilter
 });
+
+export const eventsSearchResultById = computed(() => {
+    let events = {};
+    for(let event of rawEventsSearchResult.events.events) {
+        for(let e of event.events) {
+            events[e.id] = e;
+        }
+    }
+    return events;
+});
+
 
 export const searchView = ref('messages');
 export const setSearchView = (view) => { searchView.value = view; }

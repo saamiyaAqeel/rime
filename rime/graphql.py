@@ -22,13 +22,15 @@ from .event import MessageEvent, MediaEvent
 from .mergedcontact import merge_contacts
 from .anonymise import Anonymiser
 from .subset import Subsetter
+from .device import Device
+from .provider import Provider
+from .event import Event, MessageSession
 
 
 # A per-query context which includes RIME. This is what is provided in the per-query context value.
 class QueryContext:
     def __init__(self, rime):
         self.rime = rime
-        self.message_sessions_supplied = set()
 
 
 # Convert DateTime objects to ISO strings. (ref https://ariadnegraphql.org/docs/scalars)
@@ -103,15 +105,32 @@ def _make_providers_filter(providers_filter):
     return ProvidersFilter.empty()
 
 
-def _get_events_by_provider(rime, devices, filter_obj):
-    for device in devices:
-        for provider in device.providers.values():
-            provider_events = filter_obj.apply(provider.search_events(device, filter_obj))
-            # Decorate provider_events with the device ID as resolvers below this one need it.
-            for event in provider_events:
-                event.device_id = device.id_
+@dataclass
+class EventsByProvider:
+    device: Device
+    provider: Provider
+    events: list[Event]
+    message_sessions: list[MessageSession]
 
-            yield device, provider, provider_events
+    @classmethod
+    def for_devices(cls, devices, filter_obj):
+        for device in devices:
+            for provider in device.providers.values():
+                provider_events = filter_obj.apply(provider.search_events(device, filter_obj))
+                provider_message_sessions = []
+
+                # Set session global IDs here as we add them, and update the event session ID.
+                for event in provider_events:
+                    if isinstance(event, MessageEvent) and event.session is not None:
+                        event.session.global_id = f'{device.id_}:{provider.NAME}:{event.session.local_id}'
+                        event.session_id = event.session.global_id
+                        provider_message_sessions.append(event.session)
+
+                # Decorate provider_events with the device ID as resolvers below this one need it.
+                for event in provider_events:
+                    event.device_id = device.id_
+
+                yield cls(device, provider, provider_events, provider_message_sessions)
 
 
 @query_resolver.field('events')
@@ -123,19 +142,34 @@ def resolve_events(parent, info, deviceIds, filter=None):
     events = []
     device_ids = set()
     providers = set()
-    for device, provider, provider_events in _get_events_by_provider(rime, devices, filter_obj):
-        device_ids.add(device.id_)
-        providers.add(provider)
-        events.extend(provider_events)
+    message_sessions = set()
+    for ebp in EventsByProvider.for_devices(devices, filter_obj):
+        device_ids.add(ebp.device.id_)
+        providers.add(ebp.provider)
+        events.extend(ebp.events)
+        message_sessions.update(ebp.message_sessions)
 
     device_ids = list(device_ids)
     device_ids.sort()
     events.sort(key=lambda e: (e.timestamp, e.device_id))
 
-    return {'deviceIds': device_ids, 'providers': providers, 'events': events}
+    return {'deviceIds': device_ids, 'providers': providers, 'events': events,
+            'messageSessions': message_sessions}
+
+
+events_result_resolver = ObjectType('EventsResult')
+@events_result_resolver.field('messageSessions')
+def resolve_message_sessions(events_result, info):
+    # Augment message sessions with device ID.
+    return events_result['messageSessions']
 
 
 event_resolver = InterfaceType('Event')
+
+
+@event_resolver.field('id')
+def resolve_event_id(event, info):
+    return event.id_
 
 
 @event_resolver.type_resolver
@@ -190,15 +224,6 @@ def resolve_sender(event, info):
     return event.sender
 
 
-@message_event_resolver.field('session')
-def resolve_session(event, info):
-    if event.session not in info.context.message_sessions_supplied:
-        info.context.message_sessions_supplied.add(event.session)
-        return event.session
-
-    return None
-
-
 def _media_local_id_to_url(rime, device_id, provider_name, local_id):
     return f'{rime.media_prefix}{device_id}:{provider_name}:{local_id}'
 
@@ -221,7 +246,7 @@ message_session_resolver = ObjectType('MessageSession')
 
 @message_session_resolver.field('sessionId')
 def resolve_message_session_id(session, info):
-    return session.session_id
+    return session.global_id
 
 
 # Media events
@@ -455,14 +480,14 @@ def _create_subset_populate_device(rime, device, new_device, events_filter_obj, 
 
     # Create the subset of events.
     unsubsetted_contact_providers = set(contacts_by_provider.keys())
-    for device, provider, provider_events in _get_events_by_provider(rime, [device], events_filter_obj):
-        if provider.NAME in contacts_by_provider:
-            unsubsetted_contact_providers.remove(provider.NAME)
-            contacts_for_provider = contacts_by_provider[provider.NAME]
+    for ebp in EventsByProvider.for_devices([device], events_filter_obj):
+        if ebp.provider.NAME in contacts_by_provider:
+            unsubsetted_contact_providers.remove(ebp.provider.NAME)
+            contacts_for_provider = contacts_by_provider[ebp.provider.NAME]
         else:
             contacts_for_provider = []
 
-        provider.subset(subsetter, provider_events, contacts_for_provider)
+        ebp.provider.subset(subsetter, ebp.events, contacts_for_provider)
 
     # Also subset contacts-only providers with no subsetted events.
     for provider_name in unsubsetted_contact_providers:
@@ -609,7 +634,7 @@ def subsets_resolver(payload, info):
 RESOLVERS = [
     datetime_scalar, query_resolver, event_resolver, message_event_resolver, media_event_resolver,
     message_session_resolver, provider_resolver, contact_resolver, merged_contact_resolver, name_resolver,
-    device_resolver, mutation, devices_subscription, subsets_subscription,
+    device_resolver, mutation, devices_subscription, subsets_subscription, events_result_resolver 
 ]
 
 

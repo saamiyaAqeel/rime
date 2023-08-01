@@ -74,7 +74,7 @@ class IMessage(Provider, LazyContactProvider):
             contacts.append(self.contacts[row[fields['ROWID']]])
 
         return MessageSession(
-            session_id=chat_id,
+            local_id=chat_id,
             provider=self,
             name='',
             participants=tuple(contacts)
