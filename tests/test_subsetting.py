@@ -27,17 +27,17 @@ filter_events = gql.gql("""
               text
               fromMe
               sessionId
-              session {
-                name
-                participants {
-                    id name { first last display } phone email
-                }
-              }
               sender {
                   id
                   name { first last display }
                   phone
               }
+          }
+        }
+        messageSessions {
+             name
+             participants {
+               id name { first last display } phone email
           }
         }
       }
@@ -125,6 +125,14 @@ def _compare_event_ignoring_device_ids(event_a, event_b, context=None):
         for key in event_a.keys():
             if key == 'deviceId':
                 continue
+            elif key == 'sessionId':
+                # Trim session ID from front of key
+                assert ':' in event_a[key], 'Session ID does not look like a global ID'
+                assert ':' in event_b[key], 'Session ID does not look like a global ID'
+                if event_a[key].split(':', 1)[1:] != event_b[key].split(':', 1)[1:]:
+                    raise CompareFailed(f'Session IDs do not match: {event_a[key]} != {event_b[key]}',
+                                        context=context + (key,))
+
             elif key == 'id' and _looks_like_global_contact_id(event_a[key]):
                 _compare_event_ignoring_device_ids(
                     _normalise_contact_id(event_a[key]),
@@ -134,11 +142,6 @@ def _compare_event_ignoring_device_ids(event_a, event_b, context=None):
             else:
                 _compare_event_ignoring_device_ids(event_a[key], event_b[key], context=context + (key,))
     elif isinstance(event_a, list):
-        if context == ('session', 'participants'):
-            # Order is irrelevant for session participants
-            event_a = sorted(event_a, key=lambda x: x['id'])
-            event_b = sorted(event_b, key=lambda x: x['id'])
-
         if len(event_a) != len(event_b):
             raise CompareFailed(f'List lengths do not match: {len(event_a)} != {len(event_b)}', context=context)
 
@@ -176,6 +179,10 @@ def test_maximal_filter():
         earliest_timestamp = datetime.datetime(1900, 1, 1)
         latest_timestamp = datetime.datetime(9999, 1, 1)
 
+        for session in all_events['events']['messageSessions']:
+            for contact in session['participants']:
+                participant_ids.add(contact['id'])
+
         for event in all_events['events']['events']:
             if event['__typename'] == 'MediaEvent':
                 # Not subsetted yet.
@@ -183,9 +190,6 @@ def test_maximal_filter():
 
             type_names.add(event['__typename'])
             if event['__typename'] == 'MessageEvent':
-                if event['session'] is not None:
-                    for contact in event['session']['participants']:
-                        participant_ids.add(contact['id'])
                 if event['sender'] is not None:
                     participant_ids.add(event['sender']['id'])
 
