@@ -54,6 +54,16 @@ should be for the rime server to access them and serve them to the frontend.
 If there are no device data under the `base_path` then the UI will
 not show any available devices.
 
+If you want to open iOS encrypted files you can do it by adding the name of the filesystem alongside
+its passphrase in the configuration file, as:
+
+```yaml
+filesystem:
+  base_path: "../example/"
+  passphrases:
+    'ios-encrypted': 'passphrase'
+```
+
 #### Plugins
 
 RIME supports a plugin architecture, currently in development. The only plugin you can use at the moment is `ml_names`,

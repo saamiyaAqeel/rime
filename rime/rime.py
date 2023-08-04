@@ -196,7 +196,10 @@ class Rime:
     @classmethod
     def create(cls, config: Config, bg_call, async_loop):
         if not hasattr(FILESYSTEM_REGISTRY, 'registry'):
-            FILESYSTEM_REGISTRY.registry = FilesystemRegistry(base_path=config.get_pathname('filesystem.base_path'))
+            FILESYSTEM_REGISTRY.registry = FilesystemRegistry(
+                base_path=config.get_pathname('filesystem.base_path'),
+                passphrases=config.get('filesystem').get('passphrases')
+            )
 
         session = Session(config.get_pathname('session.database'))
         obj = cls(session, config, bg_call, async_loop)

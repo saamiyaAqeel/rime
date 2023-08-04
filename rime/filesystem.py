@@ -14,6 +14,8 @@ import shutil
 import zipfile
 import tempfile
 
+from iphone_backup_decrypt import EncryptedBackup
+
 from .sql import Table, Query, get_field_indices, sqlite3_connect as sqlite3_connect_with_regex_support
 
 import fs.osfs
@@ -76,6 +78,12 @@ class DeviceSettings:
 
     def set_locked(self, is_locked):
         self._set_setting('locked', '1' if is_locked else '0')
+
+    def is_encrypted(self):
+        return self._get_setting('encrypted') == '1'
+
+    def set_encrypted(self, is_encrypted):
+        self._set_setting('encrypted', '1' if is_encrypted else '0')
 
 
 def _ensuredir(pathname):
@@ -731,10 +739,27 @@ class IosZippedDeviceFilesystem(DeviceFilesystem):
         return self._settings.is_locked()
 
 
+class NotDecryptedError(Exception):
+    "Error to throw when the Filesystem is not decrypted."
+
+    def __init__(self):
+        self.message = "Filesystem is encrypted and cannot be read!"
+        super().__init__(self.message)
+
+
 class IosEncryptedDeviceFilesystem(DeviceFilesystem):
     def __init__(self, id_: str, root: str):
         self.id_ = id_
         self.root = root
+        self.file_table = Table('Files')
+        self._settings = DeviceSettings(root)
+        self._settings.set_encrypted(True)
+
+        # Should decrypt first to get the decrypted Manifest and a _backup
+        # object that can be used to decrypt the requested SQLite3 file
+        self.manifest = None
+        self._converter = None
+        self._backup = None
 
     @classmethod
     def is_device_filesystem(cls, path):
@@ -746,40 +771,129 @@ class IosEncryptedDeviceFilesystem(DeviceFilesystem):
 
     @classmethod
     def create(cls, id_: str, root: str) -> 'DeviceFilesystem':
-        return cls(id_, root)
+        if os.path.exists(root):
+            raise FileExistsError(root)
+
+        os.makedirs(root)
+
+        # Create Manifest for file hashing. Do this manually because we don't have a device yet.
+        syspath = os.path.join(root, 'Manifest.db')
+
+        with sqlite3_connect_with_regex_support(syspath) as conn:
+            conn.execute("""CREATE TABLE Files (
+                fileID TEXT PRIMARY KEY,
+                domain TEXT,
+                relativePath TEXT,
+                flags INTEGER,
+                file BLOB)
+            """)
+            conn.execute('CREATE TABLE Properties (key TEXT PRIMARY KEY, value BLOB)')
+
+        # Create Info.plist.
+        with open(os.path.join(root, 'Info.plist'), 'wb'):
+            pass  # touch the file to ensure it exists
+
+        obj = cls(id_, root)
+        obj._settings.set_subset_fs(True)
+        return obj
 
     def is_subset_filesystem(self) -> bool:
-        return False
+        return self._settings.is_subset_fs()
 
     def scandir(self, path) -> list[str]:
         return []
 
+    def listdir(self, path) -> list[str]:
+        query = Query.from_(self.file_table).select('fileID', 'relativePath')
+        query = query.where(self.file_table.relativePath == os.path.join(self.root, path))
+        fields = get_field_indices(query)
+        return [row[fields['relativePath']] for row in self.manifest.execute(str(query))]
+
     def exists(self, path) -> bool:
-        return False
+        real_path = self._converter.get_hashed_pathname(path)
+        return os.path.exists(os.path.join(self.root, real_path))
 
     def getsize(self, path) -> int:
-        raise NotImplementedError
+        return os.path.getsize(os.path.join(self.root, self._converter.get_hashed_pathname(path)))
 
     def open(self, path):
-        raise NotImplementedError
+        # TODO: Should cope with blobs in the manifest too
+        return open(os.path.join(self.root, self._converter.get_hashed_pathname(path), 'rb'))
 
     def create_file(self, path):
         raise NotImplementedError
 
-    def sqlite3_uri(self, path, read_only=True):
-        raise NotImplementedError
-
     def sqlite3_connect(self, path, read_only=True):
-        raise NotImplementedError
+        """
+        Connect to a (decrypted) SQLite database for the specific path.
+        """
+
+        # If the Manifest file hasn't been decrypted yet then we cannot
+        # use it to get the mapping from `domain/relativePath` to `fileID`
+        if not self._converter:
+            raise NotDecryptedError
+
+        # Decrypt the file and store it with a new filename
+        decrypted_hashed_pathname = self._converter.get_hashed_pathname(path) + '-decrypted'
+        self.decrypt_file(path, decrypted_hashed_pathname)
+
+        # Connect to the decrypted SQLite DB
+        db_url = self.sqlite3_uri(os.path.join(self.root, decrypted_hashed_pathname), read_only)
+        log.debug(f"iOS connecting to {db_url} ({path})")
+        return sqlite3_connect_with_regex_support(db_url, uri=True)
 
     def sqlite3_create(self, path):
-        raise NotImplementedError
+        """
+        Create a new sqlite3 database at the given path and fail if it already exists.
+        """
+        self._converter.add_file(path)
+
+        real_path = self._converter.get_hashed_pathname(path)
+        syspath = os.path.join(self.root, real_path)
+
+        if self.exists(syspath):
+            raise FileExistsError(path)
+
+        _ensuredir(syspath)
+
+        return sqlite3_connect_with_regex_support(syspath)
 
     def lock(self, locked: bool):
-        raise NotImplementedError
+        self._settings.set_locked(locked)
 
     def is_locked(self) -> bool:
-        return True
+        return self._settings.is_locked()
+
+    def is_encrypted(self) -> bool:
+        return self._settings.is_encrypted()
+
+    def decrypt_file(self, path, decrypted_hashed_pathname):
+        """
+        Get the relative_path and store a decrypted file alongside the
+        encrypted one.
+        """
+
+        _, relative_path = path.split('/', 1)
+
+        self._backup.extract_file(
+            relative_path=relative_path,
+            output_filename=os.path.join(self.root, decrypted_hashed_pathname)
+        )
+
+    def decrypt(self, passphrase: str) -> bool:
+        """
+        Decrypt the file system and store the decrypted Manifest.
+        Keep _backup in state to decrypt specific files if needed.
+        """
+
+        decrypted_manifest_filename = 'Manifest-decrypted.db'
+
+        self._backup = EncryptedBackup(backup_directory=self.root, passphrase=passphrase)
+        self._settings.set_encrypted(False)
+
+        self._backup.save_manifest_file(os.path.join(self.root, decrypted_manifest_filename))
+        self.manifest = sqlite3_connect_with_regex_support(os.path.join(self.root, decrypted_manifest_filename))
+        self._converter = _IosHashedFileConverter(self.manifest)
 
 
 FILESYSTEM_TYPE_TO_OBJ = {
@@ -800,8 +914,9 @@ class FilesystemRegistry:
 
     Filesystems are distinguished by a key, which is the name of the directory they're in under base_path.
     """
-    def __init__(self, base_path):
+    def __init__(self, base_path, passphrases):
         self.base_path = base_path
+        self.passphrases = passphrases
         self.filesystems = self._find_available_filesystems()  # maps key to FS object.
 
     def __getitem__(self, key):
@@ -823,6 +938,13 @@ class FilesystemRegistry:
                 for fs_cls in FILESYSTEM_TYPE_TO_OBJ.values():
                     if fs_cls.is_device_filesystem(path):
                         filesystems[filename] = fs_cls(filename, path)
+
+                        # If the FileSystem is encrypted and there is
+                        # a passphrase provided as part of the YAML configuration
+                        # (probably in `rime_settings.yaml`) then decrypt it
+                        if ('Encrypted' in fs_cls.__name__) and (filename in self.passphrases):
+                            filesystems[filename].decrypt(self.passphrases[filename])
+
         except FileNotFoundError:
             log.warning(f"Could not find filesystem directory: {self.base_path}")
 
