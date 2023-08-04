@@ -747,7 +747,18 @@ class NotDecryptedError(Exception):
         super().__init__(self.message)
 
 
+class NoPassphraseError(Exception):
+    "Error to throw when trying to decrypt without providing a passphrase."
+
+    def __init__(self):
+        self.message = "Cannot decrypt. Passphrase not provided!"
+        super().__init__(self.message)
+
+
 class IosEncryptedDeviceFilesystem(DeviceFilesystem):
+
+    decrypted_manifest_filename = 'Manifest-decrypted.db'
+
     def __init__(self, id_: str, root: str):
         self.id_ = id_
         self.root = root
@@ -760,6 +771,9 @@ class IosEncryptedDeviceFilesystem(DeviceFilesystem):
         self.manifest = None
         self._converter = None
         self._backup = None
+
+        # Store in case re-decryption is required
+        self._passphrase = None
 
     @classmethod
     def is_device_filesystem(cls, path):
@@ -835,10 +849,14 @@ class IosEncryptedDeviceFilesystem(DeviceFilesystem):
 
         # Decrypt the file and store it with a new filename
         decrypted_hashed_pathname = self._converter.get_hashed_pathname(path) + '-decrypted'
-        self.decrypt_file(path, decrypted_hashed_pathname)
+        decrypted_file_path = os.path.join(self.root, decrypted_hashed_pathname)
+
+        # Decrypt the file only if it's not already decrypted
+        if not os.path.exists(decrypted_file_path):
+            self.decrypt_file(path, decrypted_hashed_pathname)
 
         # Connect to the decrypted SQLite DB
-        db_url = self.sqlite3_uri(os.path.join(self.root, decrypted_hashed_pathname), read_only)
+        db_url = self.sqlite3_uri(decrypted_file_path, read_only)
         log.debug(f"iOS connecting to {db_url} ({path})")
         return sqlite3_connect_with_regex_support(db_url, uri=True)
 
@@ -873,6 +891,12 @@ class IosEncryptedDeviceFilesystem(DeviceFilesystem):
         encrypted one.
         """
 
+        # If there is currently not an EncryptedBackup object then we need
+        # to decrypt with the `passphrase` and get the decrypted Manifest
+        # and keychain that can be used to decrypt the file.
+        if not self._backup:
+            self._decrypt_backup()
+
         _, relative_path = path.split('/', 1)
 
         self._backup.extract_file(
@@ -880,19 +904,41 @@ class IosEncryptedDeviceFilesystem(DeviceFilesystem):
             output_filename=os.path.join(self.root, decrypted_hashed_pathname)
         )
 
-    def decrypt(self, passphrase: str) -> bool:
+    def _decrypt_backup(self):
         """
-        Decrypt the file system and store the decrypted Manifest.
+        Based on the stored passphrase, decrypt the encrypted root directory
         Keep _backup in state to decrypt specific files if needed.
         """
 
-        decrypted_manifest_filename = 'Manifest-decrypted.db'
+        if self._passphrase:
+            log.debug(f'Decrypting backup at: {self.root} with passphrase: {self._passphrase}')
 
-        self._backup = EncryptedBackup(backup_directory=self.root, passphrase=passphrase)
-        self._settings.set_encrypted(False)
+            decrypted_manifest_path = os.path.join(self.root, self.decrypted_manifest_filename)
 
-        self._backup.save_manifest_file(os.path.join(self.root, decrypted_manifest_filename))
-        self.manifest = sqlite3_connect_with_regex_support(os.path.join(self.root, decrypted_manifest_filename))
+            self._backup = EncryptedBackup(backup_directory=self.root, passphrase=self._passphrase)
+            self._backup.save_manifest_file(decrypted_manifest_path)
+
+            self._settings.set_encrypted(False)
+
+        else:
+            raise NoPassphraseError
+
+    def decrypt(self, passphrase: str) -> bool:
+        """
+        Decrypt the file system and store the decrypted Manifest if it is not
+        already decrypted.
+        """
+
+        self._passphrase = passphrase
+
+        decrypted_manifest_path = os.path.join(self.root, self.decrypted_manifest_filename)
+
+        # If the decrtyped Manifest does not exist then decrypt it; also
+        # re-decrypt if one of the files is not decrtyped and we need to decrypt
+        if not os.path.exists(decrypted_manifest_path):
+            self._decrypt_backup()
+
+        self.manifest = sqlite3_connect_with_regex_support(decrypted_manifest_path)
         self._converter = _IosHashedFileConverter(self.manifest)
 
 
