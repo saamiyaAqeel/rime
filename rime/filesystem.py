@@ -1018,7 +1018,9 @@ class FilesystemRegistry:
                         # If the FileSystem is encrypted and there is
                         # a passphrase provided as part of the YAML configuration
                         # (probably in `rime_settings.yaml`) then decrypt it
-                        if ('Encrypted' in fs_cls.__name__) and (filename in self.passphrases):
+                        if (('Encrypted' in fs_cls.__name__)
+                                and self.passphrases
+                                and (filename in self.passphrases)):
                             filesystems[filename].decrypt(self.passphrases[filename])
 
         except FileNotFoundError:
