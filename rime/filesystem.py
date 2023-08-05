@@ -755,6 +755,14 @@ class NoPassphraseError(Exception):
         super().__init__(self.message)
 
 
+class WrongPassphraseError(Exception):
+    "Error to throw when trying to decrypt with a wrong passphrase."
+
+    def __init__(self):
+        self.message = "Cannot decrypt. Passphrase is wrong!"
+        super().__init__(self.message)
+
+
 class IosEncryptedDeviceFilesystem(DeviceFilesystem):
 
     decrypted_manifest_filename = 'Manifest-decrypted.db'
@@ -895,6 +903,10 @@ class IosEncryptedDeviceFilesystem(DeviceFilesystem):
     def is_encrypted(self) -> bool:
         return self._settings.is_encrypted()
 
+    def set_passphrase(self, passphrase: str):
+        print(f'Setting passphrase for device "{self.id_}" to "{passphrase}"')
+        self._passphrase = passphrase
+
     def decrypt_file(self, path, decrypted_hashed_pathname):
         """
         Get the relative_path and store a decrypted file alongside the
@@ -921,14 +933,22 @@ class IosEncryptedDeviceFilesystem(DeviceFilesystem):
         """
 
         if self._passphrase:
-            log.debug(f'Decrypting backup at: {self.root} with passphrase: {self._passphrase}')
+            # TODO: change that to log.info(); usefull to know that decryption takes
+            # time when the system slows down due to it
+            print(f'Decrypting backup at: "{self.root}" with passphrase: "{self._passphrase}"')
 
-            decrypted_manifest_path = os.path.join(self.root, self.decrypted_manifest_filename)
+            try:
 
-            self._backup = EncryptedBackup(backup_directory=self.root, passphrase=self._passphrase)
-            self._backup.save_manifest_file(decrypted_manifest_path)
+                decrypted_manifest_path = os.path.join(self.root, self.decrypted_manifest_filename)
 
-            self._settings.set_encrypted(False)
+                self._backup = EncryptedBackup(backup_directory=self.root, passphrase=self._passphrase)
+                self._backup.save_manifest_file(decrypted_manifest_path)
+
+                self._settings.set_encrypted(False)
+
+            except ValueError:
+                print('Failed to decrypt. Incorrect passphrase.')
+                raise WrongPassphraseError
 
         else:
             raise NoPassphraseError
