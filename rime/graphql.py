@@ -25,7 +25,6 @@ from .subset import Subsetter
 from .device import Device
 from .provider import Provider
 from .event import Event, MessageSession
-from .errors import NotEncryptedDeviceType
 
 
 # A per-query context which includes RIME. This is what is provided in the per-query context value.
@@ -595,37 +594,10 @@ def resolve_delete_device(rime, info, deviceId):
     return info.context.rime.delete_device(deviceId)
 
 
-class DeviceNotFound(Exception):
-    "Error to show when no device with device_id is being tracked by RIME."
-
-    def __init__(self, device_id):
-        self.message = f'Device with ID "{device_id}" not found in RIME.'
-        super().__init__(self.message)
-
-
 @mutation.field('decryptDevice')
 def resolve_decrypt_device(_, info, deviceId: str, passphrase: str):
-
     print(f'deviceId: {deviceId}, passphrase: {passphrase}')
-
-    # Find which of the devices tracked by RIME the passphrase is for
-    rime = info.context.rime
-    target_device = None
-
-    for device in rime.devices:
-        if device.id_ == deviceId:
-            target_device = device
-            break
-
-    if not target_device:
-        raise DeviceNotFound(deviceId)
-
-    # Decrypt the device
-    try:
-        target_device.decrypt(passphrase)
-        return True
-    except NotEncryptedDeviceType:
-        return False
+    info.context.rime.decrypt_device(deviceId, passphrase)
 
 
 @mutation.field('setDeviceProperties')

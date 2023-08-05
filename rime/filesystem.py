@@ -778,7 +778,7 @@ class IosEncryptedDeviceFilesystem(DeviceFilesystem):
         # _backup object that can be used to decrypt the requested SQLite3 file
         if os.path.exists(os.path.join(self.root, self.decrypted_manifest_filename)):
             self.manifest = sqlite3_connect_with_regex_support(os.path.join(self.root, self.decrypted_manifest_filename))
-            self._converter = _IosHashedFileConverter(self.manifest)
+            self._converter = _IosManifest(self.manifest)
         else:
             self._settings.set_encrypted(True)
             self.manifest = None
@@ -969,7 +969,7 @@ class IosEncryptedDeviceFilesystem(DeviceFilesystem):
             self._decrypt_backup()
 
         self.manifest = sqlite3_connect_with_regex_support(decrypted_manifest_path)
-        self._converter = _IosHashedFileConverter(self.manifest)
+        self._converter = _IosManifest(self.manifest)
 
 
 FILESYSTEM_TYPE_TO_OBJ = {
