@@ -432,6 +432,11 @@ def resolve_device_is_locked(device, info):
     return device.is_locked()
 
 
+@device_resolver.field('is_encrypted')
+def resolve_device_is_encrypted(device, info):
+    return device.is_encrypted()
+
+
 @device_resolver.field('country_code')
 def resolve_device_country_code(device, info):
     return device.country_code

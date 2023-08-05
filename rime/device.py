@@ -30,5 +30,11 @@ class Device:
     def lock(self, locked):
         self.fs.lock(locked)
 
+    def _is_encrypted_device_type(self) -> bool:
+        return 'Encrypted' in self.fs.__class__.__name__
+
+    def is_encrypted(self) -> bool:
+        return (self._is_encrypted_device_type() and self.fs.is_encrypted())
+
     def __repr__(self):
         return f"Device({self.id_})"
