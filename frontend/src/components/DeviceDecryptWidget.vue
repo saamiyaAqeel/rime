@@ -15,7 +15,7 @@ import { ref } from 'vue';
 import { useMutation } from '@vue/apollo-composable';
 import gql from 'graphql-tag';
 
-const { mutate: decryptDevice } = useMutation(gql`
+const { mutate: decryptDevice, onDone } = useMutation(gql`
   mutation decryptDevice($deviceId: String!, $passphrase: String!) {
     decryptDevice(deviceId: $deviceId, passphrase: $passphrase)
   }
@@ -26,11 +26,31 @@ const props = defineProps({
 });
 
 const showPassphraseInput = ref(false);
+const showWrongPassphraseMessage = ref(false);
 const passphrase = ref('');
+
+onDone((result) => {
+  if (result.data && !result.data.decryptDevice) {
+    showWrongPassphraseMessage.value = true;
+    passphrase.value = '';
+  } else if (result.data && result.data.decryptDevice) {
+    showWrongPassphraseMessage.value = false;
+    passphrase.value = '';
+  }
+});
 </script>
 
 <template>
-  <div class="decrypt" @click="showPassphraseInput = !showPassphraseInput">&#128273;</div>
+  <div class="encrypted">
+    <span class="decrypt" @click="showPassphraseInput = !showPassphraseInput">&#128273;</span>
+    <span
+      class="wrong-passphrase"
+      v-show="showWrongPassphraseMessage"
+      title="Wrong passphrase: could not decrypt files."
+      >&#9888;</span
+    >
+  </div>
+
   <div class="container" v-if="showPassphraseInput">
     <input type="password" v-model="passphrase" placeholder="Type passphrase..." />
     <button
@@ -48,14 +68,25 @@ const passphrase = ref('');
 
 <style scoped>
 .decrypt {
-  display: inline-block;
   font-size: 14px;
   text-align: center;
   cursor: pointer;
 }
 
+.encrypted {
+  display: inline-block;
+}
+
+.wrong-passphrase {
+  color: red;
+}
+
 .container {
   display: grid;
   grid-template-columns: 70% 30%;
+}
+
+span {
+  margin-left: 10px;
 }
 </style>
