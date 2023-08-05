@@ -52,6 +52,11 @@ type Mutation {
   setDeviceProperties(
     deviceId: String!,
     deviceProperties: SetDeviceProperties!): Boolean
+
+  decryptDevice(
+    deviceId: String!
+    passphrase: String!
+  ): Boolean
 }
 
 type Subscription {
