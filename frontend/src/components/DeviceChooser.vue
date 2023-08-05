@@ -10,6 +10,8 @@ import { useQuery, useMutation } from '@vue/apollo-composable'
 import { devices, activeDevices, deleteDevice, setDeviceSelected } from '../store.js'
 import gql from 'graphql-tag'
 
+import DeviceDecryptWidget from './DeviceDecryptWidget.vue'
+
 /* When activeDevices changes, update the check boxes. */
 watch(activeDevices, (newVal, oldVal) => {
 	nextTick(() => {
@@ -39,6 +41,9 @@ async function toggleDeviceActive(id) {
 				:label="device.id" @click="toggleDeviceActive(device.id)" :disabled="device.is_locked" />
 			<label :class="{ locked: device.is_locked }" :for="'device-' + device.id">{{ device.id }}</label>
 			<span class="country_code">{{ device.country_code }}</span>
+			<span v-if="device.is_encrypted">
+				<DeviceDecryptWidget :deviceId="device.id" />
+			</span>
 			<div class="delete" v-if="device.is_subset && !device.is_locked" @click="deleteDevice(device.id)">&#10060;</div>
 		</div>
 		<div v-if="devices.length === 0">

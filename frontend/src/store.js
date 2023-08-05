@@ -45,6 +45,7 @@ const devicesSubscription = gql`
             id
             is_subset
             is_locked
+            is_encrypted
             country_code
         }
     }
