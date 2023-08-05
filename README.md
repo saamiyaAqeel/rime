@@ -54,8 +54,8 @@ should be for the rime server to access them and serve them to the frontend.
 If there are no device data under the `base_path` then the UI will
 not show any available devices.
 
-If you want to open iOS encrypted files you can do it by adding the name of the filesystem alongside
-its passphrase in the configuration file, as:
+If you want to open iOS encrypted files you can do it from the frontend UI, or by adding the name of
+the filesystem alongside its passphrase in the configuration file, as:
 
 ```yaml
 filesystem:
@@ -104,7 +104,8 @@ can be extended to include data from other applications and platforms.
 The RIME software assumes that an unencrypted dump of the filesystem of each device can be obtained.  
 
 For iOS devices, this can be done using the backup facilities available in the Mac Finder. Make sure that the option to
-'Encrypt local backup' is disabled!
+'Encrypt local backup' is disabled! For iOS devices RIME supports encrypted backups as well, however you should provide
+the passphrase to decrypt the backup.
 
 For Android devices...  (TBD)
 
