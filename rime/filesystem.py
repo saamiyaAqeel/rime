@@ -764,16 +764,21 @@ class IosEncryptedDeviceFilesystem(DeviceFilesystem):
         self.root = root
         self.file_table = Table('Files')
         self._settings = DeviceSettings(root)
-        self._settings.set_encrypted(True)
 
-        # Should decrypt first to get the decrypted Manifest and a _backup
-        # object that can be used to decrypt the requested SQLite3 file
-        self.manifest = None
-        self._converter = None
-        self._backup = None
+        # Check if the manifest exists already,
+        # otherwise need to decrypt first to get the decrypted Manifest and a
+        # _backup object that can be used to decrypt the requested SQLite3 file
+        if os.path.exists(os.path.join(self.root, self.decrypted_manifest_filename)):
+            self.manifest = sqlite3_connect_with_regex_support(os.path.join(self.root, self.decrypted_manifest_filename))
+            self._converter = _IosHashedFileConverter(self.manifest)
+        else:
+            self._settings.set_encrypted(True)
+            self.manifest = None
+            self._converter = None
 
         # Store in case re-decryption is required
         self._passphrase = None
+        self._backup = None
 
     @classmethod
     def is_device_filesystem(cls, path):
@@ -824,8 +829,13 @@ class IosEncryptedDeviceFilesystem(DeviceFilesystem):
         return [row[fields['relativePath']] for row in self.manifest.execute(str(query))]
 
     def exists(self, path) -> bool:
-        real_path = self._converter.get_hashed_pathname(path)
-        return os.path.exists(os.path.join(self.root, real_path))
+        # If there is no _converter then there is no "Manifest-decrypted.db"
+        # so return False to avoid crashing RIME.
+        if self._converter:
+            real_path = self._converter.get_hashed_pathname(path)
+            return os.path.exists(os.path.join(self.root, real_path))
+        else:
+            return False
 
     def getsize(self, path) -> int:
         return os.path.getsize(os.path.join(self.root, self._converter.get_hashed_pathname(path)))
