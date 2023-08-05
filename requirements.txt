@@ -23,7 +23,7 @@ h11==0.14.0
 httptools==0.5.0
 idna==3.4
 iniconfig==2.0.0
-iphone-backup-decrypt==0.2.2
+-e git+https://github.com/jsharkey13/iphone_backup_decrypt@917ad4c00c2ee63ce7c5bc6b37a5ac502cdc9a5c#egg=iphone_backup_decrypt
 mccabe==0.7.0
 multidict==6.0.4
 packaging==23.1
