@@ -4,3 +4,9 @@ env
 docs/_build
 .venv
 frontend/node_modules
+
+# Ignore example/ directory
+example
+
+# Ignore MacOS specific file
+.DS_Store
