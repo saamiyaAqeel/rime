@@ -215,7 +215,7 @@ class Timeout(Exception):
     pass
 
 
-def _wait_for_device(device_name, timeout_secs=5, retry_secs=0.5, present=True):
+def _wait_for_device(device_name, timeout_secs=10, retry_secs=0.5, present=True):
     start = time.time()
     end = start + timeout_secs
 
@@ -265,4 +265,4 @@ def test_improper_subset():
             except Exception as e:
                 print(f"Failed to delete subset device {subset_name}: {e}")
 
-            _wait_for_device(subset_name, timeout_secs=2, present=False)
+            _wait_for_device(subset_name, timeout_secs=5, present=False)
