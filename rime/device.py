@@ -1,6 +1,7 @@
-from .filesystem import DeviceFilesystem
+from .filesystem import DeviceFilesystem, WrongPassphraseError
 from .session import Session
 from .provider import find_providers
+from .errors import NotEncryptedDeviceType
 
 
 class Device:
@@ -29,6 +30,30 @@ class Device:
 
     def lock(self, locked):
         self.fs.lock(locked)
+
+    def _is_encrypted_device_type(self) -> bool:
+        return 'Encrypted' in self.fs.__class__.__name__
+
+    def is_encrypted(self) -> bool:
+        return (self._is_encrypted_device_type() and self.fs.is_encrypted())
+
+    def decrypt(self, passphrase: str):
+        """
+        Try to decrypt device with provided passphrase. Return:
+            - True when decryption is successful
+            - False when decryption is not successful
+        """
+
+        if not self._is_encrypted_device_type():
+            raise NotEncryptedDeviceType
+
+        try:
+            self.fs.decrypt(passphrase)
+            self.reload_providers()
+
+        except WrongPassphraseError:
+            print('Failed to decrypt with provided passphrase.')
+            raise
 
     def __repr__(self):
         return f"Device({self.id_})"

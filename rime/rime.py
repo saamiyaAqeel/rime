@@ -8,12 +8,13 @@ from dataclasses import dataclass
 import os
 import threading
 
-from .filesystem import FilesystemRegistry
+from .filesystem import FilesystemRegistry, WrongPassphraseError
 from .session import Session
 from .graphql import query as _graphql_query, query_async as _graphql_query_async
 from .config import Config
 from .plugins import load_plugin
 from .device import Device
+from .errors import NotEncryptedDeviceType, DeviceNotFound
 
 
 FILESYSTEM_REGISTRY = threading.local()
@@ -119,12 +120,39 @@ class Rime:
 
         return new_device
 
-    def delete_device(self, device_id: str):
+    def delete_device(self, device_id: str) -> bool:
         self.filesystem_registry.delete(device_id)
 
         self.publish_event('device_list_updated')
 
         return True
+
+    def decrypt_device(self, device_id: str, passphrase: str) -> bool:
+        """
+        Find if the selected device exists and then try to decrypt it
+        with the provided passphrase.
+        """
+        # Find which of the devices tracked by RIME the passphrase is for
+        target_device = None
+
+        for device in self.devices:
+            if device.id_ == device_id:
+                target_device = device
+                break
+
+        if not target_device:
+            raise DeviceNotFound(device_id)
+
+        # Decrypt the device and send event on success to send new device
+        # state to GraphQL subscribed clients
+        try:
+            target_device.decrypt(passphrase)
+            self.publish_event('device_list_updated')
+            return True
+        except NotEncryptedDeviceType:
+            return False
+        except WrongPassphraseError:
+            return False
 
     def query(self, query_json: dict):
         return _graphql_query(self, query_json)
@@ -196,7 +224,10 @@ class Rime:
     @classmethod
     def create(cls, config: Config, bg_call, async_loop):
         if not hasattr(FILESYSTEM_REGISTRY, 'registry'):
-            FILESYSTEM_REGISTRY.registry = FilesystemRegistry(base_path=config.get_pathname('filesystem.base_path'))
+            FILESYSTEM_REGISTRY.registry = FilesystemRegistry(
+                base_path=config.get_pathname('filesystem.base_path'),
+                passphrases=config.get('filesystem').get('passphrases')
+            )
 
         session = Session(config.get_pathname('session.database'))
         obj = cls(session, config, bg_call, async_loop)

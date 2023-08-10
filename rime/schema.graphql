@@ -52,6 +52,11 @@ type Mutation {
   setDeviceProperties(
     deviceId: String!,
     deviceProperties: SetDeviceProperties!): Boolean
+
+  decryptDevice(
+    deviceId: String!
+    passphrase: String!
+  ): Boolean
 }
 
 type Subscription {
@@ -124,6 +129,11 @@ type Device {
   Is this device locked? This happens during subsetting (particularly with anonymisation). Locked devices can't be accessed.
   """
   is_locked: Boolean
+
+  """
+  Is the filesystem encrypted and requires decryption?
+  """
+  is_encrypted: Boolean
 }
 
 input EventsFilter{
