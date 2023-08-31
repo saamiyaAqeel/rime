@@ -37,7 +37,7 @@ class EventsFilter:
     timestamp_end: datetime | None = None
     type_names: set[str] | None = None
     provider_names: set[str] | None = None
-    source_regex: Pattern | _AlwaysMatchesPattern = TheAlwaysMatchesPattern
+    generic_event_category_regex: Pattern | _AlwaysMatchesPattern = TheAlwaysMatchesPattern
 
     def accepts_type(self, type_name):
         return self.type_names is None or type_name in self.type_names
@@ -77,8 +77,9 @@ class EventsFilter:
         if self.timestamp_end and event.timestamp > self.timestamp_end:
             return False
 
-        if not self.source_regex.search(event.source or ''):
-            return False
+        if event.generic_event_info:
+            if not self.generic_event_category_regex.search(event.generic_event_info.category or ''):
+                return False
 
         return True
 

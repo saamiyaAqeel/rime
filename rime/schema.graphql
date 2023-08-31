@@ -243,9 +243,21 @@ type EventsResult {
   messageSessions: [MessageSession]
 }
 
+"""
+Provides extra information which may be useful for categorising generic Events, which are those found by
+searching the whole device, without reference to a particular app.
+"""
+type GenericEventInfo {
+  """
+  The "place the event comes from", such as a directory name.
+  """
+  category: String
+}
+
+
 interface Event {
   id: ID
-  source: String
+  genericEventInfo: GenericEventInfo
   deviceId: String
   providerName: String
   providerFriendlyName: String
@@ -289,7 +301,7 @@ Messages.
 """
 type MessageEvent implements Event {
   id: ID
-  source: String
+  genericEventInfo: GenericEventInfo
   deviceId: String
   providerName: String
   providerFriendlyName: String
@@ -304,11 +316,12 @@ type MessageEvent implements Event {
 """
 A type of Event which is a media file.
 
-These represent standalone media files, such as pictures, videos, or audio files.
+These represent standalone media files, such as pictures, videos, or audio files (e.g. stored in a photo album or
+music collection).
 """
 type MediaEvent implements Media & Event {
   id: ID
-  source: String
+  genericEventInfo: GenericEventInfo
   deviceId: String
   providerName: String
   providerFriendlyName: String

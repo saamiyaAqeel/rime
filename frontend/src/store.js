@@ -88,47 +88,50 @@ export function setFilter(filter) {
 
 export const { result: rawEventsSearchResult, refetch: eventsRefetch } = useQuery( gql`
   query getEvents($deviceIds: [String]!, $filter: EventsFilter) {
-	  events(deviceIds: $deviceIds, filter: $filter) {
-	  	deviceIds,
-		providers {
-			name
-			friendlyName
-		},
-		events {
-		  id
-          deviceId
-		  providerName
-		  providerFriendlyName
-		  timestamp
-		  ... on MessageEvent {
-			  text
-			  fromMe
-			  sessionId
-			  sender {
-				  id
-				  name { first last display }
-				  phone
-			  }
-			  media {
-				  mime_type
-				  url
-			  }
-		  }
-          ... on MediaEvent {
-              mime_type
-              url
-          }
-		},
-        messageSessions {
-            sessionId
-            name
-            providerFriendlyName
-            participants {
-                name { first last display } phone email
+    events(deviceIds: $deviceIds, filter: $filter) {
+        deviceIds,
+            providers {
+                name
+                friendlyName
+            },
+            events {
+                id
+                deviceId
+                providerName
+                providerFriendlyName
+                genericEventInfo {
+                    category
+                }
+                timestamp
+                    ... on MessageEvent {
+                        text
+                        fromMe
+                        sessionId
+                        sender {
+                            id
+                            name { first last display }
+                            phone
+                        }
+                        media {
+                            mime_type
+                            url
+                        }
+                    }
+                    ... on MediaEvent {
+                        mime_type
+                        url
+                    }
+            },
+            messageSessions {
+                sessionId
+                name
+                providerFriendlyName
+                participants {
+                    name { first last display } phone email
+                }
             }
-        }
-	  }
-  }
+    }
+}
   `, {
 	deviceIds: activeDevices,
 	filter: eventsFilter

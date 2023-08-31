@@ -777,7 +777,10 @@ class IosEncryptedDeviceFilesystem(DeviceFilesystem):
         # otherwise need to decrypt first to get the decrypted Manifest and a
         # _backup object that can be used to decrypt the requested SQLite3 file
         if os.path.exists(os.path.join(self.root, self.decrypted_manifest_filename)):
-            self.manifest = sqlite3_connect_with_regex_support(os.path.join(self.root, self.decrypted_manifest_filename))
+            self.manifest = sqlite3_connect_with_regex_support(
+                os.path.join(self.root,
+                             self.decrypted_manifest_filename)
+            )
             self._converter = _IosManifest(self.manifest)
         else:
             self._settings.set_encrypted(True)

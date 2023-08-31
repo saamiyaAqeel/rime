@@ -16,11 +16,16 @@ from .provider import Provider
 
 
 @dataclass
+class GenericEventInfo:
+    category: str
+
+
+@dataclass
 class Event:
     id_: str
     timestamp: datetime
     provider: Provider
-    source: str | None = None  # The directory or file from which this event was derived.
+    generic_event_info: GenericEventInfo | None = None  # see the various *generic*.py providers
     device_id: str | None = None  # Added by graphql layer, no need to set in Provider
     provider_data: Any = None
 

@@ -10,7 +10,7 @@ from datetime import datetime
 import filetype
 
 from ..provider import Provider
-from ..event import MediaEvent
+from ..event import MediaEvent, GenericEventInfo
 from ..media import MediaData
 
 _metadata_cache = {}  # fs.id_: {path: (DirEntry, filetype.types.base.Type)}
@@ -79,6 +79,18 @@ class AndroidGenericMedia(Provider):
         if self.fs.id_ not in _metadata_cache:
             _build_metadata_cache(self.fs)
 
+        # Cache GenericEventInfo (for now)
+        generic_event_info_by_category = {}
+
+        def get_generic_event_info(direntry):
+            category = _dirname(direntry.path)
+            if category not in generic_event_info_by_category:
+                generic_event_info_by_category[category] = GenericEventInfo(
+                    category=category
+                )
+
+            return generic_event_info_by_category[category]
+
         for direntry, metadata in _metadata_cache[self.fs.id_].values():
             if metadata is None:
                 continue
@@ -89,8 +101,8 @@ class AndroidGenericMedia(Provider):
                     local_id=direntry.path,
                     id_=direntry.path,
                     timestamp=datetime.fromtimestamp(direntry.stat().st_ctime),
-                    source=_dirname(direntry.path),
-                    provider=self
+                    generic_event_info=get_generic_event_info(direntry),
+                    provider=self,
                 )
 
     def search_contacts(self, filter_):

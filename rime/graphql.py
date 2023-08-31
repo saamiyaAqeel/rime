@@ -182,27 +182,36 @@ def resolve_event_type(obj, *_):
     raise TypeError(f'Unknown event type: {obj}')
 
 
-message_event_resolver = ObjectType('MessageEvent')
-
-
-@message_event_resolver.field('timestamp')
-def resolve_timestamp(event, info):
+# Resolvers common to all event types
+def _event_resolve_timestamp(event, info):
     return event.timestamp
 
 
-@message_event_resolver.field('providerName')
-def resolve_provider_name(event, info):
+def _event_resolve_provider_name(event, info):
     return event.provider.NAME
 
 
-@message_event_resolver.field('providerFriendlyName')
-def resolve_provider_friendly_name(event, info):
+def _event_resolve_provider_friendly_name(event, info):
     return event.provider.FRIENDLY_NAME
 
 
-@message_event_resolver.field('deviceId')
-def resolve_message_event_device_id(event, info):
+def _event_resolve_message_event_device_id(event, info):
     return event.provider.fs.id_
+
+
+def _event_resolve_generic_event_info(event, info):
+    if event.generic_event_info is not None:
+        return event.generic_event_info
+
+
+message_event_resolver = ObjectType('MessageEvent')
+
+
+message_event_resolver.set_field('timestamp', _event_resolve_timestamp)
+message_event_resolver.set_field('providerName', _event_resolve_provider_name)
+message_event_resolver.set_field('providerFriendlyName', _event_resolve_provider_friendly_name)
+message_event_resolver.set_field('deviceId', _event_resolve_message_event_device_id)
+message_event_resolver.set_field('genericEventInfo', _event_resolve_generic_event_info)
 
 
 @message_event_resolver.field('fromMe')
@@ -239,6 +248,7 @@ def resolve_media(event, info):
 
     return {'mime_type': event.media.mime_type, 'url': url}
 
+
 # Message sessions
 
 
@@ -264,6 +274,12 @@ def resolve_message_session_provider_friendly_name(session, info):
 
 
 media_event_resolver = ObjectType('MediaEvent')
+
+media_event_resolver.set_field('timestamp', _event_resolve_timestamp)
+media_event_resolver.set_field('providerName', _event_resolve_provider_name)
+media_event_resolver.set_field('providerFriendlyName', _event_resolve_provider_friendly_name)
+media_event_resolver.set_field('deviceId', _event_resolve_message_event_device_id)
+media_event_resolver.set_field('genericEventInfo', _event_resolve_generic_event_info)
 
 
 @media_event_resolver.field('url')
