@@ -208,6 +208,16 @@ class DeviceFilesystem(ABC):
         return False
 
 
+class EncryptedDeviceFilesystem(DeviceFilesystem):
+    @abstractmethod
+    def is_encrypted(self) -> bool:
+        return False
+
+    @abstractmethod
+    def decrypt(self, passphrase: str) -> bool:
+        pass
+
+
 class AndroidDeviceFilesystem(DeviceFilesystem):
     def __init__(self, id_: str, root: str):
         self.id_ = id_
@@ -763,7 +773,7 @@ class WrongPassphraseError(Exception):
         super().__init__(self.message)
 
 
-class IosEncryptedDeviceFilesystem(DeviceFilesystem):
+class IosEncryptedDeviceFilesystem(EncryptedDeviceFilesystem):
 
     decrypted_manifest_filename = 'Manifest-decrypted.db'
 
@@ -973,6 +983,8 @@ class IosEncryptedDeviceFilesystem(DeviceFilesystem):
 
         self.manifest = sqlite3_connect_with_regex_support(decrypted_manifest_path)
         self._converter = _IosManifest(self.manifest)
+
+        return True
 
 
 FILESYSTEM_TYPE_TO_OBJ = {
