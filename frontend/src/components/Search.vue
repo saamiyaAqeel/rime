@@ -134,7 +134,12 @@ function updateGql() {
 		// Push actual contact ID lists from merged contacts
 		for (let mergedContactId of Object.keys(selectedMergedContacts.value)) {
 			if (selectedMergedContacts.value[mergedContactId]) {
-				filter.participantIds.push(...contacts.value[mergedContactId].map((contact) => contact.id));
+				if(!contacts.value[mergedContactId]) {
+					/* Contacts have changed since we stored them in the filter. */
+					delete selectedMergedContacts.value[mergedContactId];
+				} else {
+					filter.participantIds.push(...contacts.value[mergedContactId].map((contact) => contact.id));
+				}
 			}
 		}
 	}
