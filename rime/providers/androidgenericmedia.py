@@ -148,7 +148,7 @@ class AndroidGenericMedia(Provider):
         """
         return a MediaData object supplying the picture, video, sound, etc identified by 'local_id'.
         """
-        if local_id not in _metadata_cache[self.fs.id_]:
+        if self.fs.id_ not in _metadata_cache or local_id not in _metadata_cache[self.fs.id_]:
             _build_metadata_cache(self.fs)
 
         direntry, metadata = _metadata_cache[self.fs.id_][local_id]
