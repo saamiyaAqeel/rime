@@ -61,7 +61,7 @@ class EventsFilter:
         if self.participant_ids:
             # Create global contact IDs for comparison and include group chat participants.
 
-            event_participants = set([GlobalContactId.from_contact(event.sender)]) if event.sender else set()
+            event_participants = set([GlobalContactId.from_contact(event.sender)])
 
             if isinstance(event, MessageEvent) and event.session:
                 event_participants.update([GlobalContactId.from_contact(p) for p in event.session.participants])

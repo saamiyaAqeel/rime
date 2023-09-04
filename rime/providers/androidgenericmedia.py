@@ -6,12 +6,16 @@
 A provider which finds any media on the device not already found by other providers.
 """
 from datetime import datetime
+from dataclasses import dataclass
 
 import filetype
 
 from ..provider import Provider
 from ..event import MediaEvent, GenericEventInfo
 from ..media import MediaData
+
+from . import providernames
+from .providernames import ANDROID_GENERIC_MEDIA, ANDROID_GENERIC_MEDIA_FRIENDLY
 
 _metadata_cache = {}  # fs.id_: {path: (DirEntry, filetype.types.base.Type)}
 
@@ -53,9 +57,31 @@ def _dirname(filename):
     return filename[:filename.rindex('/')]
 
 
+@dataclass
+class DirentryProviderInfo:
+    provider_name: str
+    is_user_content: bool
+
+
+_DIRENTRY_TO_PROVIDER_PREFIXES = {
+    '/sdcard/Android/data/com.hmdglobal.camera2/': DirentryProviderInfo(providernames.ANDROID_CAMERA2_HMDGLOBAL, False),
+    '/sdcard/DCIM/Camera/': DirentryProviderInfo(providernames.ANDROID_CAMERA, True),
+    '/sdcard/WhatsApp/Media/': DirentryProviderInfo(providernames.ANDROID_WHATSAPP, True),
+    '/sdcard/com.whatsapp/files/': DirentryProviderInfo(providernames.ANDROID_WHATSAPP, False),
+}
+
+
+def _guess_provider_for_entity(category) -> DirentryProviderInfo | None:
+    for prefix, info in _DIRENTRY_TO_PROVIDER_PREFIXES.items():
+        if category.startswith(prefix):
+            return info
+
+    return None
+
+
 class AndroidGenericMedia(Provider):
-    NAME = 'android-generic-media'
-    FRIENDLY_NAME = 'Android Generic Media'
+    NAME = ANDROID_GENERIC_MEDIA
+    FRIENDLY_NAME = ANDROID_GENERIC_MEDIA_FRIENDLY
 
     PII_FIELDS = []
 
@@ -79,30 +105,37 @@ class AndroidGenericMedia(Provider):
         if self.fs.id_ not in _metadata_cache:
             _build_metadata_cache(self.fs)
 
-        # Cache GenericEventInfo (for now)
-        generic_event_info_by_category = {}
-
-        def get_generic_event_info(direntry):
-            category = _dirname(direntry.path)
-            if category not in generic_event_info_by_category:
-                generic_event_info_by_category[category] = GenericEventInfo(
-                    category=category
-                )
-
-            return generic_event_info_by_category[category]
-
         for direntry, metadata in _metadata_cache[self.fs.id_].values():
             if metadata is None:
                 continue
 
             if metadata.mime.startswith('image/') or metadata.mime.startswith('video/'):
+                category = _dirname(direntry.path)
+
+                # Attempt to label the provider. We either label it as definitively coming from a
+                # specific provider, or, if it's user or unknown content, we default to the
+                # unknown contact.
+                direntry_provider_info = _guess_provider_for_entity(category)
+                if direntry_provider_info and not direntry_provider_info.is_user_content:
+                    sender = device.provider_contact(direntry_provider_info.provider_name)
+                    is_user_generated = False
+                else:
+                    sender = device.unknown_contact
+                    is_user_generated = True
+
+                generic_event_info = GenericEventInfo(
+                    category=category,
+                    is_user_generated=is_user_generated,
+                )
+
                 yield MediaEvent(
                     mime_type=metadata.mime,
                     local_id=direntry.path,
                     id_=direntry.path,
                     timestamp=datetime.fromtimestamp(direntry.stat().st_ctime),
-                    generic_event_info=get_generic_event_info(direntry),
+                    generic_event_info=generic_event_info,
                     provider=self,
+                    sender=sender,
                 )
 
     def search_contacts(self, filter_):

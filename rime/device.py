@@ -2,6 +2,8 @@ from .filesystem import DeviceFilesystem, WrongPassphraseError
 from .session import Session
 from .provider import find_providers
 from .errors import NotEncryptedDeviceType
+from .contact import Contact, Name
+from .providers.providernames import FRIENDLY_NAMES
 
 
 class Device:
@@ -10,6 +12,34 @@ class Device:
         self.fs = fs
         self.providers = find_providers(self.fs)
         self.session = session
+
+        # Special contacts:
+
+        # ... the device operator
+        self.device_operator_contact = Contact(local_id='operator', device_id=self.id_, providerName='device',
+                                               name=Name(display="Device operator"))
+
+        # ... an unknown sender
+        self.unknown_contact = Contact(local_id='unknown', device_id=self.id_, providerName='device',
+                                       name=Name(display="Unknown"))
+
+        # ... the device itself
+        self.device_contact = Contact(local_id='device', device_id=self.id_, providerName='device',
+                                      name=Name(display="System"))
+
+        # ... individual per-device apps, created on demand.
+        self._provider_contacts = {}
+
+    def provider_contact(self, provider_name: str) -> Contact:
+        if provider_name not in self._provider_contacts:
+            self._provider_contacts[provider_name] = Contact(
+                local_id=provider_name,
+                device_id=self.id_,
+                providerName=provider_name,
+                providerFriendlyName=FRIENDLY_NAMES[provider_name],
+                name=Name(display=FRIENDLY_NAMES[provider_name]),
+            )
+        return self._provider_contacts[provider_name]
 
     def reload_providers(self):
         self.providers = find_providers(self.fs)

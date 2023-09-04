@@ -26,6 +26,8 @@ from ..sql import Table, Query, get_field_indices
 from ..contact import Contact, Name
 from ..anonymise import anonymise_phone, anonymise_email, anonymise_name
 
+from .providernames import ANDROID_CONTACTS, ANDROID_CONTACTS_FRIENDLY
+
 
 @dataclass
 class AndroidContact:
@@ -53,8 +55,8 @@ def filter_contacts(filter, contacts_iterable):
 
 
 class AndroidContacts(Provider):
-    NAME = 'android-com.android.providers.contacts'
-    FRIENDLY_NAME = 'Android Contacts'
+    NAME = ANDROID_CONTACTS
+    FRIENDLY_NAME = ANDROID_CONTACTS_FRIENDLY
 
     DB_PATH = 'data/data/com.android.providers.contacts/databases/contacts2.db'
 

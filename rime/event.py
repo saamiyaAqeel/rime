@@ -18,6 +18,7 @@ from .provider import Provider
 @dataclass
 class GenericEventInfo:
     category: str
+    is_user_generated: bool = False
 
 
 @dataclass
@@ -25,6 +26,7 @@ class Event:
     id_: str
     timestamp: datetime
     provider: Provider
+    sender: Contact
     generic_event_info: GenericEventInfo | None = None  # see the various *generic*.py providers
     device_id: str | None = None  # Added by graphql layer, no need to set in Provider
     provider_data: Any = None
@@ -57,7 +59,6 @@ class Media:
 class MessageEvent(Event):
     session_id: str
     text: str
-    sender: Contact | None = None
     from_me: bool = False
     session: MessageSession | None = None
     media: Media | None = None

@@ -201,7 +201,10 @@ def _event_resolve_message_event_device_id(event, info):
 
 def _event_resolve_generic_event_info(event, info):
     if event.generic_event_info is not None:
-        return event.generic_event_info
+        return {
+            'category': event.generic_event_info.category,
+            'isUserGenerated': event.generic_event_info.is_user_generated
+        }
 
 
 message_event_resolver = ObjectType('MessageEvent')

@@ -13,6 +13,7 @@ from ..contact import Contact, Name
 from ..sql import Table, Query, get_field_indices
 from ..anonymise import anonymise_phone, anonymise_name
 from ..media import MediaData
+from .providernames import ANDROID_WHATSAPP, ANDROID_WHATSAPP_FRIENDLY
 
 # for the message_type column in msgstore.db
 MESSAGE_TYPE_TEXT = 0
@@ -103,8 +104,8 @@ class WhatsappMessageEvent:
 
 
 class AndroidWhatsApp(Provider):
-    NAME = 'android-com.whatsapp.android'
-    FRIENDLY_NAME = 'Android WhatsApp'
+    NAME = ANDROID_WHATSAPP
+    FRIENDLY_NAME = ANDROID_WHATSAPP_FRIENDLY
 
     MESSAGE_DB = os.path.join('data', 'data', 'com.whatsapp', 'databases', 'msgstore.db')  # chats
     WA_DB = os.path.join('data', 'data', 'com.whatsapp', 'databases', 'wa.db')  # contacts
@@ -374,6 +375,12 @@ class AndroidWhatsApp(Provider):
             else:
                 # Private chat.
                 sender = self._get_contact(row[fields['sender_jid_row_id']])  # may be None
+
+            # One reason for sender to be none is that it's the device operator.
+            if sender is None and bool(row[fields['from_me']]):
+                sender = device.device_operator_contact
+            else:
+                sender = device.unknown_contact
 
             # Store session info.
             if row[fields['chat_row_id']] not in wa_sessions:

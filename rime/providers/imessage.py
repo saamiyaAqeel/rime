@@ -14,6 +14,7 @@ from ..event import Event, MessageEvent, MessageSession
 from ..contact import Contact, Name
 from ..sql import Table, Query, get_field_indices
 from ..anonymise import anonymise_phone, anonymise_name
+from .providernames import IOS_IMESSAGE, IOS_IMESSAGE_FRIENDLY
 
 
 @dataclass
@@ -28,8 +29,8 @@ class ImessageMessage:
 
 
 class IMessage(Provider, LazyContactProvider):
-    NAME = 'ios-com.apple.messages'
-    FRIENDLY_NAME = 'iOS Messages'
+    NAME = IOS_IMESSAGE
+    FRIENDLY_NAME = IOS_IMESSAGE_FRIENDLY
 
     # iOS filenames should be specified beginning DOMAIN-
     MESSAGE_DB = "HomeDomain/Library/SMS/sms.db"
@@ -106,6 +107,8 @@ class IMessage(Provider, LazyContactProvider):
             if chat_id not in sessions:
                 sessions[chat_id] = self._create_session(chat_id)
 
+            sender = device.device_operator_contact if row[fields['is_from_me']] else sessions[chat_id].participants[0]
+
             yield MessageEvent(
                 id_=row[fields['guid']],
                 session_id=chat_id,
@@ -113,6 +116,7 @@ class IMessage(Provider, LazyContactProvider):
                 from_me=bool(row[fields['is_from_me']]),
                 timestamp=self._timestamp_to_datetime(row[fields['date']]),
                 provider=self,
+                sender=sender,
                 provider_data=ImessageMessage(
                     message_row_id=row[fields['ROWID']],
                     chat_row_id=row[fields['chat_id']],

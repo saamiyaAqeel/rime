@@ -12,11 +12,12 @@ from ..contact import Contact, Name
 from ..sql import Table, Query, get_field_indices
 from ..event import Event
 from ..anonymise import anonymise_phone, anonymise_email, anonymise_name
+from .providernames import IOS_CONTACTS, IOS_CONTACTS_FRIENDLY
 
 
 class IOSContacts(Provider):
-    NAME = 'ios-AddressBook'
-    FRIENDLY_NAME = 'iOS Contacts'
+    NAME = IOS_CONTACTS
+    FRIENDLY_NAME = IOS_CONTACTS_FRIENDLY
 
     DB_PATH = 'HomeDomain/Library/AddressBook/AddressBook.sqlitedb'
 

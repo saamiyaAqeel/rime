@@ -11,6 +11,7 @@ import { watch, ref, computed } from 'vue'
 
 const menuitems = ref(null);
 const menuDownloadUrl = ref(null);
+const showNonUserGeneratedEvents = ref(false);
 
 const toggleMenu = function(event) {
 	const menu = event.target.closest('.menu');
@@ -74,6 +75,10 @@ const eventsByCategory = computed(() => {
 	return eventsByCategory;
 });
 
+const shouldShowEvent = function(event) {
+	return event && event.__typename == 'MediaEvent' && (showNonUserGeneratedEvents.value || event.genericEventInfo.isUserGenerated);
+}
+
 
 </script>
 
@@ -84,13 +89,17 @@ const eventsByCategory = computed(() => {
 				<li><a :href="menuDownloadUrl" target="_blank">Download</a></li>
 			</ul>
 		</div>
+		<div>
+			<input type="checkbox" v-model="showNonUserGeneratedEvents" id="showNonUserGeneratedEvents" />
+			<label for="showNonUserGeneratedEvents">Show non-user-generated events</label>
+		</div>
 		<div class="category" v-for="[category, events] of Object.entries(eventsByCategory)">
 			<div class="categoryName">
 				{{ category }}
 			</div>
 			<div class="grid">
 				<template v-for="event in events">
-					<div v-if="event && event.__typename == 'MediaEvent'" class="gridElement">
+					<div v-if="shouldShowEvent(event)" class="gridElement">
 						<div class="menu" :data-eventid="event.id"><div class="burger" @click="toggleMenu"> &vellip; </div></div>
 						<video v-if="event.mime_type.startsWith('video')" controls>
 							<source :src="event.url" :type="event.mime_type"/>

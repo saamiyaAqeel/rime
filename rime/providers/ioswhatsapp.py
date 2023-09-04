@@ -10,6 +10,7 @@ from ..sql import Table, Query, get_field_indices
 from ..event import MessageEvent, MessageSession
 from ..contact import Contact, Name
 from ..anonymise import anonymise_phone, anonymise_name
+from .providernames import IOS_WHATSAPP, IOS_WHATSAPP_FRIENDLY
 
 # For the ZMESSAGETYPE column in ZWAMESSAGE
 MESSAGE_TYPE_TEXT = 0
@@ -40,8 +41,8 @@ class IosWhatsappContact:
 
 
 class IOSWhatsApp(Provider):
-    NAME = 'ios-net.whatsapp.WhatsApp'
-    FRIENDLY_NAME = 'iOS WhatsApp'
+    NAME = IOS_WHATSAPP
+    FRIENDLY_NAME = IOS_WHATSAPP_FRIENDLY
 
     CHATSTORAGE_DB = 'AppDomainGroup-group.net.whatsapp.WhatsApp.shared/ChatStorage.sqlite'
 
@@ -103,6 +104,13 @@ class IOSWhatsApp(Provider):
                 chat_session_id=session_id
             )
 
+            if bool(row[fields['ZISFROMME']]):
+                sender = device.device_operator_contact
+            elif sender_jid:
+                sender = self._jid_to_contact(sender_jid)
+            else:
+                sender = device.unknown_contact
+
             yield MessageEvent(
                 id_=row[fields['Z_PK']],
                 session_id=session_id,
@@ -112,7 +120,7 @@ class IOSWhatsApp(Provider):
                 provider_data=provider_data,
                 text=row[fields['ZTEXT']],
                 from_me=bool(row[fields['ZISFROMME']]),
-                sender=self._jid_to_contact(sender_jid) if sender_jid else None,
+                sender=sender,
             )
 
     def search_contacts(self, filter_):

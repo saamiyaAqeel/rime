@@ -15,6 +15,7 @@ from ..event import MessageEvent, MessageSession
 from ..sql import Table, Query, get_field_indices
 from ..contact import Contact, Name
 from ..anonymise import anonymise_phone, anonymise_name
+from .providernames import ANDROID_TELEPHONY, ANDROID_TELEPHONY_FRIENDLY
 
 TYPE_TO_ME = 1
 TYPE_FROM_ME = 2
@@ -27,8 +28,8 @@ class AtMessage:
 
 
 class AndroidTelephony(Provider, LazyContactProvider):
-    NAME = "android-com.android.providers.telephony"
-    FRIENDLY_NAME = "Android Telephony"
+    NAME = ANDROID_TELEPHONY
+    FRIENDLY_NAME = ANDROID_TELEPHONY_FRIENDLY
 
     MMSSMS_DB = os.path.join('data', 'data', 'com.android.providers.telephony', 'databases', 'mmssms.db')
 
@@ -62,6 +63,10 @@ class AndroidTelephony(Provider, LazyContactProvider):
                 address_table_id=row[fields['address_id']],
             )
 
+            sender = device.device_operator_contact \
+                if row[fields['type']] == TYPE_TO_ME \
+                else self.contacts[row[fields['address_id']]]
+
             yield MessageEvent(
                 id_=row[fields['sms_id']],
                 session_id=session.local_id,
@@ -71,7 +76,7 @@ class AndroidTelephony(Provider, LazyContactProvider):
                 provider=self,
                 provider_data=provider_data,
                 text=row[fields['body']],
-                sender=self.contacts[row[fields['address_id']]],
+                sender=sender,
             )
 
     def _timestamp_to_datetime(self, timestamp):

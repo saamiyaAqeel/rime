@@ -101,6 +101,7 @@ export const { result: rawEventsSearchResult, refetch: eventsRefetch } = useQuer
                 providerFriendlyName
                 genericEventInfo {
                     category
+                    isUserGenerated
                 }
                 timestamp
                     ... on MessageEvent {
