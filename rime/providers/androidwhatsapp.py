@@ -365,7 +365,9 @@ class AndroidWhatsApp(Provider):
             #   is as indicated by sender_jid_row_id.
 
             # Find the sender.
-            if row[fields['sender_jid_row_id']] == 0:
+            if row[fields['from_me']]:
+                sender = device.device_operator_contact
+            elif row[fields['sender_jid_row_id']] == 0:
                 # Group chat.
                 author_device_jid = row[fields['author_device_jid']]
                 if author_device_jid:
@@ -376,10 +378,7 @@ class AndroidWhatsApp(Provider):
                 # Private chat.
                 sender = self._get_contact(row[fields['sender_jid_row_id']])  # may be None
 
-            # One reason for sender to be none is that it's the device operator.
-            if sender is None and bool(row[fields['from_me']]):
-                sender = device.device_operator_contact
-            else:
+            if sender is None:
                 sender = device.unknown_contact
 
             # Store session info.
@@ -472,7 +471,7 @@ class AndroidWhatsApp(Provider):
             wa_message = event.provider_data
 
             rows_message.add(wa_message.message_row_id)
-            if event.sender:
+            if event.sender and event.sender.provider_data:
                 rows_jid.update(jid_contact.id_ for jid_contact in event.sender.provider_data.jid_contacts)
 
             if event.session:
