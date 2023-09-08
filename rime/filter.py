@@ -30,7 +30,7 @@ class ProvidersFilter:
         return cls(name_regex=TheAlwaysMatchesPattern)
 
 
-@dataclass
+@dataclass(frozen=True)
 class EventsFilter:
     participant_ids: list[GlobalContactId] | None = None
     timestamp_start: datetime | None = None
