@@ -62,5 +62,10 @@ def sqlite3_connect(db_path, uri=False):
     return conn
 
 
+def sqlite3_connect_filename(path, read_only=True):
+    params = "?mode=ro&immutable=1" if read_only else ""
+    return sqlite3_connect(f"file:{path}{params}", uri=True)
+
+
 def get_field_indices(query):
     return {select.alias or select.name: idx for idx, select in enumerate(query._selects)}

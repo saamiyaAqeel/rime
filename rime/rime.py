@@ -8,7 +8,8 @@ from dataclasses import dataclass
 import os
 import threading
 
-from .filesystem import FilesystemRegistry, WrongPassphraseError
+from .filesystem.registry import FilesystemRegistry
+from .filesystem.exceptions import WrongPassphraseError
 from .session import Session
 from .graphql import query as _graphql_query, query_async as _graphql_query_async
 from .config import Config

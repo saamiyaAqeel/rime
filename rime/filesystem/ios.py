@@ -1,428 +1,26 @@
 # This software is released under the terms of the GNU GENERAL PUBLIC LICENSE.
 # See LICENSE.txt for full details.
 # Copyright 2023 Telemarq Ltd
-
 from abc import ABC, abstractmethod
-from dataclasses import dataclass
-import hashlib
 import os
 import plistlib
-import re
-import sqlite3
-import stat
-import shutil
-import zipfile
-import tempfile
-
-from iphone_backup_decrypt import EncryptedBackup
-
-from .sql import Table, Query, get_field_indices, sqlite3_connect as sqlite3_connect_with_regex_support
-
-import fs.osfs
-import fs.tempfs
-
-
+import hashlib
 from logging import getLogger
+import shutil
+import sqlite3
+import tempfile
+from typing import Optional
+import zipfile
+
+from iphone_backup_decrypt import EncryptedBackup  # pyright: ignore[reportMissingImports]
+
+from .devicefilesystem import DeviceFilesystem, EncryptedDeviceFilesystem, DirEntry
+from .devicesettings import DeviceSettings
+from .exceptions import NoPassphraseError, NotDecryptedError, WrongPassphraseError
+from .ensuredir import ensuredir
+from ..sql import Table, Query, get_field_indices, sqlite3_connect_filename as sqlite3_connect_with_regex_support
+
 log = getLogger(__name__)
-
-
-class Error(Exception):
-    pass
-
-
-class FilesystemNotFoundError(Error):
-    pass
-
-
-class FilesystemTypeUnknownError(Error):
-    pass
-
-
-class FilesystemIsEncryptedError(Error):
-    pass
-
-
-class DeviceSettings:
-    def __init__(self, path, settings_filename='_rime_settings.db'):
-        self._db_name = os.path.join(path, settings_filename)
-        self.conn = sqlite3_connect_with_regex_support(self._db_name)
-        self._init_tables()
-
-    def _init_tables(self):
-        self.conn.execute("CREATE TABLE IF NOT EXISTS settings (key TEXT, value TEXT)")
-
-    def _get_setting(self, key):
-        c = self.conn.cursor()
-        c.execute("SELECT value FROM settings WHERE key=?", (key,))
-        row = c.fetchone()
-        if row:
-            return row[0]
-        else:
-            return None
-
-    def _set_setting(self, key, value):
-        c = self.conn.cursor()
-        c.execute("UPDATE settings SET value=? WHERE key=?", (value, key))
-        if c.rowcount == 0:
-            c.execute("INSERT INTO settings (key, value) VALUES (?, ?)", (key, value))
-        self.conn.commit()
-
-    def is_subset_fs(self):
-        return self._get_setting('subset_fs') == '1'
-
-    def set_subset_fs(self, is_subset_fs):
-        self._set_setting('subset_fs', '1' if is_subset_fs else '0')
-
-    def is_locked(self):
-        return self._get_setting('locked') == '1'
-
-    def set_locked(self, is_locked):
-        self._set_setting('locked', '1' if is_locked else '0')
-
-    def is_encrypted(self):
-        return self._get_setting('encrypted') == '1'
-
-    def set_encrypted(self, is_encrypted):
-        self._set_setting('encrypted', '1' if is_encrypted else '0')
-
-
-def _ensuredir(pathname):
-    dirname = os.path.dirname(pathname)
-    if not os.path.exists(dirname):
-        os.makedirs(dirname)
-
-
-@dataclass(frozen=True, unsafe_hash=True)
-class DirEntry:
-    """
-    Mimic os.DirEntry for the scandir() method. Stores metadata at time of instantiation rather than
-    querying the filesystem the first time (unlike os.DirEntry).
-    """
-    # Ideally we'd use os.DirEntry, but these can't be instantiated.
-    name: str
-    path: str
-    stat_val: os.stat_result
-
-    def is_dir(self):
-        return stat.S_ISDIR(self.stat_val.st_mode)
-
-    def is_file(self):
-        return stat.S_ISREG(self.stat_val.st_mode)
-
-    def stat(self):
-        return self.stat_val
-
-
-class DeviceFilesystem(ABC):
-    @classmethod
-    @abstractmethod
-    def is_device_filesystem(cls, path) -> bool:
-        """
-        Is this path the root of a filesystem this class can manage?
-        """
-        return False
-
-    @classmethod
-    @abstractmethod
-    def create(cls, id_: str, root: str) -> 'DeviceFilesystem':
-        """
-        Create a new filesystem of this type at 'path'.
-        """
-        raise NotImplementedError()
-
-    @abstractmethod
-    def is_subset_filesystem(self) -> bool:
-        """
-        Is this a temporary filesystem?
-        """
-        return False
-
-    @abstractmethod
-    def scandir(self, path) -> list[DirEntry]:
-        """
-        As os.scandir().
-        """
-        return []
-
-    @abstractmethod
-    def exists(self, path) -> bool:
-        """
-        As os.path.exists().
-        """
-        return False
-
-    @abstractmethod
-    def getsize(self, path) -> int:
-        """
-        As os.path.getsize().
-        """
-        return 0
-
-    @abstractmethod
-    def open(self, path):
-        """
-        As open().
-        """
-        return None
-
-    @abstractmethod
-    def create_file(self, path):
-        """
-        As open(path, 'wb').
-        """
-        return None
-
-    @abstractmethod
-    def sqlite3_connect(self, path, read_only=True):
-        """
-        Return an opened sqlite3 connection to the database at 'path'.
-        """
-        return None
-
-    @abstractmethod
-    def sqlite3_create(self, path):
-        """
-        Create a new sqlite3 database at 'path' and return an opened connection read-write to it.
-        """
-        return None
-
-    @abstractmethod
-    def lock(self, locked: bool):
-        """
-        Lock or unlock the filesystem. A locked filesystem can't be viewed or written to.
-        """
-        pass
-
-    @abstractmethod
-    def is_locked(self) -> bool:
-        """
-        Is the filesystem locked?
-        """
-        return False
-
-    def walk(self, path):
-        for entry in self.scandir(path):
-            if entry.is_dir():
-                yield from self.walk(entry.path)
-            else:
-                yield entry
-
-    @abstractmethod
-    def dirname(self, pathname):
-        raise NotImplementedError()
-
-    @abstractmethod
-    def path_to_direntry(self, path) -> DirEntry:
-        raise NotImplementedError()
-
-
-class EncryptedDeviceFilesystem(DeviceFilesystem):
-    @abstractmethod
-    def is_encrypted(self) -> bool:
-        return False
-
-    @abstractmethod
-    def decrypt(self, passphrase: str) -> bool:
-        pass
-
-
-def _sqlite3_uri(path, read_only=True):
-    """
-    Return a URI suitable for passing to sqlite3_connect
-    """
-    params = "?mode=ro&immutable=1" if read_only else ""
-    return f"file:{path}{params}"
-
-
-class FSLibFilesystem:
-    def __init__(self, _fs):
-        self._fs = _fs
-
-    def dirname(self, pathname):
-        if '/' not in pathname:
-            return '/'
-
-        return pathname[:pathname.rindex('/')]
-
-    def path_to_direntry(self, path, name=None) -> DirEntry:
-        if name is None:
-            name = os.path.basename(path)
-
-        syspath = self._fs.getsyspath(path)
-        stat_val = os.stat(syspath)
-        return DirEntry(name, path, stat_val)
-
-    def scandir(self, path):
-        result = []
-        for name in self._fs.listdir(path):
-            pathname = os.path.join(path, name)  # I love it when a plan comes together
-            result.append(self.path_to_direntry(pathname, name))
-
-        return result
-
-    def create_file(self, path):
-        _ensuredir(self._fs.getsyspath(path))
-
-        return self._fs.open(path, 'wb')
-
-    def sqlite3_connect(self, path, read_only=True):
-        db_url = _sqlite3_uri(self._fs.getsyspath(path), read_only)
-        log.debug(f"Connecting to {db_url}")
-        return sqlite3_connect_with_regex_support(db_url, uri=True)
-
-    def sqlite3_create(self, path):
-        syspath = self._fs.getsyspath(path)
-
-        _ensuredir(syspath)
-        return sqlite3_connect_with_regex_support(syspath)
-
-
-class AndroidDeviceFilesystem(DeviceFilesystem):
-    def __init__(self, id_: str, root: str):
-        self.id_ = id_
-        self._fs = fs.osfs.OSFS(root)
-        self._settings = DeviceSettings(root)
-        self._fsaccess = FSLibFilesystem(self._fs)
-
-    @classmethod
-    def is_device_filesystem(cls, path):
-        return os.path.exists(os.path.join(path, 'data', 'data', 'android'))
-
-    @classmethod
-    def create(cls, id_: str, root: str):
-        if os.path.exists(root):
-            raise FileExistsError(root)
-
-        os.makedirs(root)
-        os.makedirs(os.path.join(root, 'data', 'data', 'android'))
-
-        obj = cls(id_, root)
-        obj._settings.set_subset_fs(True)
-        return obj
-
-    def dirname(self, pathname):
-        return self._fsaccess.dirname(pathname)
-
-    def is_subset_filesystem(self) -> bool:
-        return self._settings.is_subset_fs()
-
-    def path_to_direntry(self, path, name=None) -> DirEntry:
-        return self._fsaccess.path_to_direntry(path, name)
-
-    def scandir(self, path):
-        return self._fsaccess.scandir(path)
-
-    def exists(self, path):
-        return self._fs.exists(path)
-
-    def getsize(self, path):
-        return self._fs.getsize(path)
-
-    def open(self, path):
-        return self._fs.open(path, 'rb')
-
-    def create_file(self, path):
-        return self._fsaccess.create_file(path)
-
-    def sqlite3_connect(self, path, read_only=True):
-        return self._fsaccess.sqlite3_connect(path, read_only)
-
-    def sqlite3_create(self, path):
-        return self._fsaccess.sqlite3_create(path)
-
-    def lock(self, locked: bool):
-        self._settings.set_locked(locked)
-
-    def is_locked(self) -> bool:
-        return self._settings.is_locked()
-
-
-class AndroidZippedDeviceFilesystem(DeviceFilesystem):
-    """
-    Zipped filesystem of an Android device. Currently supports only read mode
-    for the data.
-
-    The class assumes that there is one directory in the .zip file
-    and all the other files and directories are located withn that directory.
-
-        file.zip
-            |- main_dir
-                |- _rime_settings.db
-                |- sdcard
-                    |- ...
-                |- data
-                    |- ...
-
-    The contents of the .zip file are extracted in a temporary directory
-    and then the (only) directory from within the temporary directory
-    (the `main_dir`) is used to instantiate a filesystem. All queries
-    refer to the data in the temporary directory.
-    """
-
-    def __init__(self, id_: str, root: str):
-        self.id_ = id_
-
-        # extract the files from the zipfile in a temporary directory
-        self.temp_root = tempfile.TemporaryDirectory()
-
-        with zipfile.ZipFile(root) as zp:
-            zp.extractall(path=self.temp_root.name)
-            main_dir, = zipfile.Path(zp).iterdir()
-
-        # instantiate a filesystem from the temporary directory
-        self._fs = fs.osfs.OSFS(os.path.join(self.temp_root.name, main_dir.name))
-        self._settings = DeviceSettings(os.path.join(self.temp_root.name, main_dir.name))
-        self._fsaccess = FSLibFilesystem(self._fs)
-
-    @classmethod
-    def is_device_filesystem(cls, path):
-        if not zipfile.is_zipfile(path):
-            return False
-
-        with zipfile.ZipFile(path) as zp:
-            # get the main directory contained in the .zip container file
-            main_dir, = zipfile.Path(zp).iterdir()
-            return zipfile.Path(zp, os.path.join(main_dir.name, 'data', 'data', 'android/')).exists()
-
-    @classmethod
-    def create(cls, id_: str, root: str):
-        return AndroidDeviceFilesystem.create(id_, root)
-
-    def is_subset_filesystem(self) -> bool:
-        return self._settings.is_subset_fs()
-
-    def path_to_direntry(self, path, name=None) -> DirEntry:
-        return self._fsaccess.path_to_direntry(path, name)
-
-    def scandir(self, path):
-        return self._fsaccess.scandir(path)
-
-    def exists(self, path):
-        return self._fs.exists(path)
-
-    def getsize(self, path):
-        return self._fs.getsize(path)
-
-    def open(self, path):
-        return self._fs.open(path, 'rb')
-
-    def create_file(self, path):
-        raise NotImplementedError
-
-    def sqlite3_connect(self, path, read_only=True):
-        return self._fsaccess.sqlite3_connect(path, read_only)
-
-    def sqlite3_create(self, path):
-        raise NotImplementedError
-
-    def lock(self, locked: bool):
-        self._settings.set_locked(locked)
-
-    def is_locked(self) -> bool:
-        return self._settings.is_locked()
-
-    def dirname(self, pathname):
-        return self._fsaccess.dirname(pathname)
 
 
 class _IosManifest:
@@ -565,7 +163,13 @@ def _ios_filesystem_is_encrypted(path):
     return manifest.get('IsEncrypted', False)
 
 
-class IosDeviceFilesystem(DeviceFilesystem):
+class IosDeviceFilesystemBase(ABC):
+    @abstractmethod
+    def ios_open_raw(self, path, mode):
+        raise NotImplementedError
+
+
+class IosDeviceFilesystem(DeviceFilesystem, IosDeviceFilesystemBase):
     def __init__(self, id_: str, root: str):
         self.id_ = id_
         self.root = root
@@ -583,7 +187,7 @@ class IosDeviceFilesystem(DeviceFilesystem):
         )
 
     @classmethod
-    def create(cls, id_: str, root: str):
+    def create(cls, id_: str, root: str, template: Optional['DeviceFilesystem'] = None) -> 'DeviceFilesystem':
         if os.path.exists(root):
             raise FileExistsError(root)
 
@@ -602,9 +206,18 @@ class IosDeviceFilesystem(DeviceFilesystem):
             """)
             conn.execute('CREATE TABLE Properties (key TEXT PRIMARY KEY, value BLOB)')
 
-        # Create Info.plist.
-        with open(os.path.join(root, 'Info.plist'), 'wb'):
-            pass  # touch the file to ensure it exists
+        if template is None:
+            # Create Info.plist.
+            with open(os.path.join(root, 'Info.plist'), 'wb'):
+                pass  # touch the file to ensure it exists
+        else:
+            # Copy Info.plist from template.
+            # TODO: There are some PII implications here.
+            assert isinstance(template, IosDeviceFilesystemBase)
+
+            with template.ios_open_raw('Info.plist', 'rb') as src:
+                with open(os.path.join(root, 'Info.plist'), 'wb') as dst:
+                    shutil.copyfileobj(src, dst)
 
         obj = cls(id_, root)
         obj._settings.set_subset_fs(True)
@@ -614,9 +227,9 @@ class IosDeviceFilesystem(DeviceFilesystem):
         return self._settings.is_subset_fs()
 
     def sqlite3_connect(self, path, read_only=True):
-        db_url = _sqlite3_uri(os.path.join(self.root, self._converter.get_hashed_pathname(path)), read_only)
-        log.debug(f"iOS connecting to {db_url} ({path})")
-        return sqlite3_connect_with_regex_support(db_url, uri=True)
+        db_filename = os.path.join(self.root, self._converter.get_hashed_pathname(path))
+        log.debug(f"iOS connecting to {path}")
+        return sqlite3_connect_with_regex_support(db_filename, read_only=read_only)
 
     def scandir(self, path):
         return self._converter.scandir(path)
@@ -628,9 +241,12 @@ class IosDeviceFilesystem(DeviceFilesystem):
     def getsize(self, path):
         return os.path.getsize(os.path.join(self.root, self._converter.get_hashed_pathname(path)))
 
+    def ios_open_raw(self, path, mode):
+        return open(os.path.join(self.root, path, mode))
+
     def open(self, path):
         # TODO: Should cope with blobs in the manifest too
-        return open(os.path.join(self.root, self._converter.get_hashed_pathname(path), 'rb'))
+        return self.ios_open_raw(self._converter.get_hashed_pathname(path), 'rb')
 
     def create_file(self, path):
         raise NotImplementedError
@@ -647,9 +263,9 @@ class IosDeviceFilesystem(DeviceFilesystem):
         if self.exists(syspath):
             raise FileExistsError(path)
 
-        _ensuredir(syspath)
+        ensuredir(syspath)
 
-        return sqlite3_connect_with_regex_support(syspath)
+        return sqlite3_connect_with_regex_support(syspath, read_only=False)
 
     def lock(self, locked: bool):
         self._settings.set_locked(locked)
@@ -664,7 +280,7 @@ class IosDeviceFilesystem(DeviceFilesystem):
         raise NotImplementedError
 
 
-class IosZippedDeviceFilesystem(DeviceFilesystem):
+class IosZippedDeviceFilesystem(DeviceFilesystem, IosDeviceFilesystemBase):
     """
     Zipped filesystem of an iOS device. Currently supports only read mode
     for the data.
@@ -712,7 +328,7 @@ class IosZippedDeviceFilesystem(DeviceFilesystem):
             with zp.open(os.path.join(main_dir.name, '_rime_settings.db')) as zf:
                 self.temp_settings.write(zf.read())
 
-        self.manifest = sqlite3_connect_with_regex_support(self.temp_manifest.name)
+        self.manifest = sqlite3_connect_with_regex_support(self.temp_manifest.name, read_only=True)
         self.file_table = Table('Files')
 
         settings_dir, settings_file = os.path.split(self.temp_settings.name)
@@ -734,8 +350,8 @@ class IosZippedDeviceFilesystem(DeviceFilesystem):
             )
 
     @classmethod
-    def create(cls, id_: str, root: str):
-        return IosDeviceFilesystem.create(id_, root)
+    def create(cls, id_: str, root: str, template: Optional['DeviceFilesystem'] = None) -> 'DeviceFilesystem':
+        return IosDeviceFilesystem.create(id_, root, template=template)
 
     def is_subset_filesystem(self) -> bool:
         return self._settings.is_subset_fs()
@@ -760,14 +376,18 @@ class IosZippedDeviceFilesystem(DeviceFilesystem):
             main_dir = self.get_main_dir(zp)
             return zp.getinfo(os.path.join(main_dir, self._converter.get_hashed_pathname(path))).file_size
 
-    def open(self, path):
+    def ios_open_raw(self, path, mode):
+        # TODO: mode
         tmp_copy = tempfile.NamedTemporaryFile(mode='w+b')
         with zipfile.ZipFile(self.root) as zp:
             # get the main directory contained in the .zip container file
             main_dir = self.get_main_dir(zp)
-            with zp.open(os.path.join(main_dir.name, self._converter.get_hashed_pathname(path))) as zf:
+            with zp.open(os.path.join(main_dir.name, path)) as zf:
                 tmp_copy.write(zf.read())
         return tmp_copy
+
+    def open(self, path):
+        return self.ios_open_raw(self._converter.get_hashed_pathname(path), 'rb')
 
     def create_file(self, path):
         raise NotImplementedError
@@ -781,9 +401,8 @@ class IosZippedDeviceFilesystem(DeviceFilesystem):
             with zp.open(os.path.join(main_dir.name, self._converter.get_hashed_pathname(path))) as zf:
                 tmp_copy.write(zf.read())
 
-        db_url = _sqlite3_uri(tmp_copy.name)
-        log.debug(f"iOS connecting to {db_url} ({path})")
-        return sqlite3_connect_with_regex_support(db_url, uri=True)
+        log.debug(f"iOS connecting to {tmp_copy.name}")
+        return sqlite3_connect_with_regex_support(tmp_copy.name, read_only=read_only)
 
     def sqlite3_create(self, path):
         raise NotImplementedError
@@ -807,30 +426,6 @@ class IosZippedDeviceFilesystem(DeviceFilesystem):
 
     def path_to_direntry(self, path):
         raise NotImplementedError
-
-
-class NotDecryptedError(Exception):
-    "Error to throw when the Filesystem is not decrypted."
-
-    def __init__(self):
-        self.message = "Filesystem is encrypted and cannot be read!"
-        super().__init__(self.message)
-
-
-class NoPassphraseError(Exception):
-    "Error to throw when trying to decrypt without providing a passphrase."
-
-    def __init__(self):
-        self.message = "Cannot decrypt. Passphrase not provided!"
-        super().__init__(self.message)
-
-
-class WrongPassphraseError(Exception):
-    "Error to throw when trying to decrypt with a wrong passphrase."
-
-    def __init__(self):
-        self.message = "Cannot decrypt. Passphrase is wrong!"
-        super().__init__(self.message)
 
 
 class IosEncryptedDeviceFilesystem(EncryptedDeviceFilesystem):
@@ -870,32 +465,8 @@ class IosEncryptedDeviceFilesystem(EncryptedDeviceFilesystem):
         )
 
     @classmethod
-    def create(cls, id_: str, root: str) -> 'DeviceFilesystem':
-        if os.path.exists(root):
-            raise FileExistsError(root)
-
-        os.makedirs(root)
-
-        # Create Manifest for file hashing. Do this manually because we don't have a device yet.
-        syspath = os.path.join(root, 'Manifest.db')
-
-        with sqlite3_connect_with_regex_support(syspath) as conn:
-            conn.execute("""CREATE TABLE Files (
-                fileID TEXT PRIMARY KEY,
-                domain TEXT,
-                relativePath TEXT,
-                flags INTEGER,
-                file BLOB)
-            """)
-            conn.execute('CREATE TABLE Properties (key TEXT PRIMARY KEY, value BLOB)')
-
-        # Create Info.plist.
-        with open(os.path.join(root, 'Info.plist'), 'wb'):
-            pass  # touch the file to ensure it exists
-
-        obj = cls(id_, root)
-        obj._settings.set_subset_fs(True)
-        return obj
+    def create(cls, id_: str, root: str, template: Optional['DeviceFilesystem'] = None) -> 'DeviceFilesystem':
+        raise NotImplementedError
 
     def is_subset_filesystem(self) -> bool:
         return self._settings.is_subset_fs()
@@ -904,6 +475,9 @@ class IosEncryptedDeviceFilesystem(EncryptedDeviceFilesystem):
         return []
 
     def listdir(self, path) -> list[str]:
+        if self.manifest is None:
+            raise NotDecryptedError()
+
         query = Query.from_(self.file_table).select('fileID', 'relativePath')
         query = query.where(self.file_table.relativePath == os.path.join(self.root, path))
         fields = get_field_indices(query)
@@ -919,10 +493,16 @@ class IosEncryptedDeviceFilesystem(EncryptedDeviceFilesystem):
             return False
 
     def getsize(self, path) -> int:
+        if self._converter is None:
+            raise NotDecryptedError()
+
         return os.path.getsize(os.path.join(self.root, self._converter.get_hashed_pathname(path)))
 
     def open(self, path):
         # TODO: Should cope with blobs in the manifest too
+        if self._converter is None:
+            raise NotDecryptedError()
+
         return open(os.path.join(self.root, self._converter.get_hashed_pathname(path), 'rb'))
 
     def create_file(self, path):
@@ -935,8 +515,8 @@ class IosEncryptedDeviceFilesystem(EncryptedDeviceFilesystem):
 
         # If the Manifest file hasn't been decrypted yet then we cannot
         # use it to get the mapping from `domain/relativePath` to `fileID`
-        if not self._converter:
-            raise NotDecryptedError
+        if self._converter is None:
+            raise NotDecryptedError()
 
         # Decrypt the file and store it with a new filename
         decrypted_hashed_pathname = self._converter.get_hashed_pathname(path) + '-decrypted'
@@ -947,9 +527,8 @@ class IosEncryptedDeviceFilesystem(EncryptedDeviceFilesystem):
             self.decrypt_file(path, decrypted_hashed_pathname)
 
         # Connect to the decrypted SQLite DB
-        db_url = _sqlite3_uri(decrypted_file_path, read_only)
-        log.debug(f"iOS connecting to {db_url} ({path})")
-        return sqlite3_connect_with_regex_support(db_url, uri=True)
+        log.debug(f"iOS connecting to {path}")
+        return sqlite3_connect_with_regex_support(decrypted_file_path, read_only=read_only)
 
     def sqlite3_create(self, path):
         """
@@ -963,7 +542,7 @@ class IosEncryptedDeviceFilesystem(EncryptedDeviceFilesystem):
         if self.exists(syspath):
             raise FileExistsError(path)
 
-        _ensuredir(syspath)
+        ensuredir(syspath)
 
         return sqlite3_connect_with_regex_support(syspath)
 
@@ -1051,87 +630,3 @@ class IosEncryptedDeviceFilesystem(EncryptedDeviceFilesystem):
 
     def path_to_direntry(self, path):
         raise NotImplementedError
-
-
-FILESYSTEM_TYPES = {
-    AndroidDeviceFilesystem,
-    AndroidZippedDeviceFilesystem,
-    IosDeviceFilesystem,
-    IosZippedDeviceFilesystem,
-    IosEncryptedDeviceFilesystem,
-}
-
-
-VALID_DEVICE_ID_REGEX = re.compile(r'^[a-zA-Z0-9_-]+$')
-
-
-class FilesystemRegistry:
-    """
-    Maintains a registry of filesystems at 'base_path'.
-
-    Filesystems are distinguished by a key, which is the name of the directory they're in under base_path.
-    """
-    def __init__(self, base_path, passphrases):
-        self.base_path = base_path
-        self.passphrases = passphrases
-        self.filesystems = self._find_available_filesystems()  # maps key to FS object.
-
-    def __getitem__(self, key):
-        return self.filesystems[key]
-
-    def rescan(self):
-        self.filesystems = self._find_available_filesystems()
-
-    def _find_available_filesystems(self):
-        """
-        Return a mapping of key -> filesystem type for each valid filesystem under base_path.
-        """
-        filesystems = {}
-
-        try:
-            for filename in os.listdir(self.base_path):
-                path = os.path.join(self.base_path, filename)
-
-                for fs_cls in FILESYSTEM_TYPES:
-                    if fs_cls.is_device_filesystem(path):
-                        filesystems[filename] = fs_cls(filename, path)
-
-                        # If the FileSystem is encrypted and there is
-                        # a passphrase provided as part of the YAML configuration
-                        # (probably in `rime_settings.yaml`) then decrypt it
-                        if (('Encrypted' in fs_cls.__name__)
-                                and self.passphrases
-                                and (filename in self.passphrases)):
-                            filesystems[filename].decrypt(self.passphrases[filename])
-
-        except FileNotFoundError:
-            log.warning(f"Could not find filesystem directory: {self.base_path}")
-
-        return filesystems
-
-    def create_empty_subset_of(self, fs: DeviceFilesystem, key: str, locked: bool = False) -> DeviceFilesystem:
-        """
-        Create an empty subset filesystem of the same type as 'fs' named 'key'
-        """
-        path = os.path.join(self.base_path, key)
-
-        if os.path.exists(path):
-            raise FileExistsError(key)
-
-        if not self.is_valid_device_id(key):
-            raise ValueError(f"Invalid device ID: {key}")
-
-        self.filesystems[key] = fs.__class__.create(key, path)
-        self.filesystems[key].lock(locked)
-
-        return self[key]
-
-    def is_valid_device_id(self, key):
-        return VALID_DEVICE_ID_REGEX.match(key)
-
-    def delete(self, key):
-        if key not in self.filesystems:
-            raise FileNotFoundError(key)
-
-        shutil.rmtree(os.path.join(self.base_path, key))
-        del self.filesystems[key]

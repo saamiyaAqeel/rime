@@ -1,4 +1,5 @@
-from .filesystem import DeviceFilesystem, EncryptedDeviceFilesystem, WrongPassphraseError
+from .filesystem.devicefilesystem import DeviceFilesystem, EncryptedDeviceFilesystem
+from .filesystem.exceptions import WrongPassphraseError
 from .session import Session
 from .provider import find_providers
 from .errors import NotEncryptedDeviceType

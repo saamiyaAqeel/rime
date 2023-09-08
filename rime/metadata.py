@@ -8,7 +8,7 @@ from dataclasses import dataclass
 from filetype import guess as filetype_guess
 from filetype.types.base import Type as FileTypeType
 
-from .filesystem import DirEntry
+from .filesystem.devicefilesystem import DirEntry
 
 
 # Chosen by fair dice roll.
