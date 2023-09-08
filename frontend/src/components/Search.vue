@@ -87,7 +87,12 @@ const allProviders = computed(() => {
 	if(rawEventsSearchResult.value) {
 		providers.push(...rawEventsSearchResult.value.events.providers);
 	}
-	providers.sort((a, b) => a.friendlyName.localeCompare(b.friendlyName));
+	providers.sort((a, b) => {
+		if(a.friendlyName == null || b.friendlyName == null)
+			return 0;
+		return a.friendlyName.localeCompare(b.friendlyName);
+	});
+
 	return providers;
 });
 
