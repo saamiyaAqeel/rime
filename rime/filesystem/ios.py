@@ -170,10 +170,13 @@ class IosDeviceFilesystemBase(ABC):
 
 
 class IosDeviceFilesystem(DeviceFilesystem, IosDeviceFilesystemBase):
-    def __init__(self, id_: str, root: str):
+    def __init__(self, id_: str, root: str, writeable_manifest: bool = False):
         self.id_ = id_
         self.root = root
-        self.manifest = sqlite3_connect_with_regex_support(os.path.join(self.root, 'Manifest.db'))
+        self.manifest = sqlite3_connect_with_regex_support(
+            os.path.join(self.root, 'Manifest.db'),
+            read_only=not writeable_manifest
+        )
         self.file_table = Table('Files')
         self._settings = DeviceSettings(root)
         self._converter = _IosManifest(self.manifest)
@@ -196,7 +199,8 @@ class IosDeviceFilesystem(DeviceFilesystem, IosDeviceFilesystemBase):
         # Create Manifest for file hashing. Do this manually because we don't have a device yet.
         syspath = os.path.join(root, 'Manifest.db')
 
-        with sqlite3_connect_with_regex_support(syspath) as conn:
+        print(f'Creating {syspath}...')
+        with sqlite3_connect_with_regex_support(syspath, read_only=False) as conn:
             conn.execute("""CREATE TABLE Files (
                 fileID TEXT PRIMARY KEY,
                 domain TEXT,
@@ -219,7 +223,7 @@ class IosDeviceFilesystem(DeviceFilesystem, IosDeviceFilesystemBase):
                 with open(os.path.join(root, 'Info.plist'), 'wb') as dst:
                     shutil.copyfileobj(src, dst)
 
-        obj = cls(id_, root)
+        obj = cls(id_, root, writeable_manifest=True)
         obj._settings.set_subset_fs(True)
         return obj
 
