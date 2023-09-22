@@ -40,8 +40,13 @@ Alternatively, you can run RIME in a Docker container. The Docker Compose file e
 
 ### Using the dev server
 
-Navigate to `http://localhost:3000`. This is the RIME frontend. RIME itself is running on a different port (port
-`5000`), and the frontend will communicate with it automatically.
+Navigate to `http://localhost:3000` in a web browser. This is the RIME frontend. RIME itself is running on a different port (port
+`5001`), and the frontend will communicate with it automatically; if you don't wish to use the frontend, you can also
+use a GraphQL explorer, your own GraphQL code, or simply `curl` to interact with the GraphQL endpoint at
+`http://localhost:5001/graphql`.
+
+The `run_dev` script displays another port as well. This port is used internally by the frontend technology (`vite`)
+for automatic reloading during frontend development.
 
 ### Configuring RIME
 
