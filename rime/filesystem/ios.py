@@ -246,7 +246,7 @@ class IosDeviceFilesystem(DeviceFilesystem, IosDeviceFilesystemBase):
         return os.path.getsize(os.path.join(self.root, self._converter.get_hashed_pathname(path)))
 
     def ios_open_raw(self, path, mode):
-        return open(os.path.join(self.root, path, mode))
+        return open(os.path.join(self.root, path), mode)
 
     def open(self, path):
         # TODO: Should cope with blobs in the manifest too
