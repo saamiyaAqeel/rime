@@ -6,10 +6,23 @@ This is a project from the University of Nottingham, in conjunction with Telemar
 
 ## Quickstart for development
 
-Before you do anything else, you'll need to download the example phone dumps (unless you have your own). These are
-stored using `git lfs`. If you'd already installed `git lfs` prior to checking out this repository, you shouldn't need
-to do anything; the files would have been downloaded on checkout. Otherwise, [https://git-lfs.com/](install `git lfs`)
-and retrieve the examples using `git lfs get`.
+You'll need the following pre-installed:
+
+* Python 3.10
+* Node.js
+* NPM
+
+If you are using Debian or Ubuntu, you can get these by running `sudo apt install python3.10 npm`. If you're using a Mac
+running Homebrew, you can get them by running `brew install python@3.10 nodejs npm`.
+
+Also, you'll need to download the example phone dumps (unless you have your own). These are stored using `git lfs`. If
+you'd already installed `git lfs` prior to checking out this repository, you shouldn't need to do anything; the files
+would have been downloaded on checkout. Otherwise, [install `git lfs`](https://git-lfs.com/) and retrieve the examples
+using `git lfs get`.
+
+If you don't have Git LFS, you can install it on Debian or Ubuntu by running `sudo apt install git-lfs`, or, if you're
+on a Mac running Homebrew, by running `brew install git-lfs`. Regardless of which system you're using, you should run
+`git lfs install` if this is the first time you've used Git LFS.
 
 RIME consists of the *rime server*, which provides the GraphQL interface and supplies any media from the device. Unless
 you're just interested in making GraphQL queries, you will also want to start up a *frontend*, which provides a
@@ -21,6 +34,10 @@ http://localhost:3000/`.
 
 ### Starting the servers (Linux / Unix / Macos / Windows Subsystem for Linux)
 You can run RIME directly without Docker. Set the PYTHON variable to your version of Python and run `run_dev.sh`.
+
+	$ ./run_dev.sh
+
+or
 
     $ PYTHON=python3 ./run_dev.sh
 
