@@ -54,17 +54,25 @@ def sqlite3_connect(db_path, uri=False):
     # We current do not, but in future may, support caching connections across threads.
     check_same_thread = False
 
+    if uri is False and db_path.startswith('file:'):
+        raise ValueError(f"Supplied a URI-looking db_path of {db_path} but uri is False")
+
     if not _sqlite3_is_threadsafe():
         raise RuntimeError("RIME requires a thread-safe sqlite3 module (sqlite3.threadsafety == 3)")
 
-    conn = sqlite3.connect(db_path, uri=uri, check_same_thread=check_same_thread)
-    conn.create_function('REGEXP', 2, _sqlite3_regexp_search)
+    try:
+        conn = sqlite3.connect(db_path, uri=uri, check_same_thread=check_same_thread)
+        conn.create_function('REGEXP', 2, _sqlite3_regexp_search)
+    except sqlite3.OperationalError as e:
+        print(f"Error connecting to database {db_path} (uri={uri}): {e}", file=sys.stderr)
+        raise
+
     return conn
 
 
 def sqlite3_connect_filename(path, read_only=True):
     params = "?mode=ro&immutable=1" if read_only else ""
-    return sqlite3_connect(f"file:{path}{params}", uri=True)
+    return sqlite3_connect(f"file://{path}{params}", uri=True)
 
 
 def get_field_indices(query):
