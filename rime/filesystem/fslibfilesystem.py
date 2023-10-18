@@ -40,11 +40,11 @@ class FSLibFilesystem:
         return self._fs.open(path, 'wb')
 
     def sqlite3_connect(self, path, read_only=True):
-        log.debug(f"Connecting to {path}")
         return sqlite3_connect_with_regex_support(self._fs.getsyspath(path), read_only=read_only)
 
     def sqlite3_create(self, path):
         syspath = self._fs.getsyspath(path)
 
         ensuredir(syspath)
-        return sqlite3_connect_with_regex_support(syspath)
+
+        return sqlite3_connect_with_regex_support(syspath, read_only=False)
