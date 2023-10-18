@@ -5,6 +5,7 @@
 from abc import ABC, abstractmethod
 
 from .media import MediaData
+from .filesystem.base import File
 
 
 class Provider(ABC):
@@ -27,6 +28,13 @@ class Provider(ABC):
         Create a subset using the given events and contacts.
         """
         return None
+
+    @abstractmethod
+    def all_files(self) -> list[File]:
+        """
+        Return a list of all files associated with the app.
+        """
+        return []
 
     @abstractmethod
     def search_events(self, device, filter_):
@@ -57,6 +65,12 @@ def find_providers(fs) -> dict[str, Provider]:
     providers_dict = {}
     for provider in Provider.__subclasses__():
         instance = provider.from_filesystem(fs)
+
+        # Sanity check the providers...
+        if not provider.NAME or not provider.FRIENDLY_NAME:
+            raise ValueError(f'Provider {provider.__name__} has no NAME or FRIENDLY_NAME')
+
+        # ... and store them.
         if instance:
             providers_dict[provider.NAME] = instance
 

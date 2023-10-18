@@ -450,64 +450,58 @@ class AndroidWhatsApp(Provider):
         Create a WhatsApp subset using the provided events and contacts.
         """
         # Copy the contacts
-        rows_wa_contacts = subsetter.row_subset("wa_contacts", "_id")
-        rows_wa_contacts.update(contact.provider_data.id_ for contact in contacts)
+        with subsetter.db_subset(src_conn=self.wadb, new_db_pathname=self.WA_DB) as subset_wadb, \
+                subsetter.db_subset(src_conn=self.msgdb, new_db_pathname=self.MESSAGE_DB) as subset_msgdb:
 
-        # Copy session participants
-        rows_group_participant_user = subsetter.row_subset("group_participant_user", "_id")
+            rows_wa_contacts = subset_wadb.row_subset("wa_contacts", "_id")
+            rows_wa_contacts.update(contact.provider_data.id_ for contact in contacts)
 
-        # Copy events
-        rows_message = subsetter.row_subset("message", "_id")
-        rows_message_media = subsetter.row_subset("message_media", "message_row_id")
-        rows_message_details = subsetter.row_subset("message_details", "message_row_id")
-        rows_jid = subsetter.row_subset("jid", "_id")
-        rows_chat = subsetter.row_subset("chat", "_id")
+            # Copy session participants
+            rows_group_participant_user = subset_msgdb.row_subset("group_participant_user", "_id")
 
-        for event in events:
-            # Reject if it's not one of ours.
-            if not isinstance(event, MessageEvent) or event.provider.NAME != self.NAME:
-                continue
+            # Copy events
+            rows_message = subset_msgdb.row_subset("message", "_id")
+            rows_message_media = subset_msgdb.row_subset("message_media", "message_row_id")
+            rows_message_details = subset_msgdb.row_subset("message_details", "message_row_id")
+            rows_jid = subset_msgdb.row_subset("jid", "_id")
+            rows_chat = subset_msgdb.row_subset("chat", "_id")
 
-            wa_message = event.provider_data
+            for event in events:
+                # Reject if it's not one of ours.
+                if not isinstance(event, MessageEvent) or event.provider.NAME != self.NAME:
+                    continue
 
-            rows_message.add(wa_message.message_row_id)
-            if event.sender and event.sender.provider_data:
-                rows_jid.update(jid_contact.id_ for jid_contact in event.sender.provider_data.jid_contacts)
+                wa_message = event.provider_data
 
-            if event.session:
-                wa_session = event.session.provider_data
-                rows_group_participant_user.update(wa_session.group_participant_user_ids)
-                if wa_session.group_user_id:
-                    rows_wa_contacts.add(wa_session.group_user_id)
-                if wa_session.group_jid_row_id:
-                    rows_jid.add(wa_session.group_jid_row_id)
+                rows_message.add(wa_message.message_row_id)
+                if event.sender and event.sender.provider_data:
+                    rows_jid.update(jid_contact.id_ for jid_contact in event.sender.provider_data.jid_contacts)
 
-            rows_message_details.add(wa_message.message_row_id)
-            rows_chat.add(wa_message.chat_row_id)
-            rows_message_media.add(wa_message.message_row_id)
+                if event.session:
+                    wa_session = event.session.provider_data
+                    rows_group_participant_user.update(wa_session.group_participant_user_ids)
+                    if wa_session.group_user_id:
+                        rows_wa_contacts.add(wa_session.group_user_id)
+                    if wa_session.group_jid_row_id:
+                        rows_jid.add(wa_session.group_jid_row_id)
 
-        # Write the message db.
-        subsetter.create_db_and_copy_rows(self.msgdb, self.MESSAGE_DB, [
-            rows_message,
-            rows_message_details,
-            rows_message_media,
-            rows_jid,
-            rows_chat,
-            rows_group_participant_user,
-        ])
+                rows_message_details.add(wa_message.message_row_id)
+                rows_chat.add(wa_message.chat_row_id)
+                rows_message_media.add(wa_message.message_row_id)
 
-        # Write the contacts DB.
-        subsetter.create_db_and_copy_rows(self.wadb, self.WA_DB, [rows_wa_contacts])
+            # copy media by copying each named file.
+            media_table = Table('message_media')
+            query = Query.from_(media_table) \
+                .select('file_path') \
+                .where(media_table.message_row_id.isin(rows_message_media.rows))
 
-        # copy media by copying each named file.
-        media_table = Table('message_media')
-        query = Query.from_(media_table) \
-            .select('file_path') \
-            .where(media_table.message_row_id.isin(rows_message_media.rows))
+            for row in self.msgdb.execute(query.get_sql()):
+                pathname = self._media_path(row[0])
+                subsetter.copy_file(self.fs.open(pathname), pathname)
 
-        for row in self.msgdb.execute(query.get_sql()):
-            pathname = self._media_path(row[0])
-            subsetter.copy_file(self.fs.open(pathname), pathname)
+    def all_files(self):
+        # TODO
+        return []
 
     @classmethod
     def from_filesystem(cls, fs):

@@ -59,6 +59,10 @@ class AndroidGenericMedia(Provider):
         """
         return None
 
+    def all_files(self):
+        # TODO
+        return []
+
     def search_events(self, device, filter_):
         """
         Search for events matching ``filter_``, which is an EventFilter.

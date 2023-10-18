@@ -152,32 +152,33 @@ class IMessage(Provider, LazyContactProvider):
     def subset(self, subsetter, events: Iterable[Event], contacts: Iterable[Contact]):
         """
         """
-        handle_rows = subsetter.row_subset('handle', 'ROWID')
-        handle_rows.update(contact.provider_data.row_id for contact in contacts if contact.providerName == self.NAME)
+        with subsetter.db_subset(src_conn=self.conn, new_db_pathname=self.MESSAGE_DB) as subset_db:
+            handle_rows = subset_db.row_subset('handle', 'ROWID')
+            handle_rows.update(
+                contact.provider_data.row_id
+                for contact in contacts
+                if contact.providerName == self.NAME
+            )
 
-        message_rows = subsetter.row_subset('message', 'ROWID')
-        chat_rows = subsetter.row_subset('chat', 'ROWID')
-        chat_message_join_rows = subsetter.row_subset('chat_message_join', 'chat_id')
-        chat_handle_join_rows = subsetter.row_subset('chat_handle_join', 'chat_id')
+            message_rows = subset_db.row_subset('message', 'ROWID')
+            chat_rows = subset_db.row_subset('chat', 'ROWID')
+            chat_message_join_rows = subset_db.row_subset('chat_message_join', 'chat_id')
+            chat_handle_join_rows = subset_db.row_subset('chat_handle_join', 'chat_id')
 
-        for event in events:
-            if not isinstance(event, MessageEvent) or event.provider != self:
-                continue
+            for event in events:
+                if not isinstance(event, MessageEvent) or event.provider != self:
+                    continue
 
-            message_rows.add(event.provider_data.message_row_id)
-            chat_rows.add(event.provider_data.chat_row_id)
-            chat_message_join_rows.add(event.provider_data.chat_row_id)
-            chat_handle_join_rows.add(event.provider_data.chat_row_id)
-            if event.session:
-                handle_rows.update(contact.provider_data.row_id for contact in event.session.participants)
+                message_rows.add(event.provider_data.message_row_id)
+                chat_rows.add(event.provider_data.chat_row_id)
+                chat_message_join_rows.add(event.provider_data.chat_row_id)
+                chat_handle_join_rows.add(event.provider_data.chat_row_id)
+                if event.session:
+                    handle_rows.update(contact.provider_data.row_id for contact in event.session.participants)
 
-        subsetter.create_db_and_copy_rows(self.conn, self.MESSAGE_DB, [
-            handle_rows,
-            message_rows,
-            chat_rows,
-            chat_message_join_rows,
-            chat_handle_join_rows,
-        ])
+    def all_files(self):
+        # TODO
+        return []
 
     @classmethod
     def from_filesystem(cls, fs):

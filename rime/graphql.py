@@ -21,7 +21,7 @@ from .filter import EventsFilter, ContactsFilter, ProvidersFilter, TheAlwaysMatc
 from .event import MessageEvent, MediaEvent
 from .mergedcontact import merge_contacts
 from .anonymise import Anonymiser
-from .subset import Subsetter
+from .subset import DeviceSubsetter, ProviderSubsetter, SubsetOptions, SubsetFillOption
 from .device import Device
 from .provider import Provider
 from .event import Event, MessageSession
@@ -495,7 +495,8 @@ def _create_subset_prepare_device(rime, target):
     return device, new_device
 
 
-def _create_subset_populate_device(rime, device, new_device, events_filter_obj, contacts_filter_obj):
+def _create_subset_populate_device(rime, opts: SubsetOptions, device, new_device, events_filter_obj,
+                                   contacts_filter_obj):
     """
     Create a subset of 'targets' with events and contacts matching the supplied filters.
 
@@ -504,7 +505,7 @@ def _create_subset_populate_device(rime, device, new_device, events_filter_obj, 
     Raises CreateSubsetError for any error we might expect callers to reasonably deal with.
     May raise anything else if something goes wrong (e.g. while a particular provider is perfoming a subset).
     """
-    subsetter = Subsetter(new_device.fs)
+    device_subsetter = DeviceSubsetter(new_device.fs, opts)
 
     # Find and remember the contacts subset.
     contacts_by_provider = {
@@ -522,12 +523,16 @@ def _create_subset_populate_device(rime, device, new_device, events_filter_obj, 
         else:
             contacts_for_provider = []
 
-        ebp.provider.subset(subsetter, ebp.events, contacts_for_provider)
+        provider_subsetter = ProviderSubsetter(device_subsetter, opts)
+
+        ebp.provider.subset(provider_subsetter, ebp.events, contacts_for_provider)
 
     # Also subset contacts-only providers with no subsetted events.
     for provider_name in unsubsetted_contact_providers:
         provider = device.providers[provider_name]
-        provider.subset(subsetter, [], contacts_by_provider[provider_name])
+
+        provider_subsetter = ProviderSubsetter(device_subsetter, opts)
+        provider.subset(provider_subsetter, [], contacts_by_provider[provider_name])
 
     new_device.reload_providers()
 
@@ -543,6 +548,12 @@ def resolve_create_subset(rime, info, targets, eventsFilter, contactsFilter, ano
 
     devices = []  # list of (old device, new device)
 
+    # Create default subset options. TODO: Expose these to GraphQL.
+    opts = SubsetOptions(
+        fill=SubsetFillOption.UNUSED_DBS_AND_TABLES,
+        anonymise=anonymise,
+    )
+
     async def _create_subset_impl(bg_rime):
         # TODO: Error reporting, status updates
         errorMessage = None
@@ -557,7 +568,8 @@ def resolve_create_subset(rime, info, targets, eventsFilter, contactsFilter, ano
 
         try:
             for old_device, new_device in devices:
-                _create_subset_populate_device(bg_rime, old_device, new_device, events_filter_obj, contacts_filter_obj)
+                _create_subset_populate_device(bg_rime, opts, old_device, new_device, events_filter_obj,
+                                               contacts_filter_obj)
                 if anonymiser:
                     for provider in new_device.providers.values():
                         anonymiser.anonymise_device_provider(new_device, provider)

@@ -153,40 +153,38 @@ class IOSWhatsApp(Provider):
         """
         Create a subset using the given events and contacts.
         """
-        rows_zwaprofilepushname = subsetter.row_subset('ZWAPROFILEPUSHNAME', 'Z_PK')
-        rows_zwagroupmember = subsetter.row_subset('ZWAGROUPMEMBER', 'Z_PK')
-        rows_zwachatsession = subsetter.row_subset('ZWACHATSESSION', 'Z_PK')
-        rows_zwamessage = subsetter.row_subset('ZWAMESSAGE', 'Z_PK')
+        with subsetter.db_subset(src_conn=self.msgdb, new_db_pathname=self.CHATSTORAGE_DB) as subset_db:
+            rows_zwaprofilepushname = subset_db.row_subset('ZWAPROFILEPUSHNAME', 'Z_PK')
+            rows_zwagroupmember = subset_db.row_subset('ZWAGROUPMEMBER', 'Z_PK')
+            rows_zwachatsession = subset_db.row_subset('ZWACHATSESSION', 'Z_PK')
+            rows_zwamessage = subset_db.row_subset('ZWAMESSAGE', 'Z_PK')
 
-        # Copy the "contacts" into ZWACHATSESSION, ZWAPROFILEPUSHNAME, and ZWAGROUPMEMBER.
-        for contact in contacts:
-            wa_contact = contact.provider_data
+            # Copy the "contacts" into ZWACHATSESSION, ZWAPROFILEPUSHNAME, and ZWAGROUPMEMBER.
+            for contact in contacts:
+                wa_contact = contact.provider_data
 
-            if wa_contact.profile_push_name_id:
-                rows_zwaprofilepushname.add(wa_contact.profile_push_name_id)
+                if wa_contact.profile_push_name_id:
+                    rows_zwaprofilepushname.add(wa_contact.profile_push_name_id)
 
-            if wa_contact.group_member_pks:
-                rows_zwagroupmember.update(set(wa_contact.group_member_pks))
+                if wa_contact.group_member_pks:
+                    rows_zwagroupmember.update(set(wa_contact.group_member_pks))
 
-            if wa_contact.chat_session_ids:
-                rows_zwachatsession.update(set(wa_contact.chat_session_ids))
+                if wa_contact.chat_session_ids:
+                    rows_zwachatsession.update(set(wa_contact.chat_session_ids))
 
-        # Copy the events.
-        for event in events:
-            wa_event = event.provider_data
+            # Copy the events.
+            for event in events:
+                wa_event = event.provider_data
 
-            rows_zwamessage.add(event.id_)
-            rows_zwachatsession.add(wa_event.chat_session_id)
+                rows_zwamessage.add(event.id_)
+                rows_zwachatsession.add(wa_event.chat_session_id)
 
-            if wa_event.group_member:
-                rows_zwagroupmember.add(wa_event.group_member)
+                if wa_event.group_member:
+                    rows_zwagroupmember.add(wa_event.group_member)
 
-        subsetter.create_db_and_copy_rows(self.msgdb, self.CHATSTORAGE_DB, [
-            rows_zwaprofilepushname,
-            rows_zwagroupmember,
-            rows_zwachatsession,
-            rows_zwamessage,
-        ])
+    def all_files(self):
+        # TODO
+        return []
 
     def _create_session(self, session_id):
         chat_table = Table('ZWACHATSESSION')

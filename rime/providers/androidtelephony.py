@@ -120,23 +120,22 @@ class AndroidTelephony(Provider, LazyContactProvider):
         """
         Create a subset using the given events and contacts.
         """
-        rows_sms = subsetter.row_subset("sms", "_id")
-        rows_threads = subsetter.row_subset('threads', '_id')
-        rows_address = subsetter.row_subset('canonical_addresses', '_id')
+        with subsetter.db_subset(src_conn=self.db, new_db_pathname=self.MMSSMS_DB) as subset_db:
+            rows_sms = subset_db.row_subset("sms", "_id")
+            rows_threads = subset_db.row_subset('threads', '_id')
+            rows_address = subset_db.row_subset('canonical_addresses', '_id')
 
-        rows_address.update(
-            contact.local_id for contact in contacts if contact.providerName == self.NAME
-        )
-        rows_threads.update(
-            event.provider_data.threads_table_id for event in events if event.provider.NAME == self.NAME
-        )
-        rows_sms.update(event.id_ for event in events if event.provider.NAME == self.NAME)
+            rows_address.update(
+                contact.local_id for contact in contacts if contact.providerName == self.NAME
+            )
+            rows_threads.update(
+                event.provider_data.threads_table_id for event in events if event.provider.NAME == self.NAME
+            )
+            rows_sms.update(event.id_ for event in events if event.provider.NAME == self.NAME)
 
-        subsetter.create_db_and_copy_rows(self.db, self.MMSSMS_DB, [
-            rows_sms,
-            rows_threads,
-            rows_address,
-        ])
+    def all_files(self):
+        # TODO
+        return []
 
     @classmethod
     def from_filesystem(cls, fs):

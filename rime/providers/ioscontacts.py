@@ -96,18 +96,18 @@ class IOSContacts(Provider):
     }
 
     def subset(self, subsetter, events: Iterable[Event], contacts: Iterable[Contact]):
-        abperson_rows = subsetter.row_subset('ABPerson', 'ROWID')
-        abmv_rows = subsetter.row_subset('ABMultiValue', 'record_id')
+        with subsetter.db_subset(src_conn=self.conn, new_db_pathname=self.DB_PATH) as subset_db:
+            abperson_rows = subset_db.row_subset('ABPerson', 'ROWID')
+            abmv_rows = subset_db.row_subset('ABMultiValue', 'record_id')
 
-        my_contact_ids = [contact.local_id for contact in contacts if contact.providerName == self.NAME]
+            my_contact_ids = [contact.local_id for contact in contacts if contact.providerName == self.NAME]
 
-        abperson_rows.update(my_contact_ids)
-        abmv_rows.update(my_contact_ids)
+            abperson_rows.update(my_contact_ids)
+            abmv_rows.update(my_contact_ids)
 
-        subsetter.create_db_and_copy_rows(self.conn, self.DB_PATH, [
-            abperson_rows,
-            abmv_rows
-        ])
+    def all_files(self):
+        # TODO
+        return []
 
     @classmethod
     def from_filesystem(cls, fs):

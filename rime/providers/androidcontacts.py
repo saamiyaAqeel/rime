@@ -138,25 +138,23 @@ class AndroidContacts(Provider):
     }
 
     def subset(self, subsetter, events: Iterable[Event], contacts: Iterable[Contact]):
-        rows_contacts = subsetter.row_subset('contacts', '_id')
-        rows_raw_contacts = subsetter.row_subset('raw_contacts', '_id')
-        rows_data = subsetter.row_subset('data', 'raw_contact_id')
-        mimetypes = subsetter.complete_table('mimetypes')
+        with subsetter.db_subset(src_conn=self.conn, new_db_pathname=self.DB_PATH) as db_subset:
+            rows_contacts = db_subset.row_subset('contacts', '_id')
+            rows_raw_contacts = db_subset.row_subset('raw_contacts', '_id')
+            rows_data = db_subset.row_subset('data', 'raw_contact_id')
+            db_subset.complete_table('mimetypes')
 
-        for contact in contacts:
-            if contact.providerName != self.NAME:
-                continue
+            for contact in contacts:
+                if contact.providerName != self.NAME:
+                    continue
 
-            rows_contacts.add(contact.local_id)
-            rows_raw_contacts.update(contact.provider_data.raw_contact_row_ids)
-            rows_data.update(contact.provider_data.raw_contact_row_ids)
+                rows_contacts.add(contact.local_id)
+                rows_raw_contacts.update(contact.provider_data.raw_contact_row_ids)
+                rows_data.update(contact.provider_data.raw_contact_row_ids)
 
-        subsetter.create_db_and_copy_rows(self.conn, self.DB_PATH, [
-            rows_contacts,
-            rows_raw_contacts,
-            rows_data,
-            mimetypes
-        ])
+    def all_files(self):
+        # TODO
+        return []
 
     def _get_mime_types(self):
         """
