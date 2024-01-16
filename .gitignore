@@ -7,6 +7,6 @@ frontend/node_modules
 
 # Ignore example/ directory
 example
-
+node_modules/
 # Ignore MacOS specific file
 .DS_Store
