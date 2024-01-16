@@ -13,6 +13,7 @@ import ProviderChooser from './ProviderChooser.vue'
 import SearchViewChooser from './SearchViewChooser.vue'
 import SearchResults from './SearchResults.vue'
 import SearchResultsMedia from './SearchResultsMedia.vue'
+import PieChart from './SearchResultsPieChart.vue'
 
 import { searchView } from '../store.js'
 
@@ -48,6 +49,7 @@ function showPopover(message) {
 			<SearchViewChooser id="searchViewChooser"/>
 			<SearchResults v-show="searchView == 'messages'" id="searchResults"/>
 			<SearchResultsMedia v-show="searchView == 'media'" id="searchResults"/>
+			<PieChart v-show="searchView == 'piechart'" id="searchResults"/>
 		</div>
 
 		<div id="popover">

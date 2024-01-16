@@ -12,6 +12,7 @@ import ThreePaneView from './components/ThreePaneView.vue'
 </script>
 
 <template>
+	<!-- <ThreePaneView id="view"/> -->
 	<ThreePaneView id="view"/>
 </template>
 
