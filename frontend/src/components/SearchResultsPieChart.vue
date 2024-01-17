@@ -68,32 +68,27 @@ export default {
          
       var legend = d3.select(this.$refs.myDataviz);
 
-      // Dynamically generate keys from the data array
       var keys = this.data.map(d => d.name);
 
-      // Usually you have a color scale in your chart already
       var color = d3.scaleOrdinal()
         .domain(keys)
         .range(this.colors);
 
-      // Add one dot in the legend for each name.
       legend.selectAll("mydots")
         .data(keys)
         .enter()
         .append("circle")
         .attr("cx", 100)
-        .attr("cy", (d, i) => 100 + i * 25) // 100 is where the first dot appears. 25 is the distance between dots
+        .attr("cy", (d, i) => 100 + i * 25) 
         .attr("r", 7)
         .style("fill", d => color(d));
 
-      // Add one dot in the legend for each name.
       legend.selectAll("mylabels")
         .data(keys)
         .enter()
         .append("text")
         .attr("x", 120)
-        .attr("y", (d, i) => 100 + i * 25) // 100 is where the first dot appears. 25 is the distance between dots
-        .style("fill", d => color(d))
+        .attr("y", (d, i) => 100 + i * 25) 
         .text(d => d)
         .attr("text-anchor", "left")
         .style("alignment-baseline", "middle");
@@ -109,7 +104,7 @@ export default {
 }
 
 .chart-container > div {
-  margin-right: 20px; /* Adjust spacing between the two charts */
+  margin-right: 20px; 
 }
 </style>
 
