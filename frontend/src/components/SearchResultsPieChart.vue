@@ -1,63 +1,15 @@
-<!-- <template>
+
+<template>
   <div>
     <h2>Pie Chart</h2>
-    <svg ref="pieChart" width="500" height="400"></svg>
-  </div>
-</template>
-
-<script setup>
-import * as d3 from 'd3';
-
-const data = [
-  { name: "Alex", share: 20.70 },
-  { name: "Shelly", share: 30.92 },
-  { name: "Clark", share: 15.42 },
-  { name: "Matt", share: 13.65 },
-  { name: "Jolene", share: 19.31 }
-];
-
-const width = 500;
-const height = 400;
-const radius = 200;
-
-const refs = defineRefs();
-
-const svg = d3.select(refs.pieChart);
-const g = svg.append("g").attr("transform", `translate(${width / 2},${height / 2})`);
-
-const ordScale = d3.scaleOrdinal()
-  .domain(data.map(d => d.name))
-  .range(['#ffd384', '#94ebcd', '#fbaccc', '#d3e0ea', '#fa7f72']);
-
-const pie = d3.pie().value(d => d.share);
-
-const arc = g.selectAll("arc")
-  .data(pie(data))
-  .enter();
-
-const path = d3.arc()
-  .outerRadius(radius)
-  .innerRadius(0);
-
-arc.append("path")
-  .attr("d", path)
-  .attr("fill", d => ordScale(d.data.name));
-
-const label = d3.arc()
-  .outerRadius(radius)
-  .innerRadius(0);
-
-arc.append("text")
-  .attr("transform", d => `translate(${label.centroid(d)})`)
-  .text(d => d.data.name)
-  .style("font-family", "arial")
-  .style("font-size", 15);
-</script> -->
-
-<!-- <template>
-  <div>
-    <h2>Pie Chart</h2>
-    <svg ref="pieChart" width="500" height="400"></svg>
+    <div class="chart-container">
+      <div>
+        <svg ref="pieChart" width="500" height="400"></svg>
+      </div>
+      <div>
+        <svg ref="myDataviz" height="300" width="450"></svg>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -113,71 +65,53 @@ export default {
          .text(d => d.data.name)
          .style("font-family", "arial")
          .style("font-size", 15);
+         
+      var legend = d3.select(this.$refs.myDataviz);
+
+      // Dynamically generate keys from the data array
+      var keys = this.data.map(d => d.name);
+
+      // Usually you have a color scale in your chart already
+      var color = d3.scaleOrdinal()
+        .domain(keys)
+        .range(this.colors);
+
+      // Add one dot in the legend for each name.
+      legend.selectAll("mydots")
+        .data(keys)
+        .enter()
+        .append("circle")
+        .attr("cx", 100)
+        .attr("cy", (d, i) => 100 + i * 25) // 100 is where the first dot appears. 25 is the distance between dots
+        .attr("r", 7)
+        .style("fill", d => color(d));
+
+      // Add one dot in the legend for each name.
+      legend.selectAll("mylabels")
+        .data(keys)
+        .enter()
+        .append("text")
+        .attr("x", 120)
+        .attr("y", (d, i) => 100 + i * 25) // 100 is where the first dot appears. 25 is the distance between dots
+        .style("fill", d => color(d))
+        .text(d => d)
+        .attr("text-anchor", "left")
+        .style("alignment-baseline", "middle");
+
     },
   },
 };
 </script>
 
 <style scoped>
-/* Add your styles here if needed */
-</style> -->
+.chart-container {
+  display: flex;
+}
 
-<template>
-  <div>
-    <h2>Pie Chart</h2>
-    <svg ref="pieChart" width="500" height="400"></svg>
-  </div>
-</template>
+.chart-container > div {
+  margin-right: 20px; /* Adjust spacing between the two charts */
+}
+</style>
 
-<script setup>
-import { ref, onMounted } from 'vue';
-import * as d3 from 'd3';
 
-const data = [
-  { name: "Alex", share: 20.70 },
-  { name: "Shelly", share: 30.92 },
-  { name: "Clark", share: 15.42 },
-  { name: "Matt", share: 13.65 },
-  { name: "Jolene", share: 19.31 }
-];
-
-const radius = 200;
-
-const svgRef = ref("pieChart");
-
-onMounted(() => {
-  const svg = d3.select(svgRef.value);
-  const width = svg.attr("width");
-  const height = svg.attr("height");
-
-  const g = svg.append("g").attr("transform", `translate(${width / 2},${height / 2})`);
-
-  const ordScale = d3.scaleOrdinal()
-    .domain(data.map(d => d.name))
-    .range(['#ffd384', '#94ebcd', '#fbaccc', '#d3e0ea', '#fa7f72']);
-
-  const pie = d3.pie().value(d => d.share);
-
-  const arc = g.selectAll("arc")
-    .data(pie(data))
-    .enter();
-
-  const path = d3.arc()
-    .outerRadius(radius)
-    .innerRadius(0);
-
-  arc.append("path")
-    .attr("d", path)
-    .attr("fill", d => ordScale(d.data.name));
-
-  const label = d3.arc()
-    .outerRadius(radius)
-    .innerRadius(0);
-
-  arc.append("text")
-    .attr("transform", d => `translate(${label.centroid(d)})`)
-    .text(d => d.data.name)
-    .style("font-family", "arial")
-    .style("font-size", 15);
-});
-</script>
+ 
