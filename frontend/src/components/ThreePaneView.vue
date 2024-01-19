@@ -14,6 +14,7 @@ import SearchViewChooser from './SearchViewChooser.vue'
 import SearchResults from './SearchResults.vue'
 import SearchResultsMedia from './SearchResultsMedia.vue'
 import PieChart from './SearchResultsPieChart.vue'
+import Timeline from  './SearchResultsTimeline.vue'
 
 import { searchView } from '../store.js'
 
@@ -50,6 +51,7 @@ function showPopover(message) {
 			<SearchResults v-show="searchView == 'messages'" id="searchResults"/>
 			<SearchResultsMedia v-show="searchView == 'media'" id="searchResults"/>
 			<PieChart v-show="searchView == 'piechart'" id="searchResults"/>
+			<Timeline v-show="searchView == 'timeline'" id="searchResults"/>
 		</div>
 
 		<div id="popover">

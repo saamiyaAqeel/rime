@@ -82,7 +82,7 @@ import { useQuery } from '@vue/apollo-composable'
 import gql from 'graphql-tag'
 
 import SearchResultMessageEvent from './SearchResultMessageEvent.vue'
-import SearchResultMediaEvent from './SearchResultMediaEvent.vue'
+//import SearchResultMediaEvent from './SearchResultMediaEvent.vue'
 
 class ChatSession {
 	constructor(sessionId, name, participants, providerFriendlyName) {
