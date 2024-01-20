@@ -1,6 +1,6 @@
 
  <template>
-    <div ref="mapDiv"></div>
+    <div ref="mapDiv"  style="height: calc(100vh - 20px); width: calc(50% - 20px); float: left; margin: 30px; border: 4px solid #0e0e0e;" ></div>
 </template>
   
   <script>
