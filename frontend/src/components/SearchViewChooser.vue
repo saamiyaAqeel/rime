@@ -16,6 +16,7 @@ const props = defineProps({
 		<li :class = "{active: searchView == 'messages'}" @click="setSearchView('messages')">Messages</li>
 		<li :class = "{active: searchView == 'media'}" @click="setSearchView('media')">Media</li>
 		<li :class = "{active: searchView == 'piechart'}" @click="setSearchView('piechart')">PieChart</li>
+		<li :class = "{active: searchView == 'map'}" @click="setSearchView('map')">MapView</li>
 	</ul>
 </template>
 
