@@ -19,7 +19,6 @@ export const loadedGoogleMapsAPI = new Promise( (resolve,reject) => {
 
     GMap.setAttribute('src',
    `example-key`);
-
     document.body.appendChild(GMap); 
 });
 
