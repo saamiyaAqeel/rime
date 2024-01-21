@@ -1,7 +1,7 @@
 
- <template>
-    <div ref="mapDiv"  style="height: calc(100vh - 20px); width: calc(50% - 20px); float: left; margin: 30px; border: 4px solid #0e0e0e;" ></div>
-</template>
+   <template>
+    <div ref="mapDiv" style="height: calc(100vh - 20px); width: calc(50% - 20px); float: left; margin: 30px; border: 4px solid #0e0e0e;"></div>
+  </template>
   
   <script>
   import { loadedGoogleMapsAPI } from '../main.js';
@@ -18,11 +18,18 @@
         // Access the google.maps object through the callback
         const maps = google.maps;
   
-        // new maps.Map(document.getElementById('map'), {
-        new maps.Map(this.$refs.mapDiv, {
-          center: { lat: 61.180059, lng: -149.822075 },
+        const center = new maps.LatLng(52.9548, -1.1581);
+  
+        const mainMap = new maps.Map(this.$refs.mapDiv, {
+          center: center,
           scrollwheel: false,
-          zoom: 4
+          zoom: 12 
+        });
+  
+        const marker = new maps.Marker({
+          position: center,
+          map: mainMap,
+          title: 'Nottingham Marker'
         });
       }
     }
