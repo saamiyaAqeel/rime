@@ -1,111 +1,59 @@
 {
-    "pfizerFacts": [
+    "ImportantEvents": [
       {
-        "description": "Approval of Pfizer/BioNTech vaccine in UK",
-        "title": "UK Approval",
+        "description": "Person A was murdered at this time",
+        "title": "Murder #26",
         "date": "2020/12/02"
       },
       {
-        "description": "Approval of Pfizer/BioNTech vaccine in Canada",
-        "title": "Canada Approval",
+        "description": "Person B was speaking to Person C physically",
+        "title": "Physical Coversation",
         "date": "2020/12/09"
       },
       {
-        "description": "Sandra Lindsay, a critical care nurse from Northwell Long Island Jewish Medical Center was the first vaccinated in New York",
-        "title": "1st Pfizer Vaccine shot in US",
+        "description": "Blood stain was found belonging to Person A",
+        "title": "Futher evidence of the case was found",
         "date": "2020/12/14"
-      },
-      {
-        "description": "Approval of Pfizer/BioNTech vaccine in EU",
-        "title": "EU Approval",
-        "date": "2020/12/21"
-      },    
-      {
-        "description": "Pfizer/BioNTech announced that their vaccine is highly effective in adolescents 12 to 15 years old",
-        "title": "Highly effective in adolescents",
-        "date": "2021/03/31"
-      },
-      {
-        "description": "Call for fast-track approval of Pfizer/BioNTech vaccine by India",
-        "title": "India Approval Call",
-        "date": "2021/04/14"
       }
     ],
-    "pfizerTimeline": [
+    "Timeline": [
       {
-        "description": "Pfizer (along with Moderna) uses a new vaccine approach involving messenger RNA",
-        "title": "Pfizer/BioNTech Trial",
+        "description": "Person A was speaking on Whatsapp",
+        "title": "A",
         "start": "2020/03/29",
         "end": "2020/11/29",
         "color": "#00a950"
       },
       {
-        "description": "Pfizer (along with Moderna) uses a new vaccine approach involving messenger RNA",
-        "title": "Test",
+        "description": "Person B was speaking on the phone",
+        "title": "B",
         "start": "2020/03/29",
         "end": "2020/11/29",
         "color": "#00a950"
       },
       {
-        "description": "Pfizer was the first company to report positive phase 3 clinical data",
-        "title": "Review",
+        "description": "Person C was using text message",
+        "title": "C",
         "start": "2020/11/29",
         "end": "2020/12/11",
         "color": "#00a950"
-      },
-      {
-        "description": "Dosage - 2 doses, 3 weeks apart",
-        "title": "US Approval",
-        "start": "2020/12/11",
-        "end": "2021/06/30",
-        "color": "#00a950"
       }
     ],
-    "otherVaccines": [
+    "SecondaryFacts": [
       {
-        "description": "Moderna (along with Pfizer) uses a new vaccine approach involving messenger RNA",
-        "title": "Moderna trials start",
+        "description": "Person A was speaking on the phone with an outsider",
+        "title": "A",
         "date": "2020/07/27"
       },
       {
-        "description": "Submitted for review",
-        "title": "Moderna Review",
+        "description": "Person C was on text message with an outsider",
+        "title": "C",
         "date": "2020/11/30"
       },
       {
-        "description": "Dosage - 2 doses, 4 weeks apart",
-        "title": "Moderna US Approval",
-        "date": "2020/12/18"
-      },
-      {
-        "description": "The vaccine is being developed by Janssen Pharmaceutica, a Belgium-based division of Johnson & Johnson",
-        "title": "Johnson and Johnson trials start",
-        "date": "2020/09/07"
-      },
-      {
-        "description": "Trial shows 66% efficacy",
-        "title": "Johnson and Johnson Review",
-        "date": "2021/01/29"
-      },
-      {
-        "description": "Dosage - 1 dose",
-        "title": "Johnson and Johnson US Approval",
-        "date": "2021/02/27"
-      },
-      {
-        "description": "Vaccine developed by a small biotech firm in US",
-        "title": "Novavax trials start",
-        "date": "2020/09/28"
-      },
-      {
-        "description": "Trial shows about 90% efficacy",
-        "title": "Novavax Review",
-        "date": "2021/01/28"
-      },
-      {
-        "description": "US pauses J&J vaccine over clot reports",
-        "title": "Johnson and Johnson vaccine paused",
-        "date": "2021/04/13"
+        "description": "Person C was on text message with an outsider",
+        "title": "C",
+        "date": "2020/12/30"
       }
     ]
    }
