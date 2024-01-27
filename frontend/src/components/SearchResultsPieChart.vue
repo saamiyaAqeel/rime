@@ -1,17 +1,20 @@
 
-<template>
-  <div>
-    <h2>Pie Chart</h2>
-    <div class="chart-container">
-      <div>
-        <svg ref="pieChart" width="500" height="400"></svg>
+  <template>
+    <div class="page-container">
+      <div class="title-container">
+        <h2>Pie Chart</h2>
+        <img src="/filtericon.jpg" alt="Filter Icon" class="filter-icon" />
       </div>
-      <div>
-        <svg ref="myDataviz" height="300" width="450"></svg>
+      <div class="chart-container">
+        <div>
+          <svg ref="pieChart" width="500" height="400"></svg>
+        </div>
+        <div>
+          <svg ref="myDataviz" height="300" width="450"></svg>
+        </div>
       </div>
     </div>
-  </div>
-</template>
+  </template>
 
 <script>
 import * as d3 from 'd3';
@@ -74,39 +77,53 @@ export default {
         .domain(keys)
         .range(this.colors);
 
-      legend.selectAll("mydots")
-        .data(keys)
-        .enter()
-        .append("circle")
-        .attr("cx", 100)
-        .attr("cy", (d, i) => 100 + i * 25) 
-        .attr("r", 7)
-        .style("fill", d => color(d));
+      legend.selectAll("mysquares")
+      .data(keys)
+      .enter()
+      .append("rect") // Change from "circle" to "rect" to create rectangles
+      .attr("x", 100)
+      .attr("y", (d, i) => 100 + i * 25)
+      .attr("width", 20) // Set the width of the rectangles
+      .attr("height", 20) // Set the height of the rectangles
+      .style("fill", d => color(d));
+
 
       legend.selectAll("mylabels")
-        .data(keys)
-        .enter()
-        .append("text")
-        .attr("x", 120)
-        .attr("y", (d, i) => 100 + i * 25) 
-        .text(d => d)
-        .attr("text-anchor", "left")
-        .style("alignment-baseline", "middle");
-
+      .data(keys)
+      .enter()
+      .append("text")
+      .attr("x", 140) 
+      .attr("y", (d, i) => 110 + i * 25)
+      .text(d => d)
+      .attr("text-anchor", "left")
+      .style("alignment-baseline", "middle");
     },
   },
 };
 </script>
 
 <style scoped>
-.chart-container {
-  display: flex;
-}
-
-.chart-container > div {
-  margin-right: 20px; 
-}
-</style>
-
-
- 
+  .chart-container {
+    display: flex;
+  }
+  
+  .page-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+  }
+  
+  .title-container {
+    display: flex;
+    align-items: center;
+  }
+  
+  .filter-icon {
+    width: 50px; 
+    height: 45px; 
+    margin-left: 10px; 
+  }
+  </style>
+  

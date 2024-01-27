@@ -1,6 +1,6 @@
 
 <template>
-  <div>
+  <div class="timeline-container">
     <div :id="containerId"></div>
   </div>
 </template>
@@ -56,6 +56,9 @@ export default {
             // Create bottom series with moments
             var otherVaccinesSeries = chart.moment(otherVaccinesDatasetMapping);
 
+            
+
+
             // Set chart scale levels
             chart.scale().zoomLevels([
               [
@@ -83,9 +86,16 @@ export default {
 </script>
 
 <style scoped>
+.timeline-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh; 
+}
+
 #container {
-  width: 100%;
-  height: 100%;
+  width: 90%;
+  height: 90%;
   margin: 0;
   padding: 0;
 }
