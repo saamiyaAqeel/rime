@@ -3,7 +3,18 @@
     <div class="page-container">
       <div class="title-container">
         <h2>Pie Chart</h2>
-        <img src="/filtericon.jpg" alt="Filter Icon" class="filter-icon" />
+        <img
+        src="/filtericon.jpg"
+        alt="Filter Icon"
+        class="filter-icon"
+        @click="toggleDropdown"
+      />
+      <div v-if="showDropdown" class="dropdown-menu">
+        <label v-for="filter in filters" :key="filter.id">
+          <input type="checkbox" v-model="selectedFilters" :value="filter.id" />
+          {{ filter.label }}
+        </label>
+      </div>
       </div>
       <div class="chart-container">
         <div>
@@ -15,6 +26,7 @@
       </div>
     </div>
   </template>
+  
 
 <script>
 import * as d3 from 'd3';
@@ -30,7 +42,14 @@ export default {
         { name: "Jolene", share: 19.31 }
       ],
       radius: 200,
-      colors: ['#ffd384', '#94ebcd', '#fbaccc', '#d3e0ea', '#fa7f72']
+      colors: ['#ffd384', '#94ebcd', '#fbaccc', '#d3e0ea', '#fa7f72'],
+      showDropdown: false,
+      selectedFilters: [],
+      filters: [
+        { id: 1, label: 'Filter 1' },
+        { id: 2, label: 'Filter 2' },
+      ],
+      dropdownPosition: { top: 0, left: 0 }
     };
   },
   mounted() {
@@ -98,6 +117,20 @@ export default {
       .attr("text-anchor", "left")
       .style("alignment-baseline", "middle");
     },
+    toggleDropdown() {
+      const dropdownMenu = this.$refs.dropdownMenu;
+      const filterIcon = this.$refs.filterIcon;
+
+      if (filterIcon && dropdownMenu) {
+        const iconRect = filterIcon.getBoundingClientRect();
+        this.dropdownPosition = {
+          top: iconRect.bottom + window.scrollY,
+          left: iconRect.left + window.scrollX,
+        };
+      }
+
+      this.showDropdown = !this.showDropdown;
+    }
   },
 };
 </script>
@@ -121,9 +154,25 @@ export default {
   }
   
   .filter-icon {
-    width: 50px; 
-    height: 45px; 
-    margin-left: 10px; 
+    width: 40px; /* Set the desired width */
+    height: 40px; /* Set the desired height */
+    margin-left: 10px; /* Adjust the margin as needed */
+    cursor: pointer;
   }
+
+.dropdown-menu {
+    position: absolute;
+    top: 70;
+    left: 130;
+    background-color: #fff;
+    border: 1px solid #ccc;
+    padding: 10px;
+    z-index: 1000;
+  }
+
+.dropdown-menu label {
+  display: block;
+  margin-bottom: 8px;
+}
   </style>
   
