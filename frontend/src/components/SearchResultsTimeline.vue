@@ -32,50 +32,38 @@ export default {
               ]);
             }
 
-            // Create dataset for the top datapoints
             var pfizerDataSet = anychart.data.set(data.ImportantEvents);
 
-            // Map the top datapoints
             var pfizerMapping = pfizerDataSet.mapAs({
               x: 'date',
               value: 'title',
             });
 
-            // Create top series with moments
             var pfizerMappingSeries = chart.moment(pfizerMapping);
 
-            // Create dataset for the bottom datapoints
             var otherVaccinesDataset = anychart.data.set(data.SecondaryFacts);
 
-            // Map the bottom dataset
             var otherVaccinesDatasetMapping = otherVaccinesDataset.mapAs({
               x: 'date',
               value: 'title',
             });
 
-            // Create bottom series with moments
             var otherVaccinesSeries = chart.moment(otherVaccinesDatasetMapping);
 
-            
-
-
-            // Set chart scale levels
             chart.scale().zoomLevels([
               [
                 { unit: 'month', count: 1 }
               ]
             ]);
 
-            // Enable chart scroller
+            chart.axis().height(60);
+            chart.axis().labels().format(function () {
+              return anychart.format.dateTime(this.tickValue, 'MMM yyyy');
+            });
+            
             chart.scroller().enabled(true);
-
-            // Set chart's title
             chart.title('Timeline of Events');
-
-            // Set container id for the chart
             chart.container(this.containerId);
-
-            // Initiate chart drawing
             chart.draw();
           }
         );
@@ -90,7 +78,7 @@ export default {
   display: flex;
   justify-content: center;
   align-items: center;
-  height: 100vh; 
+  height: 100vh;
 }
 
 #container {
