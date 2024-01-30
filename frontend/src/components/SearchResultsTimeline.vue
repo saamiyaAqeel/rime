@@ -88,8 +88,22 @@ export default {
       // Iterate over the timeline data to create legend items
       for (var i = 0; i < timelineData.length; i++) {
         var legendItem = document.createElement('div');
-        legendItem.innerHTML = timelineData[i].title;
-        legendItem.style.color = chart.getSeriesAt(i).color;
+        legendItem.style.display = 'flex'; // Set display to flex for horizontal alignment
+
+        // Create a colored square
+        var square = document.createElement('div');
+        square.style.width = '20px'; // Adjust as needed
+        square.style.height = '20px'; // Adjust as needed
+        square.style.backgroundColor =  this.getColorByTitle(timelineData[i].title) ;
+        square.style.marginRight = '5px'; // Adjust as needed
+
+        // Create the label
+        var label = document.createElement('div');
+        label.innerHTML = timelineData[i].title;
+
+        // Append both the square and label to the legend item
+        legendItem.appendChild(square);
+        legendItem.appendChild(label);
 
         // Append the legend item to the legend container
         legendContainer.appendChild(legendItem);
@@ -109,7 +123,6 @@ export default {
   },
 };
 </script>
-
 
 <style scoped>
 .timeline-container {
@@ -131,3 +144,4 @@ export default {
   margin-top: 20px;
 }
 </style>
+
