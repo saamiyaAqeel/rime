@@ -4,10 +4,14 @@
     <div :id="containerId"></div>
     <div id="legendContainer"></div>
   </div>
+  <!-- <div v-if="activeDevices.length === 0" class="center text-box">
+      No active devices. Add your own custom content here.
+  </div> -->
 </template>
 
 <script>
 import * as anychart from 'anychart';
+import { activeDevices } from '../store.js';
 
 export default {
   data() {
