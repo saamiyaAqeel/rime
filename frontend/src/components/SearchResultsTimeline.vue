@@ -11,7 +11,7 @@
 
 <script>
 import * as anychart from 'anychart';
-import { activeDevices } from '../store.js';
+//import { activeDevices } from '../store.js';
 
 export default {
   data() {

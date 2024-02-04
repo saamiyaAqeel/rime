@@ -5,13 +5,11 @@ export default {
 </script>
 
 <script setup>
-import { ref, computed, watch, onMounted, render , nextTick } from 'vue';
+import { ref, computed, watch, onMounted, render, nextTick } from 'vue';
 import * as d3 from 'd3';
 import { activeDevices } from '../store.js';
 import * as anychart from 'anychart'
 
-
-// Reactive state using ref
 const data = ref([
   { x: "A", value: 637166 },
   { x: "B", value: 721630 },
@@ -20,52 +18,24 @@ const data = ref([
   { x: "E", value: 90000 }
 ]);
 
+const selectedCar = ref('') 
+const cars = ref ([
+        { label: 'Volvo', value: 'volvo' },
+        { label: 'Saab', value: 'saab' },
+        { label: 'Opel', value: 'opel' },
+        { label: 'Audi', value: 'audi' },
+      ]);
+
 const radius = ref(200);
-//const pieChart = ref(null)
-//defineProps(['pieChart'])
 const pieChart = ref(null);
 var showChart = ref(false);
-const colors = ref(['#ffd384', '#94ebcd', '#fbaccc', '#d3e0ea', '#fa7f72']);
-const showDropdown = ref(false);
+var showDropdown = ref(false);
 const selectedFilters = ref([]);
 const filters = ref([
   { id: 1, label: 'Filter 1' },
   { id: 2, label: 'Filter 2' },
 ]);
 const dropdownPosition = ref({ top: 0, left: 0 });
-
-// Computed property
-// const computedActiveDevices = computed(() => {
-//   return activeDevices.value;
-// });
-
-// watch(() => activeDevices.value.length, () => {
-//   if (activeDevices.value.length > 0) {
-//     console.log("hello hello im watching u");
-//     //anyPieChart();
-//     showChart = true;
-//   }
-//   else {
-//     showChart = false
-//   }
-//   // checkDevices();
-// });
-
-
-// // Lifecycle hook
-// onMounted(() => {
-//   // console.log(activeDevices.value.length)
-//   // if (activeDevices.value.length > 0) {
-//   //   nextTick();
-
-//   // if (activeDevices.value.length > 0) {
-//   //   anyPieChart();
-//   // }
-  
-//       anyPieChart();
-//  // anyPieChart();
-//   //}
-// });
 
 const computedActiveDevices = computed(() => {
   return activeDevices.value;
@@ -90,6 +60,13 @@ onMounted(() => {
   }
 });
 
+const toggleDropdown = () => {
+  showDropdown.value = !showDropdown.value;
+}
+
+const handleItemClick = () => {
+  showDropdown.value = false;
+}
 
 const anyPieChart = () => {
   const chart = anychart.pie(data.value);
@@ -99,13 +76,44 @@ const anyPieChart = () => {
 }
 
 </script>
-
+<!-- 
 <template>
   <div>
     <div v-if="activeDevices.length === 0" class="center text-box">
       Select one or more devices at the top left to begin.
     </div>
     <div v-else class="page-container">
+
+      <button @click="toggleDropdown">Toggle Dropdown</button>
+      <div v-if="showDropdown"  class="dropdown">
+        <div>Item 1</div>
+        <div>Item 2</div>
+        <div>Item 3</div>
+      </div>
+
+      <div class="chart-container">
+        <div ref="pieChart" style="width: 500px; height: 500px;"></div>
+      </div>
+    </div>
+  </div>
+</template> -->
+
+<template>
+  <div >
+    <div v-if="activeDevices.length === 0" class="center text-box">
+      Select one or more devices at the top left to begin.
+    </div>
+    <div v-else class="page-container">
+      <!-- <button @click="toggleDropdown">Toggle Dropdown</button>
+      <div v-if="showDropdown" class="dropdown">
+        <div>Item 1</div>
+        <div >Item 2</div>
+        <div >Item 3</div>
+      </div> -->
+      <label for="cars">Choose a car:</label>
+    <select v-model="selectedCar" name="cars" id="cars">
+      <option v-for="(car, index) in cars" :key="index" :value="car.value">{{ car.label }}</option>
+    </select>
       <div class="chart-container">
         <div ref="pieChart" style="width: 500px; height: 500px;"></div>
       </div>
@@ -113,7 +121,12 @@ const anyPieChart = () => {
   </div>
 </template>
 
+
 <style scoped>
+.container {
+  position: relative;
+}
+
 .chart-container {
   display: flex;
 }
@@ -126,20 +139,6 @@ const anyPieChart = () => {
   height: 100vh;
 }
 
-.title-container {
-  display: flex;
-  align-items: center;
-}
-
-.filter-icon {
-  width: 40px;
-  /* Set the desired width */
-  height: 40px;
-  /* Set the desired height */
-  margin-left: 10px;
-  /* Adjust the margin as needed */
-  cursor: pointer;
-}
 
 .dropdown-menu {
   position: absolute;
@@ -162,4 +161,15 @@ const anyPieChart = () => {
   width: 30em;
   text-align: center;
 }
+
+.dropdown {
+  position: absolute;
+  top: 100%; /* Position below the button */
+  left: 0;
+  border: 1px solid #ccc;
+  padding: 5px;
+  background-color: #fff;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+
 </style>
