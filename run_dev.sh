@@ -92,3 +92,6 @@ VITE_PID=$!
 # Start Uvicorn in the foreground, running the backend.
 uvicorn --reload --reload-dir ../rime --interface asgi3 $UVICORN_OPTS --factory rimeserver:create_app
 
+
+npm run serve
+

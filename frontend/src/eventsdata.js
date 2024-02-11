@@ -1,88 +1,8 @@
-<!-- 
-This software is released under the terms of the GNU GENERAL PUBLIC LICENSE.
-See LICENSE.txt for full details.
-Copyright 2023 Telemarq Ltd
--->
-<template>
-	<div>
-		<button id="refresh" @click="eventsRefetch()">&#128472;</button>
-		<div class="searchResultsTable">
-			<div v-for="device in activeDevices" class="header"><span class="deviceName">{{ device }}</span></div>
-			<div v-if="searchResult" v-for="eventRow in eventsRowGenerator()" class="row">
-				<template v-for="event in eventRow">
-					<div v-if="event !== null" class="event" :class="event.__typename">
-						<SearchResultMessageEvent v-if="event.__typename == 'MessageEvent'" :event="event" />
-					</div>
-					<div v-else class="event"></div>
-				</template>
-			</div>
-		</div>
-		<div v-if="activeDevices.length === 0" class="center text-box">
-			Select one or more devices at the top left to begin.
-		</div>
-	</div>
-</template>
-<style scoped>
 
-.searchResultsTable {
-	display: grid;
-	grid-template-columns: v-bind(grid_template_columns);
-}
-
-.searchResultsTable .header {
-	font-weight: bold;
-	top: 0;
-	position: sticky;
-	background: white;
-}
-
-.searchResultsTable>.row {
-	display: contents;
-}
-
-.center {
-	margin: auto;
-	margin-top: 15%;
-	width: 30em;
-	text-align: center;
-}
-
-.event {
-	display: inline-block;
-}
-
-.eventHeader {
-	background: white;
-}
-
-.eventHeader .deviceName {
-	padding: 0.5em;
-	font-weight: bold;
-}
-
-.device {
-	font-size: 12px;
-	color: #aaa;
-}
-
-#refresh {
-	position: fixed;
-	top: 2px;
-	right: 2px;
-	width: 3em;
-	z-index: 1;
-}
-
-</style>
-
-<script setup>
 import { ref, watch, computed } from 'vue'
-import { eventsFilter, activeDevices, rawEventsSearchResult, eventsRefetch } from '../store.js'
+import { eventsFilter, activeDevices, rawEventsSearchResult, eventsRefetch } from './store.js'
 import { useQuery } from '@vue/apollo-composable'
 import gql from 'graphql-tag'
-
-import SearchResultMessageEvent from './SearchResultMessageEvent.vue'
-//import SearchResultMediaEvent from './SearchResultMediaEvent.vue'
 
 class ChatSession {
 	constructor(sessionId, name, participants, providerFriendlyName) {
@@ -144,7 +64,7 @@ const grid_template_columns = ref("repeat(1, 1fr)");
  * - store a delta since the last event;
  * - null out MessageEvent sessions if they're the same as the previous one.
 */
-const searchResult = computed(() => {
+export const searchResult = computed(() => {
 	let result = {'deviceIds': [], 'providers': [], 'events': []};
 	let lastEventForDevice = {};
 	let lastSessionKeyForDevice = {};
@@ -248,4 +168,3 @@ function * eventsRowGenerator() {
 	}
 }
 
-</script>
