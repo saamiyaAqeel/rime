@@ -58,17 +58,24 @@ watch(() => activeDevices.value.length, () => {
   }
 
   if (messagesSet.value) {
-    console.log(messagesSet.value)
-    axios.post('http://localhost:5000/api/messages', { title: "foo" })
+    // console.log(messagesSet.value)
+    var postRequest = JSON.stringify(messagesSet.value)
+    axios.post('http://localhost:5000/api/messages', postRequest, {
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    })
       .then(response => {
         responseData.value = response.data; // Store the response data in responseData
         // You can do additional processing here if needed
-        
+        console.log(responseData.value);
       })
       .catch(error => {
         console.error(error); // Log any errors
       });
+
   }
+
 
 
 });

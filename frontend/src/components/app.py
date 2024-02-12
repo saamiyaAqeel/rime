@@ -13,8 +13,11 @@ def get_data():
 
 @app.route('/api/messages', methods=['POST'])
 def post_data():
+    data = request.json
+    dataResponse = jsonify(data)
     response = jsonify({'message': 'Data received successfully'})
-    return response
+    # return response
+    return dataResponse
 
 if __name__ == '__main__':
     app.run(debug=True)
