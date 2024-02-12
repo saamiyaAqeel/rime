@@ -13,7 +13,7 @@ import * as anychart from 'anychart'
 import axios from 'axios';
 const endpoint = ref('http://localhost:5000/api/data');
 
-
+const responseData = ref(null);
 const data = ref([
   { x: "A", value: 637166 },
   { x: "B", value: 721630 },
@@ -59,15 +59,15 @@ watch(() => activeDevices.value.length, () => {
 
   if (messagesSet.value) {
     console.log(messagesSet.value)
-    // Make an HTTP GET request using Axios
-    // axios.post('http://localhost:5000/api/data')
-    //   .then(response => {
-    //     responseData.value = response.data; // Store the response data in responseData
-    //     // You can do additional processing here if needed
-    //   })
-    //   .catch(error => {
-    //     console.error(error); // Log any errors
-    //   });
+    axios.post('http://localhost:5000/api/messages', { title: "foo" })
+      .then(response => {
+        responseData.value = response.data; // Store the response data in responseData
+        // You can do additional processing here if needed
+        
+      })
+      .catch(error => {
+        console.error(error); // Log any errors
+      });
   }
 
 
@@ -80,8 +80,6 @@ onMounted(() => {
       anyPieChart();
     });
   }
-
-  const responseData = ref(null);
 
   // Make an HTTP GET request using Axios
   axios.get('http://localhost:5000/api/data')
