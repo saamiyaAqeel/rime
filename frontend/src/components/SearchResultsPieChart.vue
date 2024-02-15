@@ -38,46 +38,79 @@ const computedActiveDevices = computed(() => {
   return activeDevices.value;
 });
 
+// watch(() => activeDevices.value.length, () => {
+
+//   if (activeDevices.value.length > 0) {
+
+//     nextTick(() => {
+//       searchResult.value.events.forEach(event => {
+//         messagesSet.value.push(event.text)
+//       });
+//     });
+
+//     showChart = true;
+//     nextTick(() => {
+//       anyPieChart();
+//     });
+//   }
+//   else {
+//     showChart = false;
+//   }
+
+//   if (messagesSet.value) {
+//     // console.log(messagesSet.value)
+//     //var postRequest = JSON.stringify(messagesSet.value)
+//     var array = ["apple", "banana", "orange"];
+//     var postRequest = JSON.stringify(array);
+
+//     axios.post('http://localhost:5000/api/messages', postRequest, {
+//       headers: {
+//         'Content-Type': 'application/json'
+//       }
+//     })
+//       .then(response => {
+//         responseData.value = response.data; // Store the response data in responseData
+//         // You can do additional processing here if needed
+//         console.log(responseData.value);
+//       })
+//       .catch(error => {
+//         console.error(error); // Log any errors
+//       });
+
+//   }
+// });
+
 watch(() => activeDevices.value.length, () => {
-
   if (activeDevices.value.length > 0) {
-
     nextTick(() => {
       searchResult.value.events.forEach(event => {
         messagesSet.value.push(event.text)
       });
-    });
-
-    showChart = true;
-    nextTick(() => {
+      showChart = true;
       anyPieChart();
+      // Only send the post request after all data is pushed into messagesSet.value
+      if (messagesSet.value.length > 0) {
+        var postRequest = JSON.stringify(messagesSet.value[0]);
+        console.log(messagesSet.value[0])
+        axios.post('http://localhost:5000/api/messages', postRequest, {
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        })
+        .then(response => {
+          responseData.value = response.data; // Store the response data in responseData
+          // You can do additional processing here if needed
+          console.log(responseData.value);
+        })
+        .catch(error => {
+          console.error(error); // Log any errors
+        });
+      }
     });
   }
   else {
     showChart = false;
   }
-
-  if (messagesSet.value) {
-    // console.log(messagesSet.value)
-    var postRequest = JSON.stringify(messagesSet.value)
-    axios.post('http://localhost:5000/api/messages', postRequest, {
-      headers: {
-        'Content-Type': 'application/json'
-      }
-    })
-      .then(response => {
-        responseData.value = response.data; // Store the response data in responseData
-        // You can do additional processing here if needed
-        console.log(responseData.value);
-      })
-      .catch(error => {
-        console.error(error); // Log any errors
-      });
-
-  }
-
-
-
 });
 
 
