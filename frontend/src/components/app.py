@@ -36,7 +36,7 @@ def post_data():
     # Instead, you can directly use the data as a list
     message_array = data
     #print(message_array)
-    returnValue = chart_response.textClassifier(message_array)
+    returnValue = chart_response.illegalActivities(message_array)
     response = jsonify({'message': 'Data received successfully'})
     return returnValue  # Return the response object
 
