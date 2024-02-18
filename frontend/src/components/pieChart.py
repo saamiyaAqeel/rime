@@ -10,6 +10,12 @@ from collections import Counter
 from sklearn.svm import SVC
 
 class pieChart:
+
+    def create_data_structure(self, label, numeric_value):
+     data = {}
+     data['x'] = label
+     data['value'] = numeric_value
+     return data
   
     def illegalActivities(self, input_array):
         X = []  
@@ -30,11 +36,20 @@ class pieChart:
 
         classifier = LogisticRegression()
         classifier.fit(X_train_tfidf, y_train)
+        total_array_counter = 0
+        illegal_activities_counter = 0
 
         for input_text in input_array:
             new_input_tfidf = tfidf_vectorizer.transform([input_text])
             predicted_intent = classifier.predict(new_input_tfidf)
-            print("Input:", input_text, "--> Prediction:", predicted_intent[0])
+            if("non" not in predicted_intent[0]):
+               illegal_activities_counter += 1
+        
+        value = (illegal_activities_counter/len(input_array)) * 100
+        chart = pieChart()
+
+        return chart.create_data_structure("Potential Illegal Activities", str(value))
+        
     
     # def argumentativeNature(self, input_array):
     #     X = []  
@@ -87,13 +102,20 @@ class pieChart:
 
      classifier = SVC(kernel='linear')  
      classifier.fit(X_train_tfidf, y_train)
+     argumentative_nature_counter = 0
 
      for input_text in input_array:
         new_input_tfidf = tfidf_vectorizer.transform([input_text])
         predicted_intent = classifier.predict(new_input_tfidf)
-        print("Input:", input_text, "--> Prediction:", predicted_intent[0])
+        if("1" in predicted_intent[0]):
+           argumentative_nature_counter += 1
+            
+     value = (argumentative_nature_counter/len(input_array)) * 100
+     chart = pieChart()
 
-    
+     return chart.create_data_structure("Potentially Argumentative Nature", str(value))
+
+
     def strictKeywordSearch(self,keyword, passages):
      total_occurrences = 0
     
@@ -103,23 +125,43 @@ class pieChart:
         for word in words:
             if word == keyword:
                 total_occurrences += 1
+
+     total_words = sum(len(passage.split()) for passage in passages)
     
-     return total_occurrences
+     value = (total_occurrences/total_words) * 100
+     chart = pieChart()
+
+     return chart.create_data_structure("Strict Keyword Occurences", str(value))
     
     def get_synonyms(self, word):
       synonyms = set()
+
       for synset in wordnet.synsets(word):
         for lemma in synset.lemmas():
             synonyms.add(lemma.name())
+
+      if (synonyms == set()):
+         return False
+      
       return synonyms
 
     def related_keyword_search(self,text, keyword):
      chart = pieChart()
      synonyms = chart.get_synonyms(keyword)
-     words = word_tokenize(text.lower())
-     word_counter = Counter(words)
-     occurrences = sum(word_counter[word] for word in synonyms)
-     return occurrences
+
+     if(synonyms != False):
+       words = word_tokenize(text.lower())
+       word_counter = Counter(words)
+       occurrences = sum(word_counter[word] for word in synonyms)
+
+       total_words = sum(len(passage.split()) for passage in text)
+       value = (occurrences/total_words) * 100
+       chart = pieChart()
+
+       return chart.create_data_structure("Related Keyword Occurences", str(value))
+     
+     return False
+    
 
 # Example usage:
 # passage = "This is a sample passage where we will search for occurrences of related keywords."
@@ -130,6 +172,6 @@ class pieChart:
 # print(chart_instance.get_synonyms(keyword))
 
 # # Example usage:
-input_array = ["I had such an amazing day yesterday, it was so good and wholesome", "today was horrible i hated every part of it, it was lacking."]
-chart_instance = pieChart()
-chart_instance.argumentativeNature(input_array)
+# input_array = ["I had such an amazing day yesterday, it was so good and wholesome", "today was horrible i hated every part of it, it was lacking."]
+# chart_instance = pieChart()
+# chart_instance.argumentativeNature(input_array)
