@@ -21,7 +21,7 @@ class pieChart:
         X = []  
         y = []  
 
-        with open("frontend/src/components/categories.csv", mode='r', encoding='utf-8') as file:
+        with open("categories.csv", mode='r', encoding='utf-8') as file:
             csv_reader = csv.reader(file)
             for row in csv_reader: 
                 if len(row) >= 2:
@@ -29,11 +29,9 @@ class pieChart:
                     y.append(row[1])
         
         X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=80)
-
         tfidf_vectorizer = TfidfVectorizer()
         X_train_tfidf = tfidf_vectorizer.fit_transform(X_train)
         X_test_tfidf = tfidf_vectorizer.transform(X_test)
-
         classifier = LogisticRegression()
         classifier.fit(X_train_tfidf, y_train)
         total_array_counter = 0
@@ -48,9 +46,8 @@ class pieChart:
         value = (illegal_activities_counter/len(input_array)) * 100
         chart = pieChart()
 
-        return chart.create_data_structure("Potential Illegal Activities", str(value))
-        
-    
+        return chart.create_data_structure("Potential Illegal Activities", str(value))     
+                  
     # def argumentativeNature(self, input_array):
     #     X = []  
     #     y = []  
@@ -82,12 +79,12 @@ class pieChart:
     #         # Predict intent for the input text
     #         predicted_intent = classifier.predict(new_input_tfidf)
     #         print("Input:", input_text, "--> Prediction:", predicted_intent[0])
-            
+
     def argumentativeNature(self, input_array):
      X = []  
      y = []  
 
-     with open("frontend/src/components/argumentativeNature.csv", mode='r', encoding='utf-8') as file:
+     with open("argumentativeNature.csv", mode='r', encoding='utf-8') as file:
         csv_reader = csv.reader(file)
         for row in csv_reader: 
             if len(row) >= 2:
@@ -114,7 +111,6 @@ class pieChart:
      chart = pieChart()
 
      return chart.create_data_structure("Potentially Argumentative Nature", str(value))
-
 
     def strictKeywordSearch(self,keyword, passages):
      total_occurrences = 0
@@ -162,7 +158,6 @@ class pieChart:
      
      return False
     
-
 # Example usage:
 # passage = "This is a sample passage where we will search for occurrences of related keywords."
 # keyword = "djsjksksk"
