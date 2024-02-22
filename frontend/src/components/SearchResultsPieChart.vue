@@ -36,75 +36,62 @@ const pieChart = ref(null);
 var showChart = ref(false);
 var showDropdown = ref(false);
 
-const computedActiveDevices = computed(() => {
-  return activeDevices.value;
-});
-
-watch(() => activeDevices.value.length, () => {
+watch(() => activeDevices.value.length, async () => {
   if (activeDevices.value.length > 0) {
-    nextTick(() => {
-      searchResult.value.events.forEach(event => {
-        messagesSet.value.push(event.text)
-      });
-      console.log(eventsSearchResultById.value)
-      showChartPie = 0
-      pieChartData.value = []
-      if (messagesSet.value.length > 0) {
-        const discussion = [
-          "Debating the ethics of copyright law",
-          "Analyzing the impact of tax evasion on society",
-          "Discussing the legalization of marijuana",
-          "Debating the ethics of surveillance in public spaces",
-          "Analyzing the consequences of human trafficking"
-        ];
+    // Clear existing messages and chart data
+    messagesSet.value = [];
+    pieChartData.value = [];
 
-        //var postRequest = JSON.stringify(messagesSet.value);
-        var postRequest = JSON.stringify(discussion);
-        console.log(messagesSet.value[0])
-        axios.post('http://localhost:5000/api/messages', postRequest, {
-          headers: {
-            'Content-Type': 'application/json'
-          },
-        })
-          .then(response => {
-            responseData.value = response.data; // Store the response data in responseData
-            // You can do additional processing here if needed
-            const xValue = responseData.value["x"]
-            const valuePie = responseData.value["value"]
-            var newEntry = { x: xValue, value: valuePie };
-            pieChartData.value.push(newEntry);
-            const otherEntry = 100 - parseInt(valuePie)
-            newEntry = { x: "", value: otherEntry };
-            pieChartData.value.push(newEntry);
-            console.log(pieChartData.value)
-            anyPieChart(pieChartData.value);
-          })
-          .catch(error => {
-            console.error(error); // Log any errors
-          });
-      }
+    // Fetch messages for active devices
+    // await nextTick();
+    searchResult.value.events.forEach(event => {
+      messagesSet.value.push(event.text);
     });
-  }
-  else {
-    showChart = false;
+    console.log(messagesSet.value)
+
+    // Construct request payload
+    const discussion = [
+      "Debating the ethics of copyright law",
+      "Analyzing the impact of tax evasion on society",
+      "Discussing the legalization of marijuana",
+      "Debating the ethics of surveillance in public spaces",
+      "Analyzing the consequences of human trafficking"
+    ];
+
+    const postRequest = JSON.stringify(discussion);
+
+    // Send request to API
+    try {
+      const response = await axios.post('http://localhost:5000/api/messages', postRequest, {
+        headers: {
+          'Content-Type': 'application/json'
+        },
+      });
+
+      responseData.value = response.data;
+
+      // Process response data and update pie chart data
+      const xValue = responseData.value["x"];
+      const valuePie = responseData.value["value"];
+      pieChartData.value.push({ x: xValue, value: valuePie });
+      const otherEntry = 100 - parseInt(valuePie);
+      pieChartData.value.push({ x: "", value: otherEntry });
+
+      // Draw pie chart
+      anyPieChart(pieChartData.value);
+      showChartPie = 0;
+    } catch (error) {
+      console.error(error);
+    }
+  } else {
+    // If there are no active devices, hide the chart
+    showChartPie = 1;
   }
 });
+
 
 
 onMounted(() => {
-  // if (computedActiveDevices.value.length > 0) {
-  //   nextTick(() => {
-  //     anyPieChart(data.value);
-  //   });
-  // }
-  // axios.get('http://localhost:5000/api/data')
-  //   .then(response => {
-  //     responseData.value = response.data; // Store the response data in responseData
-  //     // You can do additional processing here if needed
-  //   })
-  //   .catch(error => {
-  //     console.error(error); // Log any errors
-  //   });
 });
 
 
