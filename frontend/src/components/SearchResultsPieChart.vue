@@ -49,8 +49,6 @@ watch(() => activeDevices.value.length, () => {
       console.log(eventsSearchResultById.value)
       showChartPie = 0
       pieChartData.value = []
-      anyPieChart();
-      // Only send the post request after all data is pushed into messagesSet.value
       if (messagesSet.value.length > 0) {
         const discussion = [
           "Debating the ethics of copyright law",
