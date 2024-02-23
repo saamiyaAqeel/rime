@@ -8,7 +8,7 @@ export default {
 import { ref, computed, watch, onMounted, render, nextTick } from 'vue';
 import * as d3 from 'd3';
 import { searchResult } from '../eventsdata.js'
-import { activeDevices, rawEventsSearchResult, eventsRefetch, eventsSearchResultById } from '../store.js';
+import { activeDevices, rawEventsSearchResult, eventsRefetch, eventsSearchResultById, devices } from '../store.js';
 import * as anychart from 'anychart'
 import axios from 'axios';
 const endpoint = ref('http://localhost:5000/api/data');
@@ -21,7 +21,6 @@ const data = ref([
   { x: "D", value: 78662 },
   { x: "E", value: 90000 }
 ]);
-
 const pieChartData = ref([])
 const messagesSet = ref([]);
 var showChartPie = 1
@@ -36,15 +35,17 @@ const pieChart = ref(null);
 var showChart = ref(false);
 var showDropdown = ref(false);
 
-watch(() => activeDevices.value.length, async () => {
+watch(searchResult, (result) => {
+  if (!result)
+    return;
+
   if (activeDevices.value.length > 0) {
     // Clear existing messages and chart data
     messagesSet.value = [];
     pieChartData.value = [];
 
     // Fetch messages for active devices
-    // await nextTick();
-    searchResult.value.events.forEach(event => {
+    result.events.forEach(event => {
       messagesSet.value.push(event.text);
     });
     console.log(messagesSet.value)
@@ -61,39 +62,36 @@ watch(() => activeDevices.value.length, async () => {
     const postRequest = JSON.stringify(discussion);
 
     // Send request to API
-    try {
-      const response = await axios.post('http://localhost:5000/api/messages', postRequest, {
-        headers: {
-          'Content-Type': 'application/json'
-        },
+    axios.post('http://localhost:5000/api/messages', postRequest, {
+      headers: {
+        'Content-Type': 'application/json'
+      },
+    })
+      .then(response => {
+        responseData.value = response.data;
+
+        // Process response data and update pie chart data
+        const xValue = responseData.value["x"];
+        const valuePie = responseData.value["value"];
+        pieChartData.value.push({ x: xValue, value: valuePie });
+        const otherEntry = 100 - parseInt(valuePie);
+        pieChartData.value.push({ x: "", value: otherEntry });
+
+        // Draw pie chart
+        anyPieChart(pieChartData.value);
+        showChartPie = 0;
+      })
+      .catch(error => {
+        console.error(error);
       });
-
-      responseData.value = response.data;
-
-      // Process response data and update pie chart data
-      const xValue = responseData.value["x"];
-      const valuePie = responseData.value["value"];
-      pieChartData.value.push({ x: xValue, value: valuePie });
-      const otherEntry = 100 - parseInt(valuePie);
-      pieChartData.value.push({ x: "", value: otherEntry });
-
-      // Draw pie chart
-      anyPieChart(pieChartData.value);
-      showChartPie = 0;
-    } catch (error) {
-      console.error(error);
-    }
   } else {
-    // If there are no active devices, hide the chart
     showChartPie = 1;
   }
+
 });
-
-
 
 onMounted(() => {
 });
-
 
 const anyPieChart = (chartData) => {
   const chart = anychart.pie(chartData);
