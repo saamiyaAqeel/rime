@@ -27,6 +27,21 @@ def post_data():
      response = jsonify({'message': 'Data received successfully'})
      return response
 
+@app.route('/api/argumentativeClassifier', methods=['POST'])
+def post_argumentative():
+    data = request.form.getlist('data')  # Retrieve data from the request form
+    chart_response = pieChart()
+
+    if data:
+     joined_string = ','.join(data)
+     result_array = joined_string.split(',')
+     returnValue = chart_response.argumentativeNature(result_array)
+     return returnValue
+    
+    else:
+     response = jsonify({'message': 'Data received successfully'})
+     return response
+
 
 if __name__ == '__main__':
     app.run(debug=True)

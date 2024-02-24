@@ -14,7 +14,7 @@ import axios from 'axios';
 const responseData = ref(null);
 const isOpen = ref(false);
 const selectedOption = ref('Select an option');
-const options = ['Option 1', 'Option 2', 'Option 3'];
+const options = ['Potential Illegal Activities', 'Potential Conversation of Argumentative Nature', 'Strict Keyword Search', 'Related-Words Keyword Search'];
 
 const toggleDropdown = () => {
   isOpen.value = !isOpen.value;
@@ -37,10 +37,10 @@ watch(searchResult, (result) => {
     messagesSet.value = [];
     pieChartData.value = [];
 
+
     result.events.forEach(event => {
       messagesSet.value.push(event.text);
     });
-    console.log(messagesSet.value)
 
     const formData = new FormData();
     const chunkSize = 10000;
@@ -50,27 +50,82 @@ watch(searchResult, (result) => {
       formData.append('data', chunk);
     }
 
-    axios.post('http://localhost:5000/api/messages', formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data'
+    watch(selectedOption, (option) => {
+      pieChartData.value = [];
+      anyPieChart(pieChartData.value);
+      if (option == "Potential Illegal Activities") {
+        axios.post('http://localhost:5000/api/messages', formData, {
+          headers: {
+            'Content-Type': 'multipart/form-data'
+          }
+        })
+          .then(response => {
+            responseData.value = response.data;
+            console.log(responseData.value)
+
+            const xValue = responseData.value["x"];
+            const valuePie = responseData.value["value"];
+            pieChartData.value.push({ x: xValue, value: valuePie });
+            const otherEntry = 100 - parseInt(valuePie);
+            pieChartData.value.push({ x: "", value: otherEntry });
+            anyPieChart(pieChartData.value);
+
+          })
+          .catch(error => {
+            console.error(error);
+          });
+      }
+      else if (option == "Potential Conversation of Argumentative Nature") {
+        axios.post('http://localhost:5000/api/argumentativeClassifier', formData, {
+          headers: {
+            'Content-Type': 'multipart/form-data'
+          }
+        })
+          .then(response => {
+            responseData.value = response.data;
+            console.log(responseData.value)
+
+            const xValue = responseData.value["x"];
+            const valuePie = responseData.value["value"];
+            pieChartData.value.push({ x: xValue, value: valuePie });
+            const otherEntry = 100 - parseInt(valuePie);
+            pieChartData.value.push({ x: "", value: otherEntry });
+            anyPieChart(pieChartData.value);
+
+          })
+          .catch(error => {
+            console.error(error);
+          });
+      }
+      else if (option == "Strict Keyword Search") {
+        console.log(option)
+      }
+      else {
+        console.log(option)
       }
     })
-      .then(response => {
-        responseData.value = response.data;
-        console.log(responseData.value)
 
-        const xValue = responseData.value["x"];
-        const valuePie = responseData.value["value"];
-        pieChartData.value.push({ x: xValue, value: valuePie });
-        const otherEntry = 100 - parseInt(valuePie);
-        pieChartData.value.push({ x: "", value: otherEntry });
-        anyPieChart(pieChartData.value);
+    // axios.post('http://localhost:5000/api/messages', formData, {
+    //   headers: {
+    //     'Content-Type': 'multipart/form-data'
+    //   }
+    // })
+    //   .then(response => {
+    //     responseData.value = response.data;
+    //     console.log(responseData.value)
 
-      })
-      .catch(error => {
-        console.error(error);
-      });
-  } 
+    //     const xValue = responseData.value["x"];
+    //     const valuePie = responseData.value["value"];
+    //     pieChartData.value.push({ x: xValue, value: valuePie });
+    //     const otherEntry = 100 - parseInt(valuePie);
+    //     pieChartData.value.push({ x: "", value: otherEntry });
+    //     anyPieChart(pieChartData.value);
+
+    //   })
+    //   .catch(error => {
+    //     console.error(error);
+    //   });
+  }
 
 });
 
@@ -165,5 +220,4 @@ const anyPieChart = (chartData) => {
   justify-content: center;
   height: 100vh;
 }
-
 </style>
