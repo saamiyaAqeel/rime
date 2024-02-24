@@ -20,7 +20,7 @@ class pieChart:
     def illegalActivities(self, input_array):
         X = []  
         y = []  
-
+        # input_array = input_array.split(',')
         with open("categories.csv", mode='r', encoding='utf-8') as file:
             csv_reader = csv.reader(file)
             for row in csv_reader: 
@@ -38,6 +38,7 @@ class pieChart:
         illegal_activities_counter = 0
 
         for input_text in input_array:
+            print("************************************" + input_text + "**********************************************")
             new_input_tfidf = tfidf_vectorizer.transform([input_text])
             predicted_intent = classifier.predict(new_input_tfidf)
             if("non" not in predicted_intent[0]):

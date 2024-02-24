@@ -40,16 +40,22 @@ watch(searchResult, (result) => {
     return;
 
   if (activeDevices.value.length > 0) {
-    // Clear existing messages and chart data
     messagesSet.value = [];
     pieChartData.value = [];
 
-    // Fetch messages for active devices
     result.events.forEach(event => {
       messagesSet.value.push(event.text);
     });
     console.log(messagesSet.value)
 
+    const formData = new FormData();
+    const chunkSize = 10000; 
+
+    for (let i = 0; i < messagesSet.value.length; i += chunkSize) {
+      const chunk = messagesSet.value.slice(i, i + chunkSize);
+      formData.append('data', chunk);
+    }
+    console.log(formData)
     // Construct request payload
     const discussion = [
       "Debating the ethics of copyright law",
@@ -59,17 +65,18 @@ watch(searchResult, (result) => {
       "Analyzing the consequences of human trafficking"
     ];
 
-    const postRequest = JSON.stringify(discussion);
+    const postRequest = JSON.stringify(messagesSet.value);
 
     // Send request to API
-    axios.post('http://localhost:5000/api/messages', postRequest, {
+    axios.post('http://localhost:5000/api/messages', formData, {
       headers: {
-        'Content-Type': 'application/json'
-      },
+        'Content-Type': 'multipart/form-data' 
+      }
     })
       .then(response => {
         responseData.value = response.data;
-
+        console.log(responseData.value)
+           
         // Process response data and update pie chart data
         const xValue = responseData.value["x"];
         const valuePie = responseData.value["value"];
@@ -107,13 +114,16 @@ const anyPieChart = (chartData) => {
       Select one or more devices at the top left to begin.
     </div>
     <div v-else class="page-container">
+
       <label for="cars">Choose a category:</label>
       <select v-model="selectedCar" name="cars" id="cars">
         <option v-for="(car, index) in cars" :key="index" :value="car.value">{{ car.label }}</option>
       </select>
+
       <div v-if="showChartPie === 0" class="chart-container">
         <div ref="pieChart" style="width: 500px; height: 500px;"></div>
-      </div>
+
+    </div>
     </div>
   </div>
 </template>
