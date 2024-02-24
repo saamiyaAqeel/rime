@@ -38,7 +38,6 @@ class pieChart:
         illegal_activities_counter = 0
 
         for input_text in input_array:
-            print("************************************" + input_text + "**********************************************")
             new_input_tfidf = tfidf_vectorizer.transform([input_text])
             predicted_intent = classifier.predict(new_input_tfidf)
             if("non" not in predicted_intent[0]):
