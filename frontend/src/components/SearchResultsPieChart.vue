@@ -56,18 +56,7 @@ watch(searchResult, (result) => {
       formData.append('data', chunk);
     }
     console.log(formData)
-    // Construct request payload
-    const discussion = [
-      "Debating the ethics of copyright law",
-      "Analyzing the impact of tax evasion on society",
-      "Discussing the legalization of marijuana",
-      "Debating the ethics of surveillance in public spaces",
-      "Analyzing the consequences of human trafficking"
-    ];
-
-    const postRequest = JSON.stringify(messagesSet.value);
-
-    // Send request to API
+  
     axios.post('http://localhost:5000/api/messages', formData, {
       headers: {
         'Content-Type': 'multipart/form-data' 
@@ -85,8 +74,8 @@ watch(searchResult, (result) => {
         pieChartData.value.push({ x: "", value: otherEntry });
 
         // Draw pie chart
-        anyPieChart(pieChartData.value);
         showChartPie = 0;
+        anyPieChart(pieChartData.value);
       })
       .catch(error => {
         console.error(error);
@@ -120,7 +109,7 @@ const anyPieChart = (chartData) => {
         <option v-for="(car, index) in cars" :key="index" :value="car.value">{{ car.label }}</option>
       </select>
 
-      <div v-if="showChartPie === 0" class="chart-container">
+      <div  class="chart-container">
         <div ref="pieChart" style="width: 500px; height: 500px;"></div>
 
     </div>
