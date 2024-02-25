@@ -11,6 +11,7 @@ import { activeDevices } from '../store.js';
 import * as anychart from 'anychart'
 import axios from 'axios';
 
+const searchQuery = ref('');
 const responseData = ref(null);
 const isOpen = ref(false);
 const selectedOption = ref('Select an option');
@@ -41,6 +42,7 @@ watch(searchResult, (result) => {
     result.events.forEach(event => {
       messagesSet.value.push(event.text);
     });
+    console.log(messagesSet.value)
 
     const formData = new FormData();
     const chunkSize = 10000;
@@ -98,33 +100,13 @@ watch(searchResult, (result) => {
           });
       }
       else if (option == "Strict Keyword Search") {
-        console.log(option)
+        handleSearch(messagesSet.value)
       }
       else {
         console.log(option)
       }
     })
 
-    // axios.post('http://localhost:5000/api/messages', formData, {
-    //   headers: {
-    //     'Content-Type': 'multipart/form-data'
-    //   }
-    // })
-    //   .then(response => {
-    //     responseData.value = response.data;
-    //     console.log(responseData.value)
-
-    //     const xValue = responseData.value["x"];
-    //     const valuePie = responseData.value["value"];
-    //     pieChartData.value.push({ x: xValue, value: valuePie });
-    //     const otherEntry = 100 - parseInt(valuePie);
-    //     pieChartData.value.push({ x: "", value: otherEntry });
-    //     anyPieChart(pieChartData.value);
-
-    //   })
-    //   .catch(error => {
-    //     console.error(error);
-    //   });
   }
 
 });
@@ -138,6 +120,48 @@ const anyPieChart = (chartData) => {
   chart.data(chartData);
   chart.draw();
 }
+
+const handleSearch = (messages) => {
+  console.log('Search button clicked');
+  console.log('Search query:', searchQuery.value);
+
+  const formData = new FormData();
+  const chunkSize = 10000;
+
+  for (let i = 0; i < messages.length; i += chunkSize) {
+      const chunk = messages.slice(i, i + chunkSize);
+      formData.append('data', chunk);
+  }
+
+  console.log(messages)
+
+  if (searchQuery.value) {
+    
+    // formData.append('searchQuery', searchQuery.value);
+    console.log(formData)
+
+    axios.post('http://localhost:5000/api/strictKeyword', formData, {
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    })
+      .then(response => {
+        responseData.value = response.data;
+        console.log(responseData.value)
+
+        const xValue = responseData.value["x"];
+        const valuePie = responseData.value["value"];
+        pieChartData.value.push({ x: xValue, value: valuePie });
+        const otherEntry = 100 - parseInt(valuePie);
+        pieChartData.value.push({ x: "", value: otherEntry });
+        anyPieChart(pieChartData.value);
+      })
+      .catch(error => {
+        console.error(error);
+      });
+  }
+};
+
 </script>
 
 <template>
@@ -155,6 +179,13 @@ const anyPieChart = (chartData) => {
               option }}</li>
           </ul>
         </div>
+      </div>
+
+      <!-- Search box -->
+      <div v-if="selectedOption === 'Strict Keyword Search' || selectedOption === 'Related-Words Keyword Search'"
+        class="search-box">
+        <input type="text" v-model="searchQuery" placeholder="Enter search query">
+        <button @click="handleSearch">Search</button>
       </div>
 
       <div class="chart-container">
@@ -176,6 +207,7 @@ const anyPieChart = (chartData) => {
 .dropdown {
   position: relative;
   display: inline-block;
+  min-width: fit-content;
 }
 
 .dropdown-toggle {
@@ -219,5 +251,24 @@ const anyPieChart = (chartData) => {
   align-items: center;
   justify-content: center;
   height: 100vh;
+}
+
+.search-box {
+  margin-top: 20px;
+  display: flex;
+  align-items: center;
+}
+
+.search-box input {
+  padding: 5px;
+  margin-right: 10px;
+}
+
+.search-box button {
+  padding: 5px 10px;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  cursor: pointer;
 }
 </style>
