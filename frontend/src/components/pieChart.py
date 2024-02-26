@@ -113,17 +113,22 @@ class pieChart:
      return chart.create_data_structure("Potentially Argumentative Nature", str(value))
 
     def strictKeywordSearch(self,keyword, passages):
-     total_occurrences = 0
-    
+     total_occurrences = 0 
+     total_words = 0
+     keyword = keyword.lower().strip()
+     
      for passage in passages:
-        words = passage.split()  
-        
+        words = passage.strip().split()
+
         for word in words:
+            word = word.lower().strip()
+            total_words += 1
             if word == keyword:
                 total_occurrences += 1
-
-     total_words = sum(len(passage.split()) for passage in passages)
-    
+     
+     print(total_words)
+     print(total_occurrences)
+     
      value = (total_occurrences/total_words) * 100
      chart = pieChart()
 
@@ -141,26 +146,28 @@ class pieChart:
       
       return synonyms
 
-    def related_keyword_search(self,text, keyword):
+    def related_keyword_search(self, text, keyword):
      chart = pieChart()
      synonyms = chart.get_synonyms(keyword)
 
-     if(synonyms != False):
-       words = word_tokenize(text.lower())
-       word_counter = Counter(words)
-       occurrences = sum(word_counter[word] for word in synonyms)
+     if synonyms:
+        text_str = ' '.join(text)
+        print(synonyms)
+        words = word_tokenize(text_str.lower())
 
-       total_words = sum(len(passage.split()) for passage in text)
-       value = (occurrences/total_words) * 100
-       chart = pieChart()
+        word_counter = Counter(words)
+        occurrences = sum(word_counter[word] for word in synonyms)
 
-       return chart.create_data_structure("Related Keyword Occurences", str(value))
-     
+        total_words = sum(len(passage.split()) for passage in text)
+        value = (occurrences / total_words) * 100
+        chart = pieChart()
+
+        return chart.create_data_structure("Related Keyword Occurrences", str(value))
+    
      return False
     
-# Example usage:
 # passage = "This is a sample passage where we will search for occurrences of related keywords."
-# keyword = "djsjksksk"
+# keyword = "Sample"
 # chart_instance = pieChart()
 # occurrences = chart_instance.related_keyword_search(passage, keyword)
 # print("Number of occurrences of related keywords for '{}' in the passage: {}".format(keyword, occurrences))

@@ -100,7 +100,6 @@ watch(searchResult, (result) => {
           });
       }
       else if (option == "Strict Keyword Search") {
-        handleSearch(messagesSet.value)
       }
       else {
         console.log(option)
@@ -121,44 +120,64 @@ const anyPieChart = (chartData) => {
   chart.draw();
 }
 
-const handleSearch = (messages) => {
+const handleSearch = (event) => {
   console.log('Search button clicked');
   console.log('Search query:', searchQuery.value);
 
   const formData = new FormData();
   const chunkSize = 10000;
+  pieChartData.value = [];
 
-  for (let i = 0; i < messages.length; i += chunkSize) {
-      const chunk = messages.slice(i, i + chunkSize);
-      formData.append('data', chunk);
+  formData.append('keyword', searchQuery.value)
+
+  for (let i = 0; i < messagesSet.value.length; i += chunkSize) {
+    const chunk = messagesSet.value.slice(i, i + chunkSize);
+    formData.append('data', chunk);
   }
 
-  console.log(messages)
-
   if (searchQuery.value) {
-    
-    // formData.append('searchQuery', searchQuery.value);
-    console.log(formData)
-
-    axios.post('http://localhost:5000/api/strictKeyword', formData, {
-      headers: {
-        'Content-Type': 'application/json'
-      }
-    })
-      .then(response => {
-        responseData.value = response.data;
-        console.log(responseData.value)
-
-        const xValue = responseData.value["x"];
-        const valuePie = responseData.value["value"];
-        pieChartData.value.push({ x: xValue, value: valuePie });
-        const otherEntry = 100 - parseInt(valuePie);
-        pieChartData.value.push({ x: "", value: otherEntry });
-        anyPieChart(pieChartData.value);
+    if (selectedOption == "Strict Keyword Search") {
+      axios.post('http://localhost:5000/api/strictKeyword', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        }
       })
-      .catch(error => {
-        console.error(error);
-      });
+        .then(response => {
+          responseData.value = response.data;
+          console.log(responseData.value)
+
+          const xValue = responseData.value["x"];
+          const valuePie = responseData.value["value"];
+          pieChartData.value.push({ x: xValue, value: valuePie });
+          const otherEntry = 100 - parseInt(valuePie);
+          pieChartData.value.push({ x: "", value: otherEntry });
+          anyPieChart(pieChartData.value);
+        })
+        .catch(error => {
+          console.error(error);
+        });
+    }
+    else {
+      axios.post('http://localhost:5000/api/relatedKeyword', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        }
+      })
+        .then(response => {
+          responseData.value = response.data;
+          console.log(responseData.value)
+
+          const xValue = responseData.value["x"];
+          const valuePie = responseData.value["value"];
+          pieChartData.value.push({ x: xValue, value: valuePie });
+          const otherEntry = 100 - parseInt(valuePie);
+          pieChartData.value.push({ x: "", value: otherEntry });
+          anyPieChart(pieChartData.value);
+        })
+        .catch(error => {
+          console.error(error);
+        });
+    }
   }
 };
 
@@ -181,7 +200,6 @@ const handleSearch = (messages) => {
         </div>
       </div>
 
-      <!-- Search box -->
       <div v-if="selectedOption === 'Strict Keyword Search' || selectedOption === 'Related-Words Keyword Search'"
         class="search-box">
         <input type="text" v-model="searchQuery" placeholder="Enter search query">

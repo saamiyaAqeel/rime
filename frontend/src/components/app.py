@@ -41,6 +41,36 @@ def post_argumentative():
     else:
      response = jsonify({'message': 'Data received successfully'})
      return response
+    
+@app.route('/api/strictKeyword', methods=['POST'])
+def post_strictKeyword():
+    data = request.form.getlist('data') 
+    keyword = request.form.getlist('keyword') 
+    chart_response = pieChart()
+    
+    if data and keyword:
+        joined_string = ','.join(data)
+        result_array = joined_string.split(',')
+        returnValue = chart_response.strictKeywordSearch(keyword[0], result_array)
+        return returnValue
+    else:
+        response = jsonify({'message': 'Incomplete data received'})
+        return response
+    
+@app.route('/api/relatedKeyword', methods=['POST'])
+def post_relatedKeyword():
+    data = request.form.getlist('data') 
+    keyword = request.form.getlist('keyword') 
+    chart_response = pieChart()
+    
+    if data and keyword:
+        joined_string = ','.join(data)
+        result_array = joined_string.split(',')
+        returnValue = chart_response.related_keyword_search(result_array, keyword[0])
+        return returnValue
+    else:
+        response = jsonify({'message': 'Incomplete data received'})
+        return response
 
 
 if __name__ == '__main__':
