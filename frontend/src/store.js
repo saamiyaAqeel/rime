@@ -7,8 +7,6 @@ import { ApolloClient, InMemoryCache } from '@apollo/client/core'
 import { useQuery, useMutation, useSubscription, provideApolloClient } from '@vue/apollo-composable'
 import { useLocalStorage } from '@vueuse/core'
 import gql from 'graphql-tag'
-
-
 import { GraphQLWsLink } from '@apollo/client/link/subscriptions';
 import { createClient } from 'graphql-ws';
 

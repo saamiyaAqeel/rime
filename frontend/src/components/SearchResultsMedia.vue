@@ -5,7 +5,7 @@ Copyright 2023 Telemarq Ltd
 -->
 <script setup>
 import { activeDevices, rawEventsSearchResult, eventsSearchResultById } from '../store.js'
-import SearchResultMediaEvent from './SearchResultMediaEvent.vue'
+//import SearchResultMediaEvent from './SearchResultMediaEvent.vue'
 
 import { watch, ref, computed } from 'vue'
 

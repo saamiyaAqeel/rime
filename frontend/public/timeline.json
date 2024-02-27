@@ -1,0 +1,59 @@
+{
+    "ImportantEvents": [
+      {
+        "description": "Person A was murdered at this time",
+        "title": "Murder #26",
+        "date": "2020/12/02"
+      },
+      {
+        "description": "Person B was speaking to Person C physically",
+        "title": "Physical Coversation",
+        "date": "2020/12/09"
+      },
+      {
+        "description": "Blood stain was found belonging to Person A",
+        "title": "Futher evidence of the case was found",
+        "date": "2020/12/14"
+      }
+    ],
+    "Timeline": [
+      {
+        "description": "Person A was speaking on Whatsapp",
+        "title": "A",
+        "start": "2020/03/29",
+        "end": "2020/11/29",
+        "color": "#00a950"
+      },
+      {
+        "description": "Person B was speaking on the phone",
+        "title": "B",
+        "start": "2020/03/29",
+        "end": "2020/11/29",
+        "color": "#00a950"
+      },
+      {
+        "description": "Person C was using text message",
+        "title": "C",
+        "start": "2020/11/29",
+        "end": "2020/12/11",
+        "color": "#00a950"
+      }
+    ],
+    "SecondaryFacts": [
+      {
+        "description": "Person A was speaking on the phone with an outsider",
+        "title": "A",
+        "date": "2020/07/27"
+      },
+      {
+        "description": "Person C was on text message with an outsider",
+        "title": "C",
+        "date": "2020/11/30"
+      },
+      {
+        "description": "Person C was on text message with an outsider",
+        "title": "C",
+        "date": "2020/12/30"
+      }
+    ]
+   }

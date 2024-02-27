@@ -3,8 +3,10 @@ This software is released under the terms of the GNU GENERAL PUBLIC LICENSE.
 See LICENSE.txt for full details.
 Copyright 2023 Telemarq Ltd
 -->
+
 <script setup>
 import { ref } from 'vue'
+import { activeDevices } from '../store.js';
 
 import DeviceChooser from './DeviceChooser.vue'
 import Search from './Search.vue'
@@ -13,10 +15,13 @@ import ProviderChooser from './ProviderChooser.vue'
 import SearchViewChooser from './SearchViewChooser.vue'
 import SearchResults from './SearchResults.vue'
 import SearchResultsMedia from './SearchResultsMedia.vue'
+import PieChart from './SearchResultsPieChart.vue'
+import Timeline from './SearchResultsTimeline.vue'
 
 import { searchView } from '../store.js'
 
 const showRefinements = ref(false);
+
 
 const popoverMessage = ref('This is the popover message');
 
@@ -36,28 +41,29 @@ function showPopover(message) {
 </script>
 
 <template>
+	<div>
 	<div id="view">
 		<div id="left" class="search">
 			<img id="logo" src="logo.png" />
-			<DeviceChooser id="deviceChooser"/>
-			<Search id="search"/>
+			<DeviceChooser id="deviceChooser" />
+			<Search id="search" />
 			<Subsetter id="subsetter" @showPopover="showPopover" />
 		</div>
-
 		<div id="right">
-			<SearchViewChooser id="searchViewChooser"/>
-			<SearchResults v-show="searchView == 'messages'" id="searchResults"/>
-			<SearchResultsMedia v-show="searchView == 'media'" id="searchResults"/>
+			<SearchViewChooser id="searchViewChooser" />
+			<SearchResults v-show="searchView == 'messages'" id="searchResults" />
+			<SearchResultsMedia v-show="searchView == 'media'" id="searchResults" />
+			<PieChart v-show="searchView == 'piechart'" id="pchart"/>
+			<Timeline v-show="searchView == 'timeline'" id="timeline" />
 		</div>
-
 		<div id="popover">
 			<p>{{ popoverMessage }}</p>
 		</div>
 	</div>
+</div>
 </template>
 
 <style scoped>
-
 #view {
 	display: flex;
 	width: 100%;
@@ -118,5 +124,4 @@ function showPopover(message) {
 	text-align: center;
 	display: none;
 }
-
 </style>
