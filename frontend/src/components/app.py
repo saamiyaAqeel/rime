@@ -78,8 +78,7 @@ def post_relatedKeyword():
     if data and keyword:
         joined_string = ','.join(data)
         result_array = joined_string.split(',')
-        
-        # Call related_keyword_search function and unpack the tuple
+       
         synonyms, chart_data = chart_response.related_keyword_search(result_array, keyword[0])
         print(synonyms)
         print(chart_data)
