@@ -15,6 +15,7 @@ const relatedWords = ref(false)
 const searchQuery = ref('');
 const responseData = ref(null);
 const isOpen = ref(false);
+var pieChartShow = ref(false);
 const selectedOption = ref('Select an option');
 const options = ['Potential Illegal Activities', 'Potential Conversation of Argumentative Nature', 'Strict Keyword Search', 'Related-Words Keyword Search'];
 
@@ -36,6 +37,7 @@ watch(selectedOption, (option) => {
   const result = searchResult.value
   messagesSet.value = [];
   pieChartData.value = [];
+  pieChartShow.value = false
 
   result.events.forEach(event => {
     messagesSet.value.push(event.text);
@@ -66,6 +68,7 @@ watch(selectedOption, (option) => {
         pieChartData.value.push({ x: xValue, value: valuePie });
         const otherEntry = 100 - parseInt(valuePie);
         pieChartData.value.push({ x: "", value: otherEntry });
+        pieChartShow.value = !pieChartShow.value
         anyPieChart(pieChartData.value);
 
       })
@@ -88,6 +91,7 @@ watch(selectedOption, (option) => {
         pieChartData.value.push({ x: xValue, value: valuePie });
         const otherEntry = 100 - parseInt(valuePie);
         pieChartData.value.push({ x: "", value: otherEntry });
+        pieChartShow.value = !pieChartShow.value
         anyPieChart(pieChartData.value);
 
       })
@@ -109,6 +113,7 @@ watch(searchResult, (result) => {
   if (activeDevices.value.length > 0) {
     messagesSet.value = [];
     pieChartData.value = [];
+    pieChartShow.value = false
 
 
     result.events.forEach(event => {
@@ -142,6 +147,7 @@ watch(searchResult, (result) => {
           pieChartData.value.push({ x: xValue, value: valuePie });
           const otherEntry = 100 - parseInt(valuePie);
           pieChartData.value.push({ x: "", value: otherEntry });
+          pieChartShow.value = !pieChartShow.value
           anyPieChart(pieChartData.value);
 
         })
@@ -164,8 +170,8 @@ watch(searchResult, (result) => {
           pieChartData.value.push({ x: xValue, value: valuePie });
           const otherEntry = 100 - parseInt(valuePie);
           pieChartData.value.push({ x: "", value: otherEntry });
+          pieChartShow.value = !pieChartShow.value
           anyPieChart(pieChartData.value);
-
         })
         .catch(error => {
           console.error(error);
@@ -203,6 +209,7 @@ const handleSearch = (event) => {
   const formData = new FormData();
   const chunkSize = 10000;
   pieChartData.value = [];
+  pieChartShow.value = false
 
   formData.append('keyword', searchQuery.value)
 
@@ -227,6 +234,7 @@ const handleSearch = (event) => {
           pieChartData.value.push({ x: xValue, value: valuePie });
           const otherEntry = 100 - parseInt(valuePie);
           pieChartData.value.push({ x: "", value: otherEntry });
+          pieChartShow.value = !pieChartShow.value
           anyPieChart(pieChartData.value);
         })
         .catch(error => {
@@ -249,6 +257,7 @@ const handleSearch = (event) => {
           pieChartData.value.push({ x: xValue, value: valuePie });
           const otherEntry = 100 - parseInt(valuePie);
           pieChartData.value.push({ x: "", value: otherEntry });
+          pieChartShow.value = !pieChartShow.value
           anyPieChart(pieChartData.value);
 
           console.log(responseData.value.synonyms)
