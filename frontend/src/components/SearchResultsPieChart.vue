@@ -11,6 +11,7 @@ import { activeDevices } from '../store.js';
 import * as anychart from 'anychart'
 import axios from 'axios';
 
+const relatedWords = ref(false)
 const searchQuery = ref('');
 const responseData = ref(null);
 const isOpen = ref(false);
@@ -29,6 +30,7 @@ const selectOption = (option) => {
 const pieChartData = ref([])
 const messagesSet = ref([]);
 const pieChart = ref(null);
+const tagCloud = ref(null);
 
 watch(searchResult, (result) => {
   if (!result)
@@ -54,7 +56,6 @@ watch(searchResult, (result) => {
 
     watch(selectedOption, (option) => {
       pieChartData.value = [];
-      anyPieChart(pieChartData.value);
       if (option == "Potential Illegal Activities") {
         axios.post('http://localhost:5000/api/messages', formData, {
           headers: {
@@ -102,7 +103,7 @@ watch(searchResult, (result) => {
       else if (option == "Strict Keyword Search") {
       }
       else {
-        console.log(option)
+
       }
     })
 
@@ -117,6 +118,12 @@ const anyPieChart = (chartData) => {
   const chart = anychart.pie(chartData);
   chart.container(pieChart.value);
   chart.data(chartData);
+  chart.draw();
+}
+
+const tagCloudDraw = (data) => {
+  const chart = anychart.tagCloud(data);
+  chart.container(tagCloud.value);
   chart.draw();
 }
 
@@ -158,6 +165,7 @@ const handleSearch = (event) => {
         });
     }
     else {
+      // Get related keywords piechart values
       axios.post('http://localhost:5000/api/relatedKeyword', formData, {
         headers: {
           'Content-Type': 'multipart/form-data'
@@ -165,18 +173,28 @@ const handleSearch = (event) => {
       })
         .then(response => {
           responseData.value = response.data;
-          console.log(responseData.value)
 
-          const xValue = responseData.value["x"];
-          const valuePie = responseData.value["value"];
+          const synonyms = responseData.value.synonyms;
+          const chartData = responseData.value.chart_data;
+          const xValue = chartData["x"];
+          const valuePie = chartData["value"];
           pieChartData.value.push({ x: xValue, value: valuePie });
           const otherEntry = 100 - parseInt(valuePie);
           pieChartData.value.push({ x: "", value: otherEntry });
           anyPieChart(pieChartData.value);
+
+          console.log(responseData.value.synonyms)
+          const data = [];
+          synonyms.forEach((synonym, index) => {
+            const value = Math.floor(Math.random() * (70 - 40 + 1)) + 40;
+            data.push({ x: synonym, value: value });
+          });
+          tagCloudDraw(data)
         })
         .catch(error => {
           console.error(error);
         });
+
     }
   }
 };
@@ -189,7 +207,6 @@ const handleSearch = (event) => {
       Select one or more devices at the top left to begin.
     </div>
     <div v-else class="page-container">
-
       <div class="dropdown">
         <button @click="toggleDropdown" class="dropdown-toggle">{{ selectedOption }}</button>
         <div v-if="isOpen" class="dropdown-menu">
@@ -207,14 +224,22 @@ const handleSearch = (event) => {
       </div>
 
       <div class="chart-container">
-        <div ref="pieChart" style="width: 500px; height: 500px;"></div>
-
+        <div v-if="selectedOption" ref="pieChart" style="width: 500px; height: 500px;"></div>
+        <div v-if="selectedOption === 'Related-Words Keyword Search'" ref="tagCloud" style="width: 500px; height: 500px;">
+        </div>
       </div>
+
+
     </div>
   </div>
 </template>
 
 <style scoped>
+.tag-cloud-container {
+  flex: 0 0 50%;
+  padding-left: 20px;
+}
+
 .center {
   margin: auto;
   margin-top: 15%;
@@ -290,3 +315,5 @@ const handleSearch = (event) => {
   cursor: pointer;
 }
 </style>
+
+

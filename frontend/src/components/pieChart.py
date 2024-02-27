@@ -8,8 +8,11 @@ from nltk.corpus import wordnet
 from nltk.tokenize import word_tokenize
 from collections import Counter
 from sklearn.svm import SVC
+import nltk
 
 class pieChart:
+    nltk.download('wordnet')
+    syn = ""
 
     def create_data_structure(self, label, numeric_value):
      data = {}
@@ -20,7 +23,7 @@ class pieChart:
     def illegalActivities(self, input_array):
         X = []  
         y = []  
-        # input_array = input_array.split(',')
+
         with open("categories.csv", mode='r', encoding='utf-8') as file:
             csv_reader = csv.reader(file)
             for row in csv_reader: 
@@ -48,38 +51,6 @@ class pieChart:
 
         return chart.create_data_structure("Potential Illegal Activities", str(value))     
                   
-    # def argumentativeNature(self, input_array):
-    #     X = []  
-    #     y = []  
-
-    #     # Read categories from CSV file
-    #     with open("frontend/src/components/argumentativeNature.csv", mode='r', encoding='utf-8') as file:
-    #         csv_reader = csv.reader(file)
-    #         for row in csv_reader: 
-    #             if len(row) >= 2:
-    #                 X.append(row[0])
-    #                 y.append(row[1])
-        
-    #     # Split data into train and test sets
-    #     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=80)
-
-    #     # Convert text data into TF-IDF features
-    #     tfidf_vectorizer = TfidfVectorizer()
-    #     X_train_tfidf = tfidf_vectorizer.fit_transform(X_train)
-    #     X_test_tfidf = tfidf_vectorizer.transform(X_test)
-
-    #     # Train the classifier
-    #     classifier = LogisticRegression(max_iter=1000)
-    #     classifier.fit(X_train_tfidf, y_train)
-
-    #     # Iterate over each input string
-    #     for input_text in input_array:
-    #         # Transform input text into TF-IDF features
-    #         new_input_tfidf = tfidf_vectorizer.transform([input_text])
-    #         # Predict intent for the input text
-    #         predicted_intent = classifier.predict(new_input_tfidf)
-    #         print("Input:", input_text, "--> Prediction:", predicted_intent[0])
-
     def argumentativeNature(self, input_array):
      X = []  
      y = []  
@@ -109,7 +80,6 @@ class pieChart:
             
      value = (argumentative_nature_counter/len(input_array)) * 100
      chart = pieChart()
-
      return chart.create_data_structure("Potentially Argumentative Nature", str(value))
 
     def strictKeywordSearch(self,keyword, passages):
@@ -125,34 +95,44 @@ class pieChart:
             total_words += 1
             if word == keyword:
                 total_occurrences += 1
-     
-     print(total_words)
-     print(total_occurrences)
+    
      
      value = (total_occurrences/total_words) * 100
      chart = pieChart()
 
      return chart.create_data_structure("Strict Keyword Occurences", str(value))
     
-    def get_synonyms(self, word):
-      synonyms = set()
+    # def get_synonyms(self, word):
+    #   synonyms = set()
 
-      for synset in wordnet.synsets(word):
-        for lemma in synset.lemmas():
-            synonyms.add(lemma.name())
+    #   for synset in wordnet.synsets(word):
+    #     for lemma in synset.lemmas():
+    #         synonyms.add(lemma.name())
 
-      if (synonyms == set()):
-         return False
+    #   if (synonyms == set()):
+    #      return False
       
-      return synonyms
+    #   return synonyms
+    def get_synonyms(self, word):
+     synonyms = []
+
+     for synset in wordnet.synsets(word):
+        for lemma in synset.lemmas():
+            synonyms.append(lemma.name())
+
+     if not synonyms:
+        return False
+
+     return synonyms
+
 
     def related_keyword_search(self, text, keyword):
      chart = pieChart()
      synonyms = chart.get_synonyms(keyword)
 
      if synonyms:
-        text_str = ' '.join(text)
         print(synonyms)
+        text_str = ' '.join(text)
         words = word_tokenize(text_str.lower())
 
         word_counter = Counter(words)
@@ -162,9 +142,12 @@ class pieChart:
         value = (occurrences / total_words) * 100
         chart = pieChart()
 
-        return chart.create_data_structure("Related Keyword Occurrences", str(value))
+        chart_data = chart.create_data_structure("Related Keyword Occurrences", str(value))
+        print(chart_data)
+        return synonyms, chart_data
     
      return False
+    
     
 # passage = "This is a sample passage where we will search for occurrences of related keywords."
 # keyword = "Sample"

@@ -59,6 +59,18 @@ def post_strictKeyword():
     
 @app.route('/api/relatedKeyword', methods=['POST'])
 def post_relatedKeyword():
+    # data = request.form.getlist('data') 
+    # keyword = request.form.getlist('keyword') 
+    # chart_response = pieChart()
+    
+    # if data and keyword:
+    #     joined_string = ','.join(data)
+    #     result_array = joined_string.split(',')
+    #     returnValue = chart_response.related_keyword_search(result_array, keyword[0])
+    #     return returnValue
+    # else:
+    #     response = jsonify({'message': 'Incomplete data received'})
+    #     return response
     data = request.form.getlist('data') 
     keyword = request.form.getlist('keyword') 
     chart_response = pieChart()
@@ -66,11 +78,46 @@ def post_relatedKeyword():
     if data and keyword:
         joined_string = ','.join(data)
         result_array = joined_string.split(',')
-        returnValue = chart_response.related_keyword_search(result_array, keyword[0])
-        return returnValue
+        
+        # Call related_keyword_search function and unpack the tuple
+        synonyms, chart_data = chart_response.related_keyword_search(result_array, keyword[0])
+        print(synonyms)
+        print(chart_data)
+        
+        # Check if both synonyms and chart data are not None
+        if synonyms is not None and chart_data is not None:
+            response_data = {
+                'synonyms': synonyms,
+                'chart_data': chart_data
+            }
+            return (response_data)
+        else:
+            response = jsonify({'message': 'No data found'})
+            return response
     else:
         response = jsonify({'message': 'Incomplete data received'})
         return response
+
+    
+
+# @app.route('/api/getSynonyms', methods=['POST'])
+# def post_getsynonyms():
+#     keyword = request.form.getlist('keyword') 
+#     chart_response = pieChart()
+#     data = request.form.getlist('data') 
+    
+#     if keyword:
+#         # returnValue = chart_response.get_synonyms(keyword[0])
+#         # print(returnValue)
+#         # joined_string = ','.join(data)
+#         # result_array = joined_string.split(',')
+#         # returnValue = chart_response.related_keyword_search(result_array, keyword[0])
+#         # returnValue = chart_response.syn
+#         returnValue = keyword[0]
+#         return returnValue
+#     else:
+#         response = jsonify({'message': 'Incomplete data received'})
+#         return response
 
 
 if __name__ == '__main__':
