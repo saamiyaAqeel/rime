@@ -169,15 +169,22 @@ export default {
 
 
 <template>
-  <div class="timeline-container">
-    <div ref="timeline"></div>                          
-    <div id="legendContainer"></div>
+  <div>
+    <!-- <div v-if="activeDevices.length === 0" class="center text-box">
+      Select one or more devices at the top left to begin.
+    </div> -->
+
+    <div class="timeline-container">
+      <div ref="timeline"></div>
+      <!-- <div id="legendContainer"></div> -->
+    </div>
   </div>
 </template>
 
 <script setup>
 import { ref, onMounted } from 'vue';
 import * as anychart from 'anychart';
+import { activeDevices } from '../store.js';
 
 const containerId = 'container';
 const timeline = ref(null);
@@ -218,103 +225,50 @@ const createLegend = (timelineData, chart) => {
 };
 
 onMounted(() => {
-  // anychart.onDocumentReady(() => {
-    // anychart.data.loadJsonFile('/timeline.json', (data) => {
-    //   const chart = anychart.timeline();
-    //   let series;
-
-    //   for (let i = 0; i < data.Timeline.length; i++) {
-    //     series = chart.range([
-    //       [
-    //         data.Timeline[i].title,
-    //         data.Timeline[i].start,
-    //         data.Timeline[i].end,
-    //       ],
-    //     ]);
-
-    //     series.normal().fill(getColorByTitle(data.Timeline[i].title));
-    //     series.hovered().fill(getColorByTitle(data.Timeline[i].title));
-    //     series.selected().fill(getColorByTitle(data.Timeline[i].title));
-    //   }
-
-      // const pfizerDataSet = anychart.data.set(data.ImportantEvents);
-      // const pfizerMapping = pfizerDataSet.mapAs({
-      //   x: 'date',
-      //   value: 'title',
-      // });
-      // const pfizerMappingSeries = chart.moment(pfizerMapping);
-
-      // const otherVaccinesDataset = anychart.data.set(data.SecondaryFacts);
-      // const otherVaccinesDatasetMapping = otherVaccinesDataset.mapAs({
-      //   x: 'date',
-      //   value: 'title',
-      // });
-      // const otherVaccinesSeries = chart.moment(otherVaccinesDatasetMapping);
-
-    //   chart.scale().zoomLevels([{ unit: 'month', count: 1 }]);
-    //   chart.axis().height(60);
-    //   chart.axis().labels().format(function () {
-    //     return anychart.format.dateTime(this.tickValue, 'MMM yyyy');
-    //   });
-    //   chart.scroller().enabled(true);
-    //   chart.title('Timeline of Events');
-    //   chart.container(timeline.value);
-    //   chart.draw();
-
-    //   createLegend(data.Timeline, chart);
-    // });
-  // });
 
   // var rangeData1 = [
-  //   ["Task 1", Date.UTC(2004, 0, 4), Date.UTC(2004, 7, 1)],
-  //   ["Task 2", Date.UTC(2004, 7, 1), Date.UTC(2005, 8, 10)]
+  //   { name: "Task 1", start: Date.UTC(2004, 0, 4), end: Date.UTC(2004, 11, 1) },
+  //   { name: "Task 2", start: Date.UTC(2004, 7, 1), end: Date.UTC(2005, 8, 10) },
+  //   { name: "New Task 1", start: Date.UTC(2005, 10, 1), end: Date.UTC(2006, 5, 1) },
+  //   { name: "New Task 2", start: Date.UTC(2006, 5, 15), end: Date.UTC(2006, 11, 1) }
   // ];
 
-  // var rangeData2 = [
-  //   ["New Task 1", Date.UTC(2005, 10, 1), Date.UTC(2006, 5, 1)],
-  //   ["New Task 2", Date.UTC(2006, 5, 15), Date.UTC(2006, 11, 1)]
-  // ];
 
-  // var momentData1 = [
-  //   [Date.UTC(2004, 2, 21), "Meeting 1"],
-  //   [Date.UTC(2005, 3, 19), "Meeting 2"],
-  //   [Date.UTC(2006, 1, 1), "Meeting 3"]
-  // ];
+  var rangeData1 = [
+    ["Task 1", Date.UTC(2004, 0, 4), Date.UTC(2004, 11, 1)],
+    ["Task 2", Date.UTC(2004, 7, 1), Date.UTC(2005, 8, 10)],
+    ["New Task 1", Date.UTC(2005, 10, 1), Date.UTC(2006, 5, 1)],
+    ["New Task 2", Date.UTC(2006, 5, 15), Date.UTC(2006, 11, 1)]
+  ];
+  
+  var momentData1 = [
+    { x: Date.UTC(2004, 2, 21), y: "Meeting 1" },
+    { x: Date.UTC(2005, 3, 19), y: "Meeting 2" },
+    { x: Date.UTC(2006, 1, 1), y: "Meeting 3" }
+  ];
 
-  // var momentData2 = [
-  //   [Date.UTC(2004, 5, 12), "Training 1"],
-  //   [Date.UTC(2005, 5, 1), "Training 2"],
-  //   [Date.UTC(2006, 1, 26), "Training 3"]
-  // ];
+  var momentData2 = [
+    { x: Date.UTC(2004, 5, 12), y: "Training 1" },
+    { x: Date.UTC(2005, 5, 1), y: "Training 2" },
+    { x: Date.UTC(2006, 1, 26), y: "Training 3" }
+  ];
 
+  // create a chart
   var chart = anychart.timeline();
 
-  anychart.data.loadJsonFile('/timeline.json', (data) => {
-    let series;
+  // create the first range series
+  var rangeSeries1 = chart.range(rangeData1);
 
-    for (let i = 0; i < data.Timeline.length; i++) {
-      series = chart.range([
-        [
-          data.Timeline[i].title,
-          data.Timeline[i].start,
-          data.Timeline[i].end,
-        ],
-      ]);
+  // create the first moment series
+  var momentSeries1 = chart.moment(momentData1);
 
-      series.normal().fill(getColorByTitle(data.Timeline[i].title));
-      series.hovered().fill(getColorByTitle(data.Timeline[i].title));
-      series.selected().fill(getColorByTitle(data.Timeline[i].title));
-    }
-  });
+  // create the second moment series
+  var momentSeries2 = chart.moment(momentData2);
 
+  // set the container id
   chart.container(timeline.value);
-  // chart.scale().zoomLevels([{ unit: 'month', count: 1 }]);
-  chart.axis().height(100);
-  // chart.axis().labels().format(function () {
-  //   return anychart.format.dateTime(this.tickValue, 'MMM yyyy');
-  // });
-  chart.scroller().enabled(true);
-  chart.title('Timeline of Events');
+
+  // initiate drawing the chart  
   chart.draw();
 
 });
@@ -322,13 +276,14 @@ onMounted(() => {
 </script> 
 
 <style scoped>
-.timeline-container {
+/* .timeline-container {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  height: 600vh;
-}
+  height: 100vh;
+} */
+
 
 #container {
   width: 90%;
@@ -339,6 +294,13 @@ onMounted(() => {
 
 #legendContainer {
   margin-top: 20px;
+}
+
+.center {
+  margin: auto;
+  margin-top: 15%;
+  width: 30em;
+  text-align: center;
 }
 </style>
 
