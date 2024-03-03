@@ -42,7 +42,6 @@ watch(selectedOption, (option) => {
   result.events.forEach(event => {
     messagesSet.value.push(event.text);
   });
-  console.log(messagesSet.value)
 
   const formData = new FormData();
   const chunkSize = 10000;
