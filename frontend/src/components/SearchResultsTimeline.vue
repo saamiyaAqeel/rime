@@ -21,93 +21,6 @@ import { searchResult } from '../eventsdata.js'
 const timeline = ref(null);
 const messagesSet = ref([]);
 
-// watch(searchResult, (result) => {
-//   if (!result)
-//     return;
-
-//   if (activeDevices.value.length > 0) {
-//     messagesSet.value = [];
-
-//     result.events.forEach(event => {
-//       messagesSet.value.push(event);
-//     });
-//     console.log(messagesSet.value)
-
-//     const sortedEventData = messagesSet.value.sort((a, b) => a.timestamp - b.timestamp);
-//     console.log(sortedEventData)
-
-//     const rangeData = [];
-//     const momentData = [];
-
-//     // Group events by provider name
-//     const groups = {};
-//     sortedEventData.forEach(event => {
-//       const { providerName, timestamp } = event;
-//       if (!groups[providerName]) {
-//         groups[providerName] = [];
-//       }
-//       groups[providerName].push(event);
-//     });
-
-//     // Create ranges and moments
-//     for (const providerName in groups) {
-//       const events = groups[providerName];
-//       let rangeStart = events[0].timestamp;
-//       let rangeEnd = events[0].timestamp;
-
-//       for (let i = 1; i < events.length; i++) {
-//         const currentEvent = events[i];
-//         const prevEvent = events[i - 1];
-
-//         const timeDiff = currentEvent.timestamp - prevEvent.timestamp;
-//         const isWithinHour = timeDiff <= 60 * 60 * 1000; // One hour in milliseconds
-
-//         if (isWithinHour) {
-//           rangeEnd = currentEvent.timestamp;
-//         } else {
-//           rangeData.push({
-//             name: providerName,
-//             start: rangeStart,
-//             end: rangeEnd
-//           });
-//           momentData.push({
-//             x: rangeEnd,
-//             y: `${providerName} - Range End`
-//           });
-
-//           rangeStart = currentEvent.timestamp;
-//           rangeEnd = currentEvent.timestamp;
-//         }
-//       }
-
-//       // Push the last range
-//       rangeData.push({
-//         name: providerName,
-//         start: rangeStart,
-//         end: rangeEnd
-//       });
-//       momentData.push({
-//         x: rangeEnd,
-//         y: `${providerName} - Range End`
-//       });
-//     }
-
-//     // Create chart and series
-//     const chart = anychart.timeline();
-//     const rangeSeries = chart.range(rangeData);
-//     console.log(rangeData)
-//     console.log(momentData)
-//     // const momentSeries = chart.moment(momentData);
-
-//     // Set the container
-//     chart.container(timeline.value);
-
-//     // Draw the chart
-//     chart.draw();
-
-//   }
-// })
-
 watch(searchResult, (result) => {
   if (!result)
     return;
@@ -120,10 +33,10 @@ watch(searchResult, (result) => {
 
     const sortedEventData = messagesSet.sort((a, b) => a.timestamp - b.timestamp);
 
-    const rangeData = [];
+    var rangeData = [];
     const momentData = [];
+    const dataExample = [];
 
-    // Group events by provider name
     const groups = {};
     sortedEventData.forEach(event => {
       const { providerName, timestamp } = event;
@@ -133,61 +46,88 @@ watch(searchResult, (result) => {
       groups[providerName].push(event);
     });
 
-    // Create ranges and moments for each provider
     for (const providerName in groups) {
       const providerEvents = groups[providerName];
       let rangeStart = providerEvents[0].timestamp;
       let rangeEnd = providerEvents[0].timestamp;
 
       for (let i = 1; i < providerEvents.length; i++) {
-        console.log(providerEvents[i].timestamp + " provider event " + providerEvents[i].providerFriendlyName)
         const currentEvent = providerEvents[i];
         const prevEvent = providerEvents[i - 1];
 
         const timeDiff = currentEvent.timestamp - prevEvent.timestamp;
-        const isWithinTwoHours = timeDiff <= 2 * 60 * 60 * 1000; // Two hours in milliseconds
+        const isWithinTwoHours = timeDiff <= 2 * 60 * 60 * 1000; 
 
         if (isWithinTwoHours) {
-          console.log(isWithinTwoHours)
-          rangeEnd = currentEvent.timestamp;
+          dataExample.push({
+            name: providerName,
+            start: prevEvent.timestamp,
+            end: currentEvent.timestamp
+          });
         } else {
-          // If events are not within 2 hours, treat them as individual moments
           momentData.push({
             x: prevEvent.timestamp,
             y: `${providerName} - Range End`
           });
 
-          // Start a new range from the current event
           rangeStart = currentEvent.timestamp;
           rangeEnd = currentEvent.timestamp;
         }
       }
 
-      // Push the last range for the provider
       rangeData.push({
         name: providerName,
         start: rangeStart,
         end: rangeEnd
       });
 
-      // Add the last event as a moment
       momentData.push({
         x: rangeEnd,
         y: `${providerName} - Range End`
       });
     }
 
-    // Create chart and series
+
+    const twoHours = 2 * 60 * 60 * 1000; // 2 hours in milliseconds
+
+    let events = dataExample
+    rangeData = [];
+    let providerName = events[0].name;
+    let rangeStart = events[0].start;
+    let rangeEnd = events[0].end;
+
+    for (let i = 1; i < events.length; i++) {
+      const event = events[i];
+      const timeDifference = event.start - rangeEnd;
+
+      if (event.name === providerName && timeDifference <= twoHours) {
+        rangeEnd = event.end;
+      } else {
+        rangeData.push({
+          name: providerName,
+          start: rangeStart,
+          end: rangeEnd
+        });
+
+        providerName = event.name;
+        rangeStart = event.start;
+        rangeEnd = event.end;
+      }
+    }
+
+    rangeData.push({
+      name: providerName,
+      start: rangeStart,
+      end: rangeEnd
+    });
+
+    console.log(rangeData);
+
     const chart = anychart.timeline();
     const rangeSeries = chart.range(rangeData);
     const momentSeries = chart.moment(momentData);
-    // console.log(rangeData)
-    // console.log(momentData)
 
-    // Set the container
     chart.container(timeline.value);
-
-    // Draw the chart
     chart.draw();
   }
 });
@@ -232,54 +172,17 @@ watch(searchResult, (result) => {
 
 onMounted(() => {
 
-  // var rangeData1 = [
-  //   ["Task 1", Date.UTC(2004, 0, 4), Date.UTC(2004, 11, 1)],
-  //   ["Task 2", Date.UTC(2004, 7, 1), Date.UTC(2005, 8, 10)],
-  //   ["New Task 1", Date.UTC(2005, 10, 1), Date.UTC(2006, 5, 1)],
-  //   ["New Task 2", Date.UTC(2006, 5, 15), Date.UTC(2006, 11, 1)]
-  // ];
-
-  // var momentData1 = [
-  //   { x: Date.UTC(2004, 2, 21), y: "Meeting 1" },
-  //   { x: Date.UTC(2005, 3, 19), y: "Meeting 2" },
-  //   { x: Date.UTC(2006, 1, 1), y: "Meeting 3" }
-  // ];
-
-  // var momentData2 = [
-  //   { x: Date.UTC(2004, 5, 12), y: "Training 1" },
-  //   { x: Date.UTC(2005, 5, 1), y: "Training 2" },
-  //   { x: Date.UTC(2006, 1, 26), y: "Training 3" }
-  // ];
-
-  // // create a chart
-  // var chart = anychart.timeline();
-
-  // // create the first range series
-  // var rangeSeries1 = chart.range(rangeData1);
-
-  // // create the first moment series
-  // var momentSeries1 = chart.moment(momentData1);
-
-  // // create the second moment series
-  // var momentSeries2 = chart.moment(momentData2);
-
-  // // set the container id
-  // chart.container(timeline.value);
-
-  // // initiate drawing the chart  
-  // chart.draw();
-
 });
 
 </script> 
 
 <style scoped>
-
 .center {
   display: flex;
   justify-content: center;
   align-items: center;
-  height: 200vh; /* Adjust the height as needed */
+  height: 200vh;
+  /* Adjust the height as needed */
 }
 
 .timeline-container {

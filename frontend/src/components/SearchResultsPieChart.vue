@@ -118,7 +118,6 @@ watch(searchResult, (result) => {
     result.events.forEach(event => {
       messagesSet.value.push(event.text);
     });
-    console.log(messagesSet.value)
 
     const formData = new FormData();
     const chunkSize = 10000;
@@ -139,7 +138,6 @@ watch(searchResult, (result) => {
       })
         .then(response => {
           responseData.value = response.data;
-          console.log(responseData.value)
 
           const xValue = responseData.value["x"];
           const valuePie = responseData.value["value"];
