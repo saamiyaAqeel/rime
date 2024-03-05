@@ -1,14 +1,31 @@
 
 <template>
-  <div class="center">
-    <!-- <div v-if="activeDevices.length === 0" class="center text-box">
+  <!-- <div v-if="activeDevices.length === 0" class="center text-box">
       Select one or more devices at the top left to begin.
     </div> -->
+  <!-- <div class="timeline-container">
+  <div ref="timeline"></div> -->
+  <!-- <div id="legendContainer"></div> -->
+  <!-- </div> -->
+  <div>
 
-    <div class="timeline-container">
-      <div ref="timeline"></div>
-      <!-- <div id="legendContainer"></div> -->
+    <div class="filter-container">
+      <label for="start-date">Start Date:</label>
+      <input type="date" id="start-date" v-model="startDate">
+      <label for="start-time">Start Time:</label>
+      <input type="time" id="start-time" v-model="startTime">
+      <label for="end-date">End Date:</label>
+      <input type="date" id="end-date" v-model="endDate">
+      <label for="end-time">End Time:</label>
+      <input type="time" id="end-time" v-model="endTime">
+      <button @click="applyFilter">Apply</button>
     </div>
+
+
+    <div class="container">
+      <div ref="timeline"></div>
+    </div>
+
   </div>
 </template>
 
@@ -20,6 +37,13 @@ import { searchResult } from '../eventsdata.js'
 
 const timeline = ref(null);
 const messagesSet = ref([]);
+const startDate = ref('');
+const startTime = ref('');
+const endDate = ref('');
+const endTime = ref('');
+
+const applyFilter = () => {
+};
 
 watch(searchResult, (result) => {
   if (!result)
@@ -56,7 +80,7 @@ watch(searchResult, (result) => {
         const prevEvent = providerEvents[i - 1];
 
         const timeDiff = currentEvent.timestamp - prevEvent.timestamp;
-        const isWithinTwoHours = timeDiff <= 2 * 60 * 60 * 1000; 
+        const isWithinTwoHours = timeDiff <= 2 * 60 * 60 * 1000;
 
         if (isWithinTwoHours) {
           dataExample.push({
@@ -103,31 +127,27 @@ watch(searchResult, (result) => {
       if (event.name === providerName && timeDifference <= twoHours) {
         rangeEnd = event.end;
       } else {
-        rangeData.push({
-          name: providerName,
-          start: rangeStart,
-          end: rangeEnd
-        });
-
+        rangeData.push([providerName, rangeStart, rangeEnd]);
         providerName = event.name;
         rangeStart = event.start;
         rangeEnd = event.end;
       }
     }
 
-    rangeData.push({
-      name: providerName,
-      start: rangeStart,
-      end: rangeEnd
+    rangeData.push([providerName, rangeStart, rangeEnd]);
+
+    const decemberRangeData = rangeData.filter(event => {
+      const eventDate = new Date(event[1]);
+      const month = eventDate.getMonth() + 1; // January is 0, so we add 1
+      const year = eventDate.getFullYear();
+      return month === 12 && year === 2022;
     });
 
-    console.log(rangeData);
-
     const chart = anychart.timeline();
-    const rangeSeries = chart.range(rangeData);
-    const momentSeries = chart.moment(momentData);
-
+    const rangeSeries = chart.range(decemberRangeData);
+    console.log(rangeData)
     chart.container(timeline.value);
+    chart.scroller().enabled(true);
     chart.draw();
   }
 });
@@ -177,35 +197,35 @@ onMounted(() => {
 </script> 
 
 <style scoped>
-.center {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 200vh;
-  /* Adjust the height as needed */
-}
-
-.timeline-container {
-  width: 100%;
-  height: 60%;
-}
-
-#container {
-  width: 90%;
-  height: 60%;
-  margin: 0;
-  padding: 0;
-}
-
 #legendContainer {
   margin-top: 20px;
 }
 
-.center {
-  margin: auto;
-  margin-top: 15%;
-  width: 30em;
-  text-align: center;
+.container {
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  height: 100%;
+}
+
+/* .container {
+  text-align: center; 
+}
+
+.content {
+  display: inline-block; 
+} */
+
+.filter-container {
+  margin-top: 100px;
+  margin-bottom: 40px;
+  margin-left: 100px;
+}
+
+.filter-container label,
+.filter-container input,
+.filter-container button {
+  margin-right: 10px;
 }
 </style>
 
