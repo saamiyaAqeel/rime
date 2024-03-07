@@ -8,7 +8,6 @@
   <!-- <div id="legendContainer"></div> -->
   <!-- </div> -->
   <div>
-
     <div class="filter-container">
       <label for="start-date">Start Date:</label>
       <input type="date" id="start-date" v-model="startDate">
@@ -21,8 +20,10 @@
       <button @click="applyFilter">Apply</button>
     </div>
 
-
-    <div class="container">
+    <!-- <div class="container">
+      <div ref="timeline"></div>
+    </div> -->
+    <div class="container" v-if="hasRangeData">
       <div ref="timeline"></div>
     </div>
 
@@ -41,116 +42,128 @@ const startDate = ref('');
 const startTime = ref('');
 const endDate = ref('');
 const endTime = ref('');
+const hasRangeData = ref(false);
 
 const applyFilter = () => {
 };
 
 watch(searchResult, (result) => {
-  if (!result)
-    return;
+  // if (!result)
+  //   return;
+  // console.log("HELLO I AM HERE")
+  // messagesSet.value = []
 
-  if (activeDevices.value.length > 0) {
-    const messagesSet = [];
-    result.events.forEach(event => {
-      messagesSet.push(event);
-    });
+  // if (activeDevices.value.length > 0) {
+  //   const messagesSet = [];
+  //   result.events.forEach(event => {
+  //     messagesSet.push(event);
+  //   });
 
-    const sortedEventData = messagesSet.sort((a, b) => a.timestamp - b.timestamp);
+  //   const sortedEventData = messagesSet.sort((a, b) => a.timestamp - b.timestamp);
 
-    var rangeData = [];
-    const momentData = [];
-    const dataExample = [];
+  //   var rangeData = [];
+  //   const momentData = [];
+  //   const dataExample = [];
 
-    const groups = {};
-    sortedEventData.forEach(event => {
-      const { providerName, timestamp } = event;
-      if (!groups[providerName]) {
-        groups[providerName] = [];
-      }
-      groups[providerName].push(event);
-    });
+  //   const groups = {};
+  //   sortedEventData.forEach(event => {
+  //     const { providerName, timestamp } = event;
+  //     if (!groups[providerName]) {
+  //       groups[providerName] = [];
+  //     }
+  //     groups[providerName].push(event);
+  //   });
 
-    for (const providerName in groups) {
-      const providerEvents = groups[providerName];
-      let rangeStart = providerEvents[0].timestamp;
-      let rangeEnd = providerEvents[0].timestamp;
+  //   for (const providerName in groups) {
+  //     const providerEvents = groups[providerName];
+  //     let rangeStart = providerEvents[0].timestamp;
+  //     let rangeEnd = providerEvents[0].timestamp;
 
-      for (let i = 1; i < providerEvents.length; i++) {
-        const currentEvent = providerEvents[i];
-        const prevEvent = providerEvents[i - 1];
+  //     for (let i = 1; i < providerEvents.length; i++) {
+  //       const currentEvent = providerEvents[i];
+  //       const prevEvent = providerEvents[i - 1];
 
-        const timeDiff = currentEvent.timestamp - prevEvent.timestamp;
-        const isWithinTwoHours = timeDiff <= 2 * 60 * 60 * 1000;
+  //       const timeDiff = currentEvent.timestamp - prevEvent.timestamp;
+  //       const isWithinTwoHours = timeDiff <= 2 * 60 * 60 * 1000;
 
-        if (isWithinTwoHours) {
-          dataExample.push({
-            name: providerName,
-            start: prevEvent.timestamp,
-            end: currentEvent.timestamp
-          });
-        } else {
-          momentData.push({
-            x: prevEvent.timestamp,
-            y: `${providerName} - Range End`
-          });
+  //       if (isWithinTwoHours) {
+  //         dataExample.push({
+  //           name: providerName,
+  //           start: prevEvent.timestamp,
+  //           end: currentEvent.timestamp
+  //         });
+  //       } else {
+  //         momentData.push({
+  //           x: prevEvent.timestamp,
+  //           y: `${providerName} - Range End`
+  //         });
 
-          rangeStart = currentEvent.timestamp;
-          rangeEnd = currentEvent.timestamp;
-        }
-      }
+  //         rangeStart = currentEvent.timestamp;
+  //         rangeEnd = currentEvent.timestamp;
+  //       }
+  //     }
 
-      rangeData.push({
-        name: providerName,
-        start: rangeStart,
-        end: rangeEnd
-      });
+  //     rangeData.push({
+  //       name: providerName,
+  //       start: rangeStart,
+  //       end: rangeEnd
+  //     });
 
-      momentData.push({
-        x: rangeEnd,
-        y: `${providerName} - Range End`
-      });
-    }
+  //     momentData.push({
+  //       x: rangeEnd,
+  //       y: `${providerName} - Range End`
+  //     });
+  //   }
 
+  //   const twoHours = 2 * 60 * 60 * 1000; 
 
-    const twoHours = 2 * 60 * 60 * 1000; // 2 hours in milliseconds
+  //   let events = dataExample
+  //   rangeData = [];
+  //   let providerName = events[0].name;
+  //   let rangeStart = events[0].start;
+  //   let rangeEnd = events[0].end;
 
-    let events = dataExample
-    rangeData = [];
-    let providerName = events[0].name;
-    let rangeStart = events[0].start;
-    let rangeEnd = events[0].end;
+  //   for (let i = 1; i < events.length; i++) {
+  //     const event = events[i];
+  //     const timeDifference = event.start - rangeEnd;
 
-    for (let i = 1; i < events.length; i++) {
-      const event = events[i];
-      const timeDifference = event.start - rangeEnd;
+  //     if (event.name === providerName && timeDifference <= twoHours) {
+  //       rangeEnd = event.end;
+  //     } else {
+  //       rangeData.push([providerName, rangeStart, rangeEnd]);
+  //       providerName = event.name;
+  //       rangeStart = event.start;
+  //       rangeEnd = event.end;
+  //     }
+  //   }
 
-      if (event.name === providerName && timeDifference <= twoHours) {
-        rangeEnd = event.end;
-      } else {
-        rangeData.push([providerName, rangeStart, rangeEnd]);
-        providerName = event.name;
-        rangeStart = event.start;
-        rangeEnd = event.end;
-      }
-    }
+  //   rangeData.push([providerName, rangeStart, rangeEnd]);
 
-    rangeData.push([providerName, rangeStart, rangeEnd]);
+  //   const decemberRangeData = rangeData.filter(event => {
+  //     const eventDate = new Date(event[1]);
+  //     const month = eventDate.getMonth() + 1; 
+  //     const year = eventDate.getFullYear();
+  //     return month === 12 && year === 2022;
+  //   });
 
-    const decemberRangeData = rangeData.filter(event => {
-      const eventDate = new Date(event[1]);
-      const month = eventDate.getMonth() + 1; // January is 0, so we add 1
-      const year = eventDate.getFullYear();
-      return month === 12 && year === 2022;
-    });
+  //   hasRangeData.value = rangeData.length > 0;
 
-    const chart = anychart.timeline();
-    const rangeSeries = chart.range(decemberRangeData);
-    console.log(rangeData)
-    chart.container(timeline.value);
-    chart.scroller().enabled(true);
-    chart.draw();
-  }
+  //   if (hasRangeData.value) {
+  //     anyTimeline(rangeData);
+  //   }
+
+  // }
 });
+
+const anyTimeline = (chartData) => {
+  const chart = anychart.timeline();
+  chart.range(chartData);
+  console.log(chartData)
+  chart.container(timeline.value);
+  chart.scroller().enabled(true);
+  console.log("THE DATA HAS CHANGED")
+  chart.draw();
+}
 
 
 // const getColorByTitle = (title) => {
