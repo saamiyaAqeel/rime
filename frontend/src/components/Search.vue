@@ -22,30 +22,39 @@ const selectedMergedContacts = ref({});
 const startTime = ref(null)
 const endTime = ref(null)
 
-watch(searchResult, (result) => {
-	if (!result) return;
-
-	const events = result.events;
-
-	if (events.length === 0) return;
-
-	const sortedEvents = events.sort((a, b) => a.timestamp - b.timestamp);
-
-	const earliestEvent = sortedEvents[0];
-	const latestEvent = sortedEvents[sortedEvents.length - 1];
-
-	const earliestTimestamp = new Date(earliestEvent.timestamp);
-	const latestTimestamp = new Date(latestEvent.timestamp);
-
-	const startOfMonthTimestamp = startOfMonth(earliestTimestamp);
-	const endOfMonthTimestamp = endOfMonth(latestTimestamp);
-
-	console.log("Start of Month Timestamp:", startOfMonthTimestamp);
-	console.log("End of Month Timestamp:", endOfMonthTimestamp);
-
-	startTime.value = startOfMonthTimestamp
-	endTime.value = endOfMonthTimestamp
+watch([searchTimeStart, searchTimeEnd], () => {
+	console.log(startTime.value)
+	console.log(endTime.value)
 });
+
+// watch(searchResult, (result) => {
+// 	if (!result) return;
+
+// 	const events = result.events;
+
+// 	if (events.length === 0) return;
+
+// 	const sortedEvents = events.sort((a, b) => a.timestamp - b.timestamp);
+// 	console.log(sortedEvents)
+
+// 	const earliestEvent = sortedEvents[0];
+// 	const latestEvent = sortedEvents[sortedEvents.length - 1];
+
+// 	const earliestTimestamp = new Date(earliestEvent.timestamp);
+// 	const latestTimestamp = new Date(latestEvent.timestamp);
+
+// 	const startOfMonthTimestamp = startOfMonth(earliestTimestamp);
+// 	const endOfMonthTimestamp = endOfMonth(latestTimestamp);
+
+// 	console.log("Start of Month Timestamp:", startOfMonthTimestamp);
+// 	console.log("End of Month Timestamp:", endOfMonthTimestamp);
+
+// 	startTime.value = startOfMonthTimestamp
+// 	endTime.value = endOfMonthTimestamp
+// });
+
+// const initialStartTime = computed(() => startTime.value);
+// const initialEndTime = computed(() => endTime.value);
 
 const startOfMonth = (date) => {
 	const nextMonth = new Date(date);
@@ -236,25 +245,38 @@ watch([searchProviderRestrict, searchTypeRestrict, searchTimeRestrict, searchTim
 					</div>
 				</div>
 			</div>
-			
+
 			<div class="searchStanza">
 				<input type="checkbox" v-model="searchTimeRestrict" id="searchTimeRestrictCheckbox">
 				<label for="searchTimeRestrictCheckbox"> Time range </label>
 				<div v-if="searchTimeRestrict" class="searchOption">
 					<div>
 						<label for="searchTimeRestrictStart">Start:</label>
-						<input type="datetime-local" v-model="searchTimeStart" id="searchTimeRestrictStart" :min="startTime"
-							:max="endTime">
+						<input type="datetime-local" v-model="searchTimeStart" id="searchTimeRestrictStart">
 					</div>
 					<div>
 						<label for="searchTimeRestrictEnd">End:</label>
-						<input type="datetime-local" v-model="searchTimeEnd" id="searchTimeRestrictEnd" :min="startTime"
-							:max="endTime">
+						<input type="datetime-local" v-model="searchTimeEnd" id="searchTimeRestrictEnd">
 					</div>
 				</div>
 			</div>
 
-
+			<!-- <div class="searchStanza">
+				<input type="checkbox" v-model="searchTimeRestrict" id="searchTimeRestrictCheckbox">
+				<label for="searchTimeRestrictCheckbox"> Time range </label>
+				<div v-if="searchTimeRestrict" class="searchOption">
+					<div>
+						<label for="searchTimeRestrictStart">Start:</label>
+						<input type="datetime-local" v-model="searchTimeStart" id="searchTimeRestrictStart"
+							:min="initialStartTime" :max="initialEndTime">
+					</div>
+					<div>
+						<label for="searchTimeRestrictEnd">End:</label>
+						<input type="datetime-local" v-model="searchTimeEnd" id="searchTimeRestrictEnd"
+							:min="initialStartTime" :max="initialEndTime">
+					</div>
+				</div>
+			</div> -->
 
 
 			<!-- Restrict based on participants -->
