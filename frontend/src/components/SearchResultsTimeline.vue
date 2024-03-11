@@ -6,9 +6,11 @@
   <div ref="timeline"></div> -->
   <!-- <div id="legendContainer"></div> -->
   <!-- </div> -->
+
   <div>
-    <div class="filter-container">
-      <label for="start-date">Start Date:</label>
+
+     <!-- <div class="filter-container">
+       <label for="start-date">Start Date:</label>
       <input type="date" id="start-date" v-model="startDate">
       <label for="start-time">Start Time:</label>
       <input type="time" id="start-time" v-model="startTime">
@@ -16,12 +18,13 @@
       <input type="date" id="end-date" v-model="endDate">
       <label for="end-time">End Time:</label>
       <input type="time" id="end-time" v-model="endTime">
-      <button @click="applyFilter">Apply</button>
-    </div>
+      <button @click="applyFilter">Apply</button> 
+    </div>  -->
 
     <div class="container">
       <div ref="timeline"></div>
     </div>
+
     <div id="legendContainer" class="legend-container"></div>
     <!-- <div class="container" v-if="hasRangeData">
       <div ref="timeline"></div>
@@ -83,10 +86,10 @@ watch(searchResult, (result) => {
 
     const deviceIds = [];
     result.events.forEach(event => {
-      deviceIds.push(event.deviceId); // Extract device IDs
+      deviceIds.push(event.deviceId); 
     });
 
-    const uniqueDeviceIds = Array.from(new Set(deviceIds)); // Get unique device IDs
+    const uniqueDeviceIds = Array.from(new Set(deviceIds)); 
 
     for (const providerName in groups) {
       const providerEvents = groups[providerName];
@@ -138,7 +141,6 @@ watch(searchResult, (result) => {
     for (let i = 1; i < events.length; i++) {
       const event = events[i];
       const timeDifference = event.start - rangeEnd;
-
       if (event.name === providerName && event.deviceName === deviceName && timeDifference <= twoHours) {
         rangeEnd = event.end;
       } else {
@@ -150,12 +152,10 @@ watch(searchResult, (result) => {
       }
     }
 
-    rangeData.push([providerName, deviceName, rangeStart, rangeEnd]); 
-
-    console.log(rangeData)
+    rangeData.push([providerName, deviceName, rangeStart, rangeEnd]);
 
     const splitRangeData = [];
-    let currentSubArray = [rangeData[0][1]]; 
+    let currentSubArray = [rangeData[0][1]];
 
     for (let i = 0; i < rangeData.length; i++) {
       const currentEvent = rangeData[i];
@@ -186,24 +186,16 @@ watch(searchResult, (result) => {
       return decemberSubArray;
     });
 
-    //console.log(decemberData);
-
     const deviceIdColorPairs = getColorByTitle(uniqueDeviceIds);
-    anyTimeline(splitRangeData, deviceIdColorPairs);
+    anyTimeline(splitRangeData, momentData, deviceIdColorPairs);
     createLegend(deviceIdColorPairs);
   }
 });
 
 
-const anyTimeline = (chartData, deviceIdColorPairs) => {
+const anyTimeline = (chartData, momentData, deviceIdColorPairs) => {
   const chart = anychart.timeline();
-  // chart.range(chartData);
-  // chart.container(timeline.value);
-  // chart.scroller().enabled(true);
-  // chart.draw();
-  // Iterate through each subarray in splitRangeData
   chartData.forEach((subArray, index) => {
-
     const deviceName = subArray[0];
     const deviceColor = deviceIdColorPairs.find(pair => pair.deviceId === deviceName)?.color;
     console.log(deviceColor)
@@ -212,19 +204,15 @@ const anyTimeline = (chartData, deviceIdColorPairs) => {
     console.log(data);
     const rangeSeries = chart.range(data);
     rangeSeries.normal().fill(deviceColor);
-    // const deviceName = subArray[0];
-    // const deviceColor = deviceIdColorPairs.find(pair => pair.deviceId === deviceName)?.color;
-
-    // const chartDataWithoutFirstElement = subArray.slice(1);
-    // const data = chartDataWithoutFirstElement.map(event => [event[0], event[1], event[2]]);
-
-    // const rangeSeries = chart.range(data);
-    // console.log(data);
-    // rangeSeries.normal().fill(deviceColor);
+    rangeSeries.normal().stroke(deviceColor);
   });
+  chart.moment(momentData)
   chart.container(timeline.value);
   chart.scroller().enabled(true);
+  var axis = chart.axis();
+  axis.height(25);
   chart.draw();
+  timeline.value.classList.add('centered-timeline');
 
 }
 
@@ -253,11 +241,11 @@ const createLegend = (deviceIdColorPairs) => {
 
 
 const getColorByTitle = (uniqueDeviceIds) => {
-  const colors = ['#ff0000', '#00ff00', '#0000ff', '#808080']; 
+  const colors = ['#ff0000', '#00ff00', '#0000ff', '#808080'];
   const deviceIdColorPairs = [];
 
   uniqueDeviceIds.forEach((deviceId, index) => {
-    const colorIndex = index % colors.length; 
+    const colorIndex = index % colors.length;
     const color = colors[colorIndex];
     deviceIdColorPairs.push({ deviceId: deviceId, color: color });
   });
@@ -292,16 +280,41 @@ onMounted(() => {
 }
 
 .container {
-  justify-content: center;
+  /* justify-content: center;
   align-items: center;
   width: 100%;
+  height: 80%; */
+
+  /* margin-top: 70px;
+  margin-bottom: 70px; */
+
+  /* width: 100%;
   height: 100%;
+  margin: 0;
+  padding: 0; */
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh; 
+  width: 100%; 
+  margin: 0;
+  padding: 0;  
+
+}
+
+.centered-timeline {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
+  width: 100%;
 }
 
 
 .filter-container {
   margin-top: 100px;
-  margin-bottom: 100px;
+  margin-bottom: 70px;
   margin-left: 100px;
 }
 
