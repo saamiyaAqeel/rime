@@ -5,31 +5,21 @@
     </div>
 
     <div v-else>
+      
+      <div>
+        <button id="zoomToButton" @click="zoomTo">Zoom To</button>
+        <label for="startDatePicker">start date:</label>
+        <input type="date" id="startDatePicker" v-model="startDate">
+        <label for="endDatePicker">end date:</label>
+        <input type="date" id="endDatePicker" v-model="endDate">
+        <button id="fitButton" @click="fit">Fit to Container</button>
+      </div>
 
-      <!-- <div> -->
-      <button id="zoomToButton" onclick="zoomTo()">Zoom To</button>
-      <label>start date:</label>
-      <label id="dateLabel1">01 April 2005</label>
-      <label>end date: </label>
-      <label id="dateLabel2">01 April 2006</label>
-      <button id="fitButton" onclick="fit()">Fit to Container</button>
-      <!-- </div> -->
-
-      <!-- <div class="filter-container">
-       <label for="start-date">Start Date:</label>
-      <input type="date" id="start-date" v-model="startDate">
-      <label for="start-time">Start Time:</label>
-      <input type="time" id="start-time" v-model="startTime">
-      <label for="end-date">End Date:</label>
-      <input type="date" id="end-date" v-model="endDate">
-      <label for="end-time">End Time:</label>
-      <input type="time" id="end-time" v-model="endTime">
-      <button @click="applyFilter">Apply</button> 
-    </div>  -->
 
       <div class="container">
-        <div ref="timeline"></div>
+        <div ref="timeline" class="timeline"></div>
       </div>
+
       <div id="legendContainer" class="legend-container"></div>
     </div>
   </div>
@@ -264,21 +254,37 @@ onMounted(() => {
 </script>
 
 <style scoped>
-button {
-    margin: 10px 0 0 10px;
-}
+button,
 label {
-    display: inline-block;
-    margin: 10px 0 0 10px;
+  margin: 10px 5px;
 }
+
+.container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: calc(100vh - 100px);
+  width: 100%;
+}
+
+.centered-timeline {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
+  width: 100%;
+}
+
+
 #fitButton {
-   /* position: absolute; */
-   right: 10px;
+  right: 10px;
 }
+
 #dateLabel1 {
   margin: 0;
   font-style: italic;
 }
+
 #dateLabel2 {
   margin: 0;
   font-style: italic;
@@ -301,44 +307,11 @@ label {
   display: flex;
   align-items: center;
   margin-right: 40px;
-  /* Adjust spacing between legend items */
 }
 
 #legendContainer {
   margin-bottom: 30px;
 
-}
-
-.container {
-  /* justify-content: center;
-  align-items: center;
-  width: 100%;
-  height: 80%; */
-
-  /* margin-top: 70px;
-  margin-bottom: 70px; */
-
-  /* width: 100%;
-  height: 100%;
-  margin: 0;
-  padding: 0; */
-
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 100vh;
-  width: 100%;
-  margin: 0;
-  padding: 0;
-
-}
-
-.centered-timeline {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 100%;
-  width: 100%;
 }
 
 
