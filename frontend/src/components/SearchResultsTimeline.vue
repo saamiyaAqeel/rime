@@ -1,15 +1,21 @@
 <template>
-  <!-- <div v-if="activeDevices.length === 0" class="center text-box">
-      Select one or more devices at the top left to begin.
-    </div> -->
-  <!-- <div class="timeline-container">
-  <div ref="timeline"></div> -->
-  <!-- <div id="legendContainer"></div> -->
-  <!-- </div> -->
-
   <div>
+    <div v-if="activeDevices.length === 0" class="center text-box">
+      Select one or more devices at the top left to begin.
+    </div>
 
-     <!-- <div class="filter-container">
+    <div v-else>
+
+      <!-- <div> -->
+      <button id="zoomToButton" onclick="zoomTo()">Zoom To</button>
+      <label>start date:</label>
+      <label id="dateLabel1">01 April 2005</label>
+      <label>end date: </label>
+      <label id="dateLabel2">01 April 2006</label>
+      <button id="fitButton" onclick="fit()">Fit to Container</button>
+      <!-- </div> -->
+
+      <!-- <div class="filter-container">
        <label for="start-date">Start Date:</label>
       <input type="date" id="start-date" v-model="startDate">
       <label for="start-time">Start Time:</label>
@@ -21,14 +27,11 @@
       <button @click="applyFilter">Apply</button> 
     </div>  -->
 
-    <div class="container">
-      <div ref="timeline"></div>
+      <div class="container">
+        <div ref="timeline"></div>
+      </div>
+      <div id="legendContainer" class="legend-container"></div>
     </div>
-
-    <div id="legendContainer" class="legend-container"></div>
-    <!-- <div class="container" v-if="hasRangeData">
-      <div ref="timeline"></div>
-    </div> -->
   </div>
 </template>
 
@@ -86,10 +89,10 @@ watch(searchResult, (result) => {
 
     const deviceIds = [];
     result.events.forEach(event => {
-      deviceIds.push(event.deviceId); 
+      deviceIds.push(event.deviceId);
     });
 
-    const uniqueDeviceIds = Array.from(new Set(deviceIds)); 
+    const uniqueDeviceIds = Array.from(new Set(deviceIds));
 
     for (const providerName in groups) {
       const providerEvents = groups[providerName];
@@ -261,6 +264,33 @@ onMounted(() => {
 </script>
 
 <style scoped>
+button {
+    margin: 10px 0 0 10px;
+}
+label {
+    display: inline-block;
+    margin: 10px 0 0 10px;
+}
+#fitButton {
+   /* position: absolute; */
+   right: 10px;
+}
+#dateLabel1 {
+  margin: 0;
+  font-style: italic;
+}
+#dateLabel2 {
+  margin: 0;
+  font-style: italic;
+}
+
+.center {
+  margin: auto;
+  margin-top: 15%;
+  width: 30em;
+  text-align: center;
+}
+
 .legend-container {
   display: flex;
   justify-content: center;
@@ -296,10 +326,10 @@ onMounted(() => {
   display: flex;
   justify-content: center;
   align-items: center;
-  height: 100vh; 
-  width: 100%; 
+  height: 100vh;
+  width: 100%;
   margin: 0;
-  padding: 0;  
+  padding: 0;
 
 }
 
