@@ -8,7 +8,7 @@ Copyright 2023 Telemarq Ltd
 import { ref, watch, computed } from 'vue'
 import { useQuery } from '@vue/apollo-composable'
 import gql from 'graphql-tag'
-import { searchResult } from '../eventsdata.js'
+
 import ContactCardSmall from './ContactCardSmall.vue'
 import { activeDevices, contactsFilter, setFilter, rawEventsSearchResult } from '../store.js'
 
@@ -19,63 +19,13 @@ const searchTimeStart = ref(null);
 const searchTimeEnd = ref(null);
 const searchParticipantsRestrict = ref(false);
 const selectedMergedContacts = ref({});
-const startTime = ref(null)
-const endTime = ref(null)
-
-watch([searchTimeStart, searchTimeEnd], () => {
-	console.log(startTime.value)
-	console.log(endTime.value)
-});
-
-// watch(searchResult, (result) => {
-// 	if (!result) return;
-
-// 	const events = result.events;
-
-// 	if (events.length === 0) return;
-
-// 	const sortedEvents = events.sort((a, b) => a.timestamp - b.timestamp);
-// 	console.log(sortedEvents)
-
-// 	const earliestEvent = sortedEvents[0];
-// 	const latestEvent = sortedEvents[sortedEvents.length - 1];
-
-// 	const earliestTimestamp = new Date(earliestEvent.timestamp);
-// 	const latestTimestamp = new Date(latestEvent.timestamp);
-
-// 	const startOfMonthTimestamp = startOfMonth(earliestTimestamp);
-// 	const endOfMonthTimestamp = endOfMonth(latestTimestamp);
-
-// 	console.log("Start of Month Timestamp:", startOfMonthTimestamp);
-// 	console.log("End of Month Timestamp:", endOfMonthTimestamp);
-
-// 	startTime.value = startOfMonthTimestamp
-// 	endTime.value = endOfMonthTimestamp
-// });
-
-// const initialStartTime = computed(() => startTime.value);
-// const initialEndTime = computed(() => endTime.value);
-
-const startOfMonth = (date) => {
-	const nextMonth = new Date(date);
-	nextMonth.setMonth(nextMonth.getMonth() + 1);
-	const roundedDate = new Date(Math.ceil(nextMonth.getTime() / (10 * 60 * 1000)) * (10 * 60 * 1000));
-	return roundedDate.toISOString().slice(0, -1);
-}
-
-const endOfMonth = (date) => {
-	const nextMonth = new Date(date);
-	nextMonth.setMonth(nextMonth.getMonth() + 1);
-	const roundedDate = new Date(Math.ceil(nextMonth.getTime() / (10 * 60 * 1000)) * (10 * 60 * 1000));
-	return roundedDate.toISOString().slice(0, -1);
-}
 
 
 const eventTypes = ref([
-	{ 'type': 'MessageEvent', 'name': 'Messages', 'selected': false }
+	{'type': 'MessageEvent', 'name': 'Messages', 'selected': false}
 ]);
 
-const { result: contactsResult } = useQuery(gql`
+const { result: contactsResult } = useQuery( gql`
 	query getContacts($deviceIds: [String]!, $filter: ContactsFilter) {
 		contacts(deviceIds: $deviceIds, filter: $filter) {
             contacts {
@@ -134,11 +84,11 @@ const selectedProviders = ref({});
 
 const allProviders = computed(() => {
 	let providers = [];
-	if (rawEventsSearchResult.value) {
+	if(rawEventsSearchResult.value) {
 		providers.push(...rawEventsSearchResult.value.events.providers);
 	}
 	providers.sort((a, b) => {
-		if (a.friendlyName == null || b.friendlyName == null)
+		if(a.friendlyName == null || b.friendlyName == null)
 			return 0;
 		return a.friendlyName.localeCompare(b.friendlyName);
 	});
@@ -175,7 +125,7 @@ function updateGql() {
 			}
 		}
 		// No providers = all providers, so you can click 'filter by provider' and not immediately lose your data
-		if (filter.providerNames.length == 0) {
+		if(filter.providerNames.length == 0) {
 			filter.providerNames = null;
 		}
 	}
@@ -189,7 +139,7 @@ function updateGql() {
 		// Push actual contact ID lists from merged contacts
 		for (let mergedContactId of Object.keys(selectedMergedContacts.value)) {
 			if (selectedMergedContacts.value[mergedContactId]) {
-				if (!contacts.value[mergedContactId]) {
+				if(!contacts.value[mergedContactId]) {
 					/* Contacts have changed since we stored them in the filter. */
 					delete selectedMergedContacts.value[mergedContactId];
 				} else {
@@ -225,8 +175,7 @@ watch([searchProviderRestrict, searchTypeRestrict, searchTimeRestrict, searchTim
 
 				<div v-if="searchProviderRestrict" class="searchOption">
 					<div v-for="provider of allProviders" :key="provider.name">
-						<input type="checkbox" :checked="selectedProviders[provider.name]" :value="provider.name"
-							:id="'searchProviderRestrict' + provider.name" @change="updateSelectedProviders(provider)">
+						<input type="checkbox" :checked="selectedProviders[provider.name]" :value="provider.name" :id="'searchProviderRestrict' + provider.name" @change="updateSelectedProviders(provider)">
 						<label :for="'searchProviderRestrict' + provider.name"> {{ provider.friendlyName }}</label>
 					</div>
 				</div>
@@ -239,55 +188,41 @@ watch([searchProviderRestrict, searchTypeRestrict, searchTimeRestrict, searchTim
 
 				<div v-if="searchTypeRestrict" class="searchOption">
 					<div v-for="eventType of eventTypes" :key="eventType.type">
-						<input type="checkbox" v-model="eventType.selected" :value="eventType.type"
-							:id="'searchTypeRestrict' + eventType.type" @change="updateGql()">
+						<input type="checkbox" v-model="eventType.selected" :value="eventType.type" :id="'searchTypeRestrict' + eventType.type" @change="updateGql()">
 						<label :for="'searchTypeRestrict' + eventType.type"> {{ eventType.name }}</label>
 					</div>
 				</div>
 			</div>
 
+			<!-- Restrict based on time -->
 			<div class="searchStanza">
 				<input type="checkbox" v-model="searchTimeRestrict" id="searchTimeRestrictCheckbox">
 				<label for="searchTimeRestrictCheckbox"> Time range </label>
 				<div v-if="searchTimeRestrict" class="searchOption">
 					<div>
-						<label for="searchTimeRestrictStart">Start:</label>
+						<label for="searchTimeRestrictStart">S:</label>
 						<input type="datetime-local" v-model="searchTimeStart" id="searchTimeRestrictStart">
 					</div>
 					<div>
-						<label for="searchTimeRestrictEnd">End:</label>
+						<label for="searchTimeRestrictEnd">E:</label>
 						<input type="datetime-local" v-model="searchTimeEnd" id="searchTimeRestrictEnd">
 					</div>
 				</div>
 			</div>
-
-			<!-- <div class="searchStanza">
-				<input type="checkbox" v-model="searchTimeRestrict" id="searchTimeRestrictCheckbox">
-				<label for="searchTimeRestrictCheckbox"> Time range </label>
-				<div v-if="searchTimeRestrict" class="searchOption">
-					<div>
-						<label for="searchTimeRestrictStart">Start:</label>
-						<input type="datetime-local" v-model="searchTimeStart" id="searchTimeRestrictStart"
-							:min="initialStartTime" :max="initialEndTime">
-					</div>
-					<div>
-						<label for="searchTimeRestrictEnd">End:</label>
-						<input type="datetime-local" v-model="searchTimeEnd" id="searchTimeRestrictEnd"
-							:min="initialStartTime" :max="initialEndTime">
-					</div>
-				</div>
-			</div> -->
-
 
 			<!-- Restrict based on participants -->
 			<div class="searchStanza">
 				<input type="checkbox" v-model="searchParticipantsRestrict" id="searchParticipantsRestrictCheckbox">
 				<label for="searchParticipantsRestrictCheckbox"> People </label>
 				<div v-if="searchParticipantsRestrict" class="searchOption">
-					<ContactCardSmall v-for="mergedContact of mergedContacts" :key="mergedContact.id"
-						:mergedContact="mergedContact" :rawContacts="contacts[mergedContact.id]"
+					<ContactCardSmall
+						v-for="mergedContact of mergedContacts"
+						:key="mergedContact.id"
+						:mergedContact="mergedContact"
+						:rawContacts="contacts[mergedContact.id]"
 						:selected="selectedMergedContacts[mergedContact.id] || false"
-						@click="selectMergedContact(mergedContact)" />
+						@click="selectMergedContact(mergedContact)"
+					/>
 				</div>
 			</div>
 		</form>
@@ -295,7 +230,10 @@ watch([searchProviderRestrict, searchTypeRestrict, searchTimeRestrict, searchTim
 </template>
 
 <style scoped>
+
 .searchOption {
 	margin-left: 1em;
 }
+
+
 </style>

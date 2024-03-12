@@ -1,3 +1,46 @@
+<!-- <template>
+  <div>
+    <div v-if="activeDevices.length === 0" class="center text-box">
+      Select one or more devices at the top left to begin.
+    </div>
+
+    <div v-else>
+      <div class="center-container">
+        <button id="zoomToButton" @click="zoomTo">Zoom To</button>
+        <label for="startDatePicker">start date:</label>
+        <input type="date" id="startDatePicker" v-model="startDate">
+        <label for="endDatePicker">end date:</label>
+        <input type="date" id="endDatePicker" v-model="endDate">
+        <button id="fitButton" @click="fit">Fit to Container</button>
+        <div class="info-icon" @mouseover="showInfoBox = true" @mouseleave="showInfoBox = false">
+          <span class="icon">?</span>
+          <div class="info-box" v-show="showInfoBox">
+            Information about the date range...
+          </div>
+      </div>
+    </div>
+    
+        <div>{{ timeRange }}</div>
+
+        <div>
+          <label for="timeRangeSelect">Select Time Range:</label>
+          <select id="timeRangeSelect" v-model="selectedTimeRange">
+            <option value="1800000">30 minutes</option>
+            <option value="3600000">1 hour</option>
+            <option value="7200000">2 hours</option>
+            <option value="10800000">3 hours</option>
+          </select>
+        </div>
+
+        <div class="container">
+          <div ref="timeline" class="timeline"></div>
+        </div>
+
+        <div id="legendContainer" class="legend-container"></div>
+      </div>
+    </div>
+</template> -->
+
 <template>
   <div>
     <div v-if="activeDevices.length === 0" class="center text-box">
@@ -5,16 +48,33 @@
     </div>
 
     <div v-else>
-      
-      <div>
-        <button id="zoomToButton" @click="zoomTo">Zoom To</button>
-        <label for="startDatePicker">start date:</label>
-        <input type="date" id="startDatePicker" v-model="startDate">
-        <label for="endDatePicker">end date:</label>
-        <input type="date" id="endDatePicker" v-model="endDate">
-        <button id="fitButton" @click="fit">Fit to Container</button>
+      <div class="center-container">
+        <div class="date-picker">
+          <label for="startDatePicker">start date:</label>
+          <input type="date" id="startDatePicker" v-model="startDate">
+          <label for="endDatePicker">end date:</label>
+          <input type="date" id="endDatePicker" v-model="endDate">
+          <button id="zoomToButton" @click="zoomTo">Zoom To</button>
+          <button id="fitButton" @click="fit">Fit to Container</button>
+          <div class="info-icon" @mouseover="showInfoBox = true" @mouseleave="showInfoBox = false">
+            <span class="icon">?</span>
+            <div class="info-box" v-show="showInfoBox">
+              Information about the date range...
+            </div>
+          </div>
+        </div>
       </div>
 
+      <div class="time-range">
+        <div>{{ timeRange }}</div>
+        <label for="timeRangeSelect">Select Time Range:</label>
+        <select id="timeRangeSelect" class ="dropdown-hours" v-model="selectedTimeRange">
+          <option value="1800000">30 minutes</option>
+          <option value="3600000">1 hour</option>
+          <option value="7200000">2 hours</option>
+          <option value="10800000">3 hours</option>
+        </select>
+      </div>
 
       <div class="container">
         <div ref="timeline" class="timeline"></div>
@@ -31,14 +91,39 @@ import * as anychart from 'anychart';
 import { activeDevices } from '../store.js';
 import { searchResult } from '../eventsdata.js'
 
+const timeRange = ref('');
 const timeline = ref(null);
 const messagesSet = ref([]);
 const startDate = ref('');
-const startTime = ref('');
 const endDate = ref('');
-const endTime = ref('');
-const hasRangeData = ref(false);
-const legendItems = ref([]);
+var startOfMonthTimestamp = ref(null);
+var endOfMonthTimestamp = ref(null);
+const showInfoBox = ref(false);
+const selectedTimeRange = ref(3600000);
+
+const zoomTo = () => {
+
+  if (!startDate.value || !endDate.value) {
+    alert('Null value of dates present');
+  }
+  else {
+    const selectedStartDate = new Date(startDate.value).toISOString().slice(0, -1);
+    const selectedEndDate = new Date(endDate.value).toISOString().slice(0, -1);
+    console.log(selectedStartDate)
+    console.log(selectedEndDate)
+    console.log(startOfMonthTimestamp.value)
+    console.log(endOfMonthTimestamp.value)
+
+    if (new Date(selectedEndDate) > new Date(endOfMonthTimestamp.value) ||
+      new Date(selectedStartDate) < new Date(startOfMonthTimestamp.value) ||
+      new Date(selectedStartDate) > new Date(endOfMonthTimestamp.value) ||
+      new Date(selectedEndDate) < new Date(startOfMonthTimestamp.value)) {
+      alert('Selected dates are not within the range of the search result.');
+    } else {
+      console.log("hello")
+    }
+  }
+};
 
 const applyFilter = () => {
 };
@@ -46,6 +131,43 @@ const applyFilter = () => {
 const generateColor = (index) => {
   const colors = ['#ff0000', '#00ff00', '#0000ff', '#ffff00', '#ff00ff', '#00ffff'];
   return colors[index % colors.length];
+}
+
+watch(searchResult, (result) => {
+  if (!result) return;
+
+  const events = result.events;
+
+  if (events.length === 0) return;
+
+  const sortedEvents = events.sort((a, b) => a.timestamp - b.timestamp);
+  const earliestEvent = sortedEvents[0];
+  const latestEvent = sortedEvents[sortedEvents.length - 1];
+  const earliestTimestamp = new Date(earliestEvent.timestamp);
+  const latestTimestamp = new Date(latestEvent.timestamp);
+
+  startOfMonthTimestamp.value = startOfMonth(earliestTimestamp);
+  endOfMonthTimestamp.value = endOfMonth(latestTimestamp);
+
+  console.log("Start of Month Timestamp:", startOfMonthTimestamp.value);
+  console.log("End of Month Timestamp:", endOfMonthTimestamp.value);
+  console.log(events)
+
+  timeRange.value = `Time Range: ${startOfMonthTimestamp.value.toLocaleString()} - ${endOfMonthTimestamp.value.toLocaleString()}`;
+});
+
+const startOfMonth = (date) => {
+  const nextMonth = new Date(date);
+  nextMonth.setMonth(nextMonth.getMonth() + 1);
+  const roundedDate = new Date(Math.ceil(nextMonth.getTime() / (10 * 60 * 1000)) * (10 * 60 * 1000));
+  return roundedDate.toISOString().slice(0, -1);
+}
+
+const endOfMonth = (date) => {
+  const nextMonth = new Date(date);
+  nextMonth.setMonth(nextMonth.getMonth() + 1);
+  const roundedDate = new Date(Math.ceil(nextMonth.getTime() / (10 * 60 * 1000)) * (10 * 60 * 1000));
+  return roundedDate.toISOString().slice(0, -1);
 }
 
 watch(searchResult, (result) => {
@@ -254,6 +376,59 @@ onMounted(() => {
 </script>
 
 <style scoped>
+.dropdown-hours{
+  width: 100px
+}
+.time-range {
+  display: flex;
+  align-items: center;
+}
+
+.center-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.info-icon {
+  position: relative;
+  display: inline-block;
+}
+
+.info-icon:hover .info-box {
+  display: block;
+}
+
+.icon {
+  display: inline-block;
+  width: 40px;
+  /* Increased width */
+  height: 40px;
+  /* Increased height */
+  border-radius: 50%;
+  background-color: #ccc;
+  color: #fff;
+  text-align: center;
+  line-height: 40px;
+  /* Adjusted line height */
+  cursor: pointer;
+  margin-right: 20px;
+  /* Added margin */
+}
+
+.info-box {
+  position: absolute;
+  top: -60px;
+  left: -100px;
+  width: 200px;
+  padding: 10px;
+  background-color: #fff;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  display: none;
+}
+
 button,
 label {
   margin: 10px 5px;
