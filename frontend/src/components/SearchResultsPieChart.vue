@@ -99,8 +99,12 @@ watch(selectedOption, (option) => {
       });
   }
   else if (option == "Strict Keyword Search") {
+    pieChart.value.innerHTML = '';
+
   }
   else {
+    pieChart.value.innerHTML = '';
+
 
   }
 })
@@ -187,6 +191,7 @@ onMounted(() => {
 });
 
 const anyPieChart = (chartData) => {
+  pieChart.value.innerHTML = '';
   const chart = anychart.pie(chartData);
   chart.container(pieChart.value);
   chart.data(chartData);
@@ -194,6 +199,7 @@ const anyPieChart = (chartData) => {
 }
 
 const tagCloudDraw = (data) => {
+  tagCloud.value.innerHTML = '';
   const chart = anychart.tagCloud(data);
   chart.container(tagCloud.value);
   chart.draw();

@@ -8,11 +8,11 @@
     <div v-else>
       <div class="center-container">
         <div class="date-picker">
+          <button id="zoomToButton" @click="zoomTo">Zoom To</button>
           <label for="startDatePicker">start date:</label>
           <input type="date" id="startDatePicker" v-model="startDate">
           <label for="endDatePicker">end date:</label>
           <input type="date" id="endDatePicker" v-model="endDate">
-          <button id="zoomToButton" @click="zoomTo">Zoom To</button>
           <button id="fitButton" @click="fit">Fit to Container</button>
           <div class="info-icon" @mouseover="showInfoBox = true" @mouseleave="showInfoBox = false">
             <span class="icon">?</span>
@@ -60,7 +60,6 @@ const showInfoBox = ref(false);
 const selectedTimeRange = ref(7200000);
 
 const zoomTo = () => {
-
   if (!startDate.value || !endDate.value) {
     alert('Null value of dates present');
   }
@@ -93,7 +92,7 @@ watch(searchResult, (result) => {
   const events = result.events;
 
   if (events.length === 0) return;
-
+  
   const sortedEvents = events.sort((a, b) => a.timestamp - b.timestamp);
   const earliestEvent = sortedEvents[0];
   const latestEvent = sortedEvents[sortedEvents.length - 1];
@@ -124,6 +123,7 @@ watch([selectedTimeRange, searchResult], ([timeRange, result]) => {
   if (!result)
     return;
   messagesSet.value = []
+  console.log(timeline.value)
 
   if (activeDevices.value.length > 0) {
     const set = result.events;
@@ -243,6 +243,7 @@ watch([selectedTimeRange, searchResult], ([timeRange, result]) => {
 
 
 const anyTimeline = (chartData, momentData, deviceIdColorPairs) => {
+  timeline.value.innerHTML = '';
   const chart = anychart.timeline();
   chartData.forEach((subArray, index) => {
     const deviceName = subArray[0];
@@ -260,11 +261,11 @@ const anyTimeline = (chartData, momentData, deviceIdColorPairs) => {
   axis.height(25);
   chart.draw();
   timeline.value.classList.add('centered-timeline');
-
 }
 
 const createLegend = (deviceIdColorPairs) => {
   const legendContainer = document.getElementById('legendContainer');
+  legendContainer.innerHTML = '';
 
   deviceIdColorPairs.forEach((pair) => {
     const legendItem = document.createElement('div');
