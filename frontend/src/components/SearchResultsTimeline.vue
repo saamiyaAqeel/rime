@@ -1,45 +1,3 @@
-<!-- <template>
-  <div>
-    <div v-if="activeDevices.length === 0" class="center text-box">
-      Select one or more devices at the top left to begin.
-    </div>
-
-    <div v-else>
-      <div class="center-container">
-        <button id="zoomToButton" @click="zoomTo">Zoom To</button>
-        <label for="startDatePicker">start date:</label>
-        <input type="date" id="startDatePicker" v-model="startDate">
-        <label for="endDatePicker">end date:</label>
-        <input type="date" id="endDatePicker" v-model="endDate">
-        <button id="fitButton" @click="fit">Fit to Container</button>
-        <div class="info-icon" @mouseover="showInfoBox = true" @mouseleave="showInfoBox = false">
-          <span class="icon">?</span>
-          <div class="info-box" v-show="showInfoBox">
-            Information about the date range...
-          </div>
-      </div>
-    </div>
-    
-        <div>{{ timeRange }}</div>
-
-        <div>
-          <label for="timeRangeSelect">Select Time Range:</label>
-          <select id="timeRangeSelect" v-model="selectedTimeRange">
-            <option value="1800000">30 minutes</option>
-            <option value="3600000">1 hour</option>
-            <option value="7200000">2 hours</option>
-            <option value="10800000">3 hours</option>
-          </select>
-        </div>
-
-        <div class="container">
-          <div ref="timeline" class="timeline"></div>
-        </div>
-
-        <div id="legendContainer" class="legend-container"></div>
-      </div>
-    </div>
-</template> -->
 
 <template>
   <div>
@@ -99,7 +57,7 @@ const endDate = ref('');
 var startOfMonthTimestamp = ref(null);
 var endOfMonthTimestamp = ref(null);
 const showInfoBox = ref(false);
-const selectedTimeRange = ref(3600000);
+const selectedTimeRange = ref(7200000);
 
 const zoomTo = () => {
 
@@ -109,10 +67,6 @@ const zoomTo = () => {
   else {
     const selectedStartDate = new Date(startDate.value).toISOString().slice(0, -1);
     const selectedEndDate = new Date(endDate.value).toISOString().slice(0, -1);
-    console.log(selectedStartDate)
-    console.log(selectedEndDate)
-    console.log(startOfMonthTimestamp.value)
-    console.log(endOfMonthTimestamp.value)
 
     if (new Date(selectedEndDate) > new Date(endOfMonthTimestamp.value) ||
       new Date(selectedStartDate) < new Date(startOfMonthTimestamp.value) ||
@@ -120,7 +74,7 @@ const zoomTo = () => {
       new Date(selectedEndDate) < new Date(startOfMonthTimestamp.value)) {
       alert('Selected dates are not within the range of the search result.');
     } else {
-      console.log("hello")
+      console.log("Safe to zoom")
     }
   }
 };
@@ -149,10 +103,6 @@ watch(searchResult, (result) => {
   startOfMonthTimestamp.value = startOfMonth(earliestTimestamp);
   endOfMonthTimestamp.value = endOfMonth(latestTimestamp);
 
-  console.log("Start of Month Timestamp:", startOfMonthTimestamp.value);
-  console.log("End of Month Timestamp:", endOfMonthTimestamp.value);
-  console.log(events)
-
   timeRange.value = `Time Range: ${startOfMonthTimestamp.value.toLocaleString()} - ${endOfMonthTimestamp.value.toLocaleString()}`;
 });
 
@@ -170,7 +120,7 @@ const endOfMonth = (date) => {
   return roundedDate.toISOString().slice(0, -1);
 }
 
-watch(searchResult, (result) => {
+watch([selectedTimeRange, searchResult], ([timeRange, result]) => {
   if (!result)
     return;
   messagesSet.value = []
@@ -217,7 +167,7 @@ watch(searchResult, (result) => {
         const prevEvent = providerEvents[i - 1];
 
         const timeDiff = currentEvent.timestamp - prevEvent.timestamp;
-        const isWithinTwoHours = timeDiff <= 2 * 60 * 60 * 1000;
+        const isWithinTwoHours = timeDiff <= timeRange;
 
         if (isWithinTwoHours) {
           dataExample.push({
@@ -243,7 +193,7 @@ watch(searchResult, (result) => {
       });
     }
 
-    const twoHours = 2 * 60 * 60 * 1000;
+    const Hours = timeRange;
 
     let events = dataExample
     rangeData = [];
@@ -256,7 +206,7 @@ watch(searchResult, (result) => {
     for (let i = 1; i < events.length; i++) {
       const event = events[i];
       const timeDifference = event.start - rangeEnd;
-      if (event.name === providerName && event.deviceName === deviceName && timeDifference <= twoHours) {
+      if (event.name === providerName && event.deviceName === deviceName && timeDifference <= Hours) {
         rangeEnd = event.end;
       } else {
         rangeData.push([providerName, deviceName, rangeStart, rangeEnd]);
@@ -284,22 +234,6 @@ watch(searchResult, (result) => {
       }
     }
 
-    let decemberSubArray = []
-    let decemberData = [];
-
-    console.log(splitRangeData)
-
-    decemberData = splitRangeData.flatMap(subArray => {
-      const providerName = subArray[0];
-
-      const decemberSubArray = subArray.slice(1).reduce((acc, event) => {
-        const [startTimeMonth, endTimeMonth] = [new Date(event[1]).getMonth(), new Date(event[2]).getMonth()];
-        if (startTimeMonth === 11 || endTimeMonth === 11) acc.push([providerName, event[0], event[1], event[2]]);
-        return acc;
-      }, []);
-
-      return decemberSubArray;
-    });
 
     const deviceIdColorPairs = getColorByTitle(uniqueDeviceIds);
     anyTimeline(splitRangeData, momentData, deviceIdColorPairs);
@@ -313,10 +247,8 @@ const anyTimeline = (chartData, momentData, deviceIdColorPairs) => {
   chartData.forEach((subArray, index) => {
     const deviceName = subArray[0];
     const deviceColor = deviceIdColorPairs.find(pair => pair.deviceId === deviceName)?.color;
-    console.log(deviceColor)
     const chartDataWithoutFirstElement = subArray.slice(1);
     const data = chartDataWithoutFirstElement.map(event => [event[0], event[1], event[2]]);
-    console.log(data);
     const rangeSeries = chart.range(data);
     rangeSeries.normal().fill(deviceColor);
     rangeSeries.normal().stroke(deviceColor);
@@ -381,6 +313,7 @@ onMounted(() => {
 }
 .time-range {
   display: flex;
+  margin-right: 20px;
   align-items: center;
 }
 
