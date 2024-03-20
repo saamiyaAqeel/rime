@@ -12,6 +12,7 @@ import * as anychart from 'anychart'
 import axios from 'axios';
 
 const relatedWords = ref(false)
+const noResults = ref(false)
 const searchQuery = ref('');
 const responseData = ref(null);
 const isOpen = ref(false);
@@ -179,9 +180,10 @@ watch(searchResult, (result) => {
         });
     }
     else if (option == "Strict Keyword Search") {
+      handleSearch()
     }
     else {
-
+      handleSearch()
     }
   }
 
@@ -205,9 +207,7 @@ const tagCloudDraw = (data) => {
   chart.draw();
 }
 
-const handleSearch = (event) => {
-  console.log('Search button clicked');
-  console.log('Search query:', searchQuery.value);
+const handleSearch = () => {
 
   const formData = new FormData();
   const chunkSize = 10000;
@@ -221,8 +221,9 @@ const handleSearch = (event) => {
     formData.append('data', chunk);
   }
 
+
   if (searchQuery.value) {
-    if (selectedOption == "Strict Keyword Search") {
+    if (selectedOption.value == 'Strict Keyword Search') {
       axios.post('http://localhost:5000/api/strictKeyword', formData, {
         headers: {
           'Content-Type': 'multipart/form-data'
@@ -231,14 +232,19 @@ const handleSearch = (event) => {
         .then(response => {
           responseData.value = response.data;
           console.log(responseData.value)
-
-          const xValue = responseData.value["x"];
           const valuePie = responseData.value["value"];
-          pieChartData.value.push({ x: xValue, value: valuePie });
-          const otherEntry = 100 - parseInt(valuePie);
-          pieChartData.value.push({ x: "", value: otherEntry });
-          pieChartShow.value = !pieChartShow.value
-          anyPieChart(pieChartData.value);
+          if (valuePie == "0.0") {
+            console.log("show no words found message")
+            noResults.value = true
+          } else {
+            noResults.value = false
+            const xValue = responseData.value["x"];
+            pieChartData.value.push({ x: xValue, value: valuePie });
+            const otherEntry = 100 - parseInt(valuePie);
+            pieChartData.value.push({ x: "", value: otherEntry });
+            pieChartShow.value = !pieChartShow.value
+            anyPieChart(pieChartData.value);
+          }
         })
         .catch(error => {
           console.error(error);
@@ -252,11 +258,15 @@ const handleSearch = (event) => {
       })
         .then(response => {
           responseData.value = response.data;
-
           const synonyms = responseData.value.synonyms;
           const chartData = responseData.value.chart_data;
           const xValue = chartData["x"];
           const valuePie = chartData["value"];
+          if (valuePie == "0.0") {
+            console.log("show no words found message")
+            noResults.value = true
+          } else {
+            noResults.value = false
           pieChartData.value.push({ x: xValue, value: valuePie });
           const otherEntry = 100 - parseInt(valuePie);
           pieChartData.value.push({ x: "", value: otherEntry });
@@ -270,6 +280,8 @@ const handleSearch = (event) => {
             data.push({ x: synonym, value: value });
           });
           tagCloudDraw(data)
+        }
+
         })
         .catch(error => {
           console.error(error);
@@ -292,7 +304,7 @@ const handleSearch = (event) => {
         <div v-if="isOpen" class="dropdown-menu">
           <ul>
             <li v-for="(option, index) in options" :key="index" @click="selectOption(option)" class="dropdown-item">{{
-              option }}</li>
+      option }}</li>
           </ul>
         </div>
       </div>
@@ -304,12 +316,18 @@ const handleSearch = (event) => {
       </div>
 
       <div class="chart-container">
-        <div v-if="selectedOption" ref="pieChart" style="width: 500px; height: 500px;"></div>
-        <div v-if="selectedOption === 'Related-Words Keyword Search'" ref="tagCloud" style="width: 500px; height: 500px;">
-        </div>
+      <div v-if="noResults === true" class="center text-box">
+        No matching word found in search results
       </div>
+    </div>
 
+      <div class="chart-container">
+        <div v-if="selectedOption" ref="pieChart" style="width: 500px; height: 500px;"></div>
+        <div v-if="selectedOption === 'Related-Words Keyword Search'" ref="tagCloud"
+          style="width: 500px; height: 500px;">
+        </div>
 
+      </div>
     </div>
   </div>
 </template>
@@ -395,5 +413,3 @@ const handleSearch = (event) => {
   cursor: pointer;
 }
 </style>
-
-

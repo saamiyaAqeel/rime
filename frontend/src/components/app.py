@@ -52,7 +52,10 @@ def post_strictKeyword():
         joined_string = ','.join(data)
         result_array = joined_string.split(',')
         returnValue = chart_response.strictKeywordSearch(keyword[0], result_array)
-        return returnValue
+        if returnValue:
+         return returnValue
+        else:
+           response = jsonify('Word not found')
     else:
         response = jsonify({'message': 'Incomplete data received'})
         return response

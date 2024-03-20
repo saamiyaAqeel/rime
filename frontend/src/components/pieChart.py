@@ -82,11 +82,11 @@ class pieChart:
      chart = pieChart()
      return chart.create_data_structure("Potentially Argumentative Nature", str(value))
 
-    def strictKeywordSearch(self,keyword, passages):
+    def strictKeywordSearch(self, keyword, passages):
      total_occurrences = 0 
      total_words = 0
      keyword = keyword.lower().strip()
-     
+    
      for passage in passages:
         words = passage.strip().split()
 
@@ -96,23 +96,12 @@ class pieChart:
             if word == keyword:
                 total_occurrences += 1
     
-     
-     value = (total_occurrences/total_words) * 100
+     value = (total_occurrences / total_words) * 100
      chart = pieChart()
 
-     return chart.create_data_structure("Strict Keyword Occurences", str(value))
+     return chart.create_data_structure("Strict Keyword Occurrences", str(value))
+
     
-    # def get_synonyms(self, word):
-    #   synonyms = set()
-
-    #   for synset in wordnet.synsets(word):
-    #     for lemma in synset.lemmas():
-    #         synonyms.add(lemma.name())
-
-    #   if (synonyms == set()):
-    #      return False
-      
-    #   return synonyms
     def get_synonyms(self, word):
      synonyms = []
 
@@ -148,15 +137,3 @@ class pieChart:
     
      return False
     
-    
-# passage = "This is a sample passage where we will search for occurrences of related keywords."
-# keyword = "Sample"
-# chart_instance = pieChart()
-# occurrences = chart_instance.related_keyword_search(passage, keyword)
-# print("Number of occurrences of related keywords for '{}' in the passage: {}".format(keyword, occurrences))
-# print(chart_instance.get_synonyms(keyword))
-
-# # Example usage:
-# input_array = ["I had such an amazing day yesterday, it was so good and wholesome", "today was horrible i hated every part of it, it was lacking."]
-# chart_instance = pieChart()
-# chart_instance.argumentativeNature(input_array)
