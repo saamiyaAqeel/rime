@@ -1,4 +1,3 @@
-
 <template>
   <div>
     <div v-if="activeDevices.length === 0" class="center text-box">
@@ -17,7 +16,10 @@
           <div class="info-icon" @mouseover="showInfoBox = true" @mouseleave="showInfoBox = false">
             <span class="icon">?</span>
             <div class="info-box" v-show="showInfoBox">
-              Information about the date range...
+              This timeline is a visualisation made to portray all messages and media in a chronological format. All changes
+              made to the search results is dynamically made to the timeline on the page. To zoom into a certain part of the you can 
+              do that in the date range picker, however it can only be done for the valid date ranges as shown below. A time block is made 
+              if an event is 2 hours within each other by default, if you would like to change the time span it can be done below as well.
             </div>
           </div>
         </div>
@@ -26,7 +28,7 @@
       <div class="time-range">
         <div>{{ timeRange }}</div>
         <label for="timeRangeSelect">Select Time Range:</label>
-        <select id="timeRangeSelect" class ="dropdown-hours" v-model="selectedTimeRange">
+        <select id="timeRangeSelect" class="dropdown-hours" v-model="selectedTimeRange">
           <option value="1800000">30 minutes</option>
           <option value="3600000">1 hour</option>
           <option value="7200000">2 hours</option>
@@ -58,6 +60,8 @@ var startOfMonthTimestamp = ref(null);
 var endOfMonthTimestamp = ref(null);
 const showInfoBox = ref(false);
 const selectedTimeRange = ref(7200000);
+var zoomSafe = ref(false);
+let chart = anychart.timeline();
 
 const zoomTo = () => {
   if (!startDate.value || !endDate.value) {
@@ -67,14 +71,17 @@ const zoomTo = () => {
     const selectedStartDate = new Date(startDate.value).toISOString().slice(0, -1);
     const selectedEndDate = new Date(endDate.value).toISOString().slice(0, -1);
 
-    if (new Date(selectedEndDate) > new Date(endOfMonthTimestamp.value) ||
-      new Date(selectedStartDate) < new Date(startOfMonthTimestamp.value) ||
-      new Date(selectedStartDate) > new Date(endOfMonthTimestamp.value) ||
-      new Date(selectedEndDate) < new Date(startOfMonthTimestamp.value)) {
-      alert('Selected dates are not within the range of the search result.');
-    } else {
+    // if (new Date(selectedEndDate) > new Date(endOfMonthTimestamp.value) ||
+    //   new Date(selectedStartDate) < new Date(startOfMonthTimestamp.value) ||
+    //   new Date(selectedStartDate) > new Date(endOfMonthTimestamp.value) ||
+    //   new Date(selectedEndDate) < new Date(startOfMonthTimestamp.value)) {
+    //   alert('Selected dates are not within the range of the search result.');
+    // } else {
       console.log("Safe to zoom")
-    }
+      const startUTC = Date.UTC(startDate.value.getFullYear(), startDate.value.getMonth(), startDate.value.getDate());
+      const endUTC = Date.UTC(endDate.value.getFullYear(), endDate.value.getMonth(), endDate.value.getDate());
+      chart.zoomTo(startUTC, endUTC);
+    // }
   }
 };
 
@@ -92,7 +99,6 @@ watch(searchResult, (result) => {
   const events = result.events;
 
   if (events.length === 0) return;
-  
   const sortedEvents = events.sort((a, b) => a.timestamp - b.timestamp);
   const earliestEvent = sortedEvents[0];
   const latestEvent = sortedEvents[sortedEvents.length - 1];
@@ -123,7 +129,6 @@ watch([selectedTimeRange, searchResult], ([timeRange, result]) => {
   if (!result)
     return;
   messagesSet.value = []
-  console.log(timeline.value)
 
   if (activeDevices.value.length > 0) {
     const set = result.events;
@@ -186,7 +191,6 @@ watch([selectedTimeRange, searchResult], ([timeRange, result]) => {
           rangeEnd = currentEvent.timestamp;
         }
       }
-
       momentData.push({
         x: rangeEnd,
         y: `${providerName} - Range End`
@@ -234,7 +238,6 @@ watch([selectedTimeRange, searchResult], ([timeRange, result]) => {
       }
     }
 
-
     const deviceIdColorPairs = getColorByTitle(uniqueDeviceIds);
     anyTimeline(splitRangeData, momentData, deviceIdColorPairs);
     createLegend(deviceIdColorPairs);
@@ -244,7 +247,7 @@ watch([selectedTimeRange, searchResult], ([timeRange, result]) => {
 
 const anyTimeline = (chartData, momentData, deviceIdColorPairs) => {
   timeline.value.innerHTML = '';
-  const chart = anychart.timeline();
+  chart = anychart.timeline();
   chartData.forEach((subArray, index) => {
     const deviceName = subArray[0];
     const deviceColor = deviceIdColorPairs.find(pair => pair.deviceId === deviceName)?.color;
@@ -309,9 +312,10 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.dropdown-hours{
+.dropdown-hours {
   width: 100px
 }
+
 .time-range {
   display: flex;
   margin-right: 20px;
@@ -336,18 +340,14 @@ onMounted(() => {
 .icon {
   display: inline-block;
   width: 40px;
-  /* Increased width */
   height: 40px;
-  /* Increased height */
   border-radius: 50%;
   background-color: #ccc;
   color: #fff;
   text-align: center;
   line-height: 40px;
-  /* Adjusted line height */
   cursor: pointer;
   margin-right: 20px;
-  /* Added margin */
 }
 
 .info-box {

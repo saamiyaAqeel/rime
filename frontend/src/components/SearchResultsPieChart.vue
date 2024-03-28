@@ -12,6 +12,7 @@ import * as anychart from 'anychart'
 import axios from 'axios';
 
 const relatedWords = ref(false)
+const showInfoBox = ref(false);
 const noResults = ref(false)
 const searchQuery = ref('');
 const responseData = ref(null);
@@ -267,20 +268,20 @@ const handleSearch = () => {
             noResults.value = true
           } else {
             noResults.value = false
-          pieChartData.value.push({ x: xValue, value: valuePie });
-          const otherEntry = 100 - parseInt(valuePie);
-          pieChartData.value.push({ x: "", value: otherEntry });
-          pieChartShow.value = !pieChartShow.value
-          anyPieChart(pieChartData.value);
+            pieChartData.value.push({ x: xValue, value: valuePie });
+            const otherEntry = 100 - parseInt(valuePie);
+            pieChartData.value.push({ x: "", value: otherEntry });
+            pieChartShow.value = !pieChartShow.value
+            anyPieChart(pieChartData.value);
 
-          console.log(responseData.value.synonyms)
-          const data = [];
-          synonyms.forEach((synonym, index) => {
-            const value = Math.floor(Math.random() * (70 - 40 + 1)) + 40;
-            data.push({ x: synonym, value: value });
-          });
-          tagCloudDraw(data)
-        }
+            console.log(responseData.value.synonyms)
+            const data = [];
+            synonyms.forEach((synonym, index) => {
+              const value = Math.floor(Math.random() * (70 - 40 + 1)) + 40;
+              data.push({ x: synonym, value: value });
+            });
+            tagCloudDraw(data)
+          }
 
         })
         .catch(error => {
@@ -307,6 +308,19 @@ const handleSearch = () => {
       option }}</li>
           </ul>
         </div>
+        <div class="info-icon" @mouseover="showInfoBox = true" @mouseleave="showInfoBox = false">
+          <span class="icon">?</span>
+          <div class="info-box" v-show="showInfoBox">
+            This timeline is a visualisation made to portray all messages and media in a chronological format. All
+            changes
+            made to the search results is dynamically made to the timeline on the page. To zoom into a certain part of
+            the you can
+            do that in the date range picker, however it can only be done for the valid date ranges as shown below. A
+            time block is made
+            if an event is 2 hours within each other by default, if you would like to change the time span it can be
+            done below as well.
+          </div>
+        </div>
       </div>
 
       <div v-if="selectedOption === 'Strict Keyword Search' || selectedOption === 'Related-Words Keyword Search'"
@@ -316,10 +330,10 @@ const handleSearch = () => {
       </div>
 
       <div class="chart-container">
-      <div v-if="noResults === true" class="center text-box">
-        No matching word found in search results
+        <div v-if="noResults === true" class="center text-box">
+          No matching word found in search results
+        </div>
       </div>
-    </div>
 
       <div class="chart-container">
         <div v-if="selectedOption" ref="pieChart" style="width: 500px; height: 500px;"></div>
@@ -333,6 +347,43 @@ const handleSearch = () => {
 </template>
 
 <style scoped>
+.info-icon {
+  position: relative;
+  display: inline-block;
+  margin-right: 10px
+}
+
+.info-icon:hover .info-box {
+  display: block;
+}
+
+.icon {
+  display: inline-block;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background-color: #ccc;
+  color: #fff;
+  text-align: center;
+  line-height: 40px;
+  cursor: pointer;
+  margin-right: 20px;
+}
+
+.info-box {
+  position: absolute;
+  top: -60px; 
+  left: 50px; 
+  width: 300px;
+  padding: 10px;
+  background-color: #fff;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  display: none;
+}
+
+
 .tag-cloud-container {
   flex: 0 0 50%;
   padding-left: 20px;
@@ -349,6 +400,7 @@ const handleSearch = () => {
   position: relative;
   display: inline-block;
   min-width: fit-content;
+  margin-right: 20px;
 }
 
 .dropdown-toggle {
