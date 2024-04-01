@@ -68,8 +68,11 @@ watch(selectedOption, (option) => {
       })
       .then((response) => {
         responseData.value = response.data;
-        console.log(responseData.value);
-        anyPieChart(responseData.value["x"], responseData.value["value"]);
+        const length = responseData.value.arrayLength;
+        const chartData = responseData.value.chart_data;
+        const xValue = chartData["x"];
+        const valuePie = chartData["value"];
+        anyPieChart(xValue, valuePie, length);
       })
       .catch((error) => {
         console.error(error);
@@ -83,8 +86,11 @@ watch(selectedOption, (option) => {
       })
       .then((response) => {
         responseData.value = response.data;
-        console.log(responseData.value);
-        anyPieChart(responseData.value["x"], responseData.value["value"]);
+        const length = responseData.value.arrayLength;
+        const chartData = responseData.value.chart_data;
+        const xValue = chartData["x"];
+        const valuePie = chartData["value"];
+        anyPieChart(xValue, valuePie, length);
       })
       .catch((error) => {
         console.error(error);
@@ -128,8 +134,11 @@ watch(searchResult, (result) => {
         })
         .then((response) => {
           responseData.value = response.data;
-          console.log(responseData.value);
-          anyPieChart(responseData.value["x"], responseData.value["value"]);
+          const length = responseData.value.arrayLength;
+          const chartData = responseData.value.chart_data;
+          const xValue = chartData["x"];
+          const valuePie = chartData["value"];
+          anyPieChart(xValue, valuePie, length);
         })
         .catch((error) => {
           console.error(error);
@@ -143,8 +152,11 @@ watch(searchResult, (result) => {
         })
         .then((response) => {
           responseData.value = response.data;
-          console.log(responseData.value);
-          anyPieChart(responseData.value["x"], responseData.value["value"]);
+          const length = responseData.value.arrayLength;
+          const chartData = responseData.value.chart_data;
+          const xValue = chartData["x"];
+          const valuePie = chartData["value"];
+          anyPieChart(xValue, valuePie, length);
         })
         .catch((error) => {
           console.error(error);
@@ -157,12 +169,12 @@ watch(searchResult, (result) => {
   }
 });
 
-const anyPieChart = (label, significantValue) => {
+const anyPieChart = (label, significantValue, length) => {
   pieChart.value.innerHTML = "";
 
   const chartData = [
     { x: label, value: significantValue },
-    { x: "Negligible Value", value: 100 - significantValue },
+    { x: "Negligible Value", value: length - significantValue },
   ];
 
   const chart = anychart.pie(chartData);
@@ -178,7 +190,7 @@ const anyPieChart = (label, significantValue) => {
     if (this.index === 1) {
       return "";
     } else {
-      return significantValue + "%";
+      return Math.round(significantValue / length * 100) + "%";
     }
   });
 
@@ -186,7 +198,7 @@ const anyPieChart = (label, significantValue) => {
   chart.draw();
 };
 
-onMounted(() => {});
+onMounted(() => { });
 
 const tagCloudDraw = (data) => {
   tagCloud.value.innerHTML = "";
@@ -218,16 +230,22 @@ const handleSearch = () => {
         })
         .then((response) => {
           responseData.value = response.data;
-          console.log(responseData.value);
-          const valuePie = responseData.value["value"];
+          const length = responseData.value.arrayLength;
+          const chartData = responseData.value.chart_data;
+          console.log(responseData.value)
+          const xValue = chartData["x"];
+          const valuePie = chartData["value"];
+          console.log(xValue)
+          console.log(valuePie)
           if (valuePie == "0.0") {
             console.log("show no words found message");
             noResults.value = true;
           } else {
             noResults.value = false;
             responseData.value = response.data;
-            console.log(responseData.value);
-            anyPieChart(responseData.value["x"], responseData.value["value"]);
+            const xValue = chartData["x"];
+            const valuePie = chartData["value"];
+            anyPieChart(xValue, valuePie, length);
           }
         })
         .catch((error) => {
@@ -242,6 +260,7 @@ const handleSearch = () => {
         })
         .then((response) => {
           responseData.value = response.data;
+          const length = responseData.value.arrayLength
           const synonyms = responseData.value.synonyms;
           const chartData = responseData.value.chart_data;
           const xValue = chartData["x"];
@@ -252,7 +271,8 @@ const handleSearch = () => {
           } else {
             noResults.value = false;
             responseData.value = response.data;
-            anyPieChart(xValue, valuePie);
+            anyPieChart(xValue, valuePie, length);
+
             const data = [];
             synonyms.forEach((synonym, index) => {
               const value = Math.floor(Math.random() * (70 - 40 + 1)) + 40;
@@ -281,21 +301,12 @@ const handleSearch = () => {
         </button>
         <div v-if="isOpen" class="dropdown-menu">
           <ul>
-            <li
-              v-for="(option, index) in options"
-              :key="index"
-              @click="selectOption(option)"
-              class="dropdown-item"
-            >
+            <li v-for="(option, index) in options" :key="index" @click="selectOption(option)" class="dropdown-item">
               {{ option }}
             </li>
           </ul>
         </div>
-        <div
-          class="info-icon"
-          @mouseover="showInfoBox = true"
-          @mouseleave="showInfoBox = false"
-        >
+        <div class="info-icon" @mouseover="showInfoBox = true" @mouseleave="showInfoBox = false">
           <span class="icon">?</span>
           <div class="info-box" v-show="showInfoBox">
             This timeline is a visualisation made to portray all messages and media in a
@@ -309,13 +320,9 @@ const handleSearch = () => {
         </div>
       </div>
 
-      <div
-        v-if="
-          selectedOption === 'Strict Keyword Search' ||
-          selectedOption === 'Related-Words Keyword Search'
-        "
-        class="search-box"
-      >
+      <div v-if="selectedOption === 'Strict Keyword Search' ||
+      selectedOption === 'Related-Words Keyword Search'
+      " class="search-box">
         <input type="text" v-model="searchQuery" placeholder="Enter search query" />
         <button @click="handleSearch">Search</button>
       </div>
@@ -327,22 +334,22 @@ const handleSearch = () => {
       </div>
 
       <div class="chart-container">
-        <div
-          v-if="selectedOption"
-          ref="pieChart"
-          style="width: 500px; height: 500px"
-        ></div>
-        <div
-          v-if="selectedOption === 'Related-Words Keyword Search'"
-          ref="tagCloud"
-          style="width: 500px; height: 500px"
-        ></div>
+        <div v-if="selectedOption" ref="pieChart" style="width: 500px; height: 500px"></div>
+        <div v-if="selectedOption === 'Related-Words Keyword Search'" ref="tagCloud"
+          style="width: 500px; height: 500px"></div>
       </div>
     </div>
   </div>
 </template>
 
 <style scoped>
+.info-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
 .info-icon {
   position: relative;
   display: inline-block;

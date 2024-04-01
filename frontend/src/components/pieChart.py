@@ -9,6 +9,15 @@ from nltk.tokenize import word_tokenize
 from collections import Counter
 from sklearn.svm import SVC
 import nltk
+import tensorflow as tf
+from tensorflow.keras.preprocessing.text import Tokenizer
+from tensorflow.keras.preprocessing.sequence import pad_sequences
+import numpy as np
+import pandas as pd
+from sklearn.model_selection import train_test_split
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import Embedding, LSTM, Dense
+
 
 class pieChart:
     nltk.download('wordnet')
@@ -46,10 +55,13 @@ class pieChart:
             if("non" not in predicted_intent[0]):
                illegal_activities_counter += 1
         
-        value = (illegal_activities_counter/len(input_array)) * 100
+        value = (illegal_activities_counter / len(input_array)) * 100
         chart = pieChart()
 
-        return chart.create_data_structure("Potential Illegal Activities", str(value))     
+        print(len(input_array))
+        print(chart.create_data_structure("Potential Illegal Activities", str(illegal_activities_counter)))
+
+        return str(len(input_array)) ,chart.create_data_structure("Potential Illegal Activities", str(illegal_activities_counter))     
                   
     def argumentativeNature(self, input_array):
      X = []  
@@ -78,9 +90,9 @@ class pieChart:
         if("1" in predicted_intent[0]):
            argumentative_nature_counter += 1
             
-     value = (argumentative_nature_counter/len(input_array)) * 100
+     value = (argumentative_nature_counter / len(input_array)) * 100
      chart = pieChart()
-     return chart.create_data_structure("Potentially Argumentative Nature", str(value))
+     return str(len(input_array)), chart.create_data_structure("Potentially Argumentative Nature", str(argumentative_nature_counter))
 
     def strictKeywordSearch(self, keyword, passages):
      total_occurrences = 0 
@@ -98,9 +110,7 @@ class pieChart:
     
      value = (total_occurrences / total_words) * 100
      chart = pieChart()
-
-     return chart.create_data_structure("Strict Keyword Occurrences", str(value))
-
+     return str(total_words), chart.create_data_structure("Strict Keyword Occurrences", str(total_occurrences))
     
     def get_synonyms(self, word):
      synonyms = []
@@ -114,6 +124,38 @@ class pieChart:
 
      return synonyms
 
+    def rnn_sample(self):
+     df = pd.read_csv('argumentativeNature.csv')
+
+     texts = df['text'].values
+     labels = df['label'].values
+
+     tokenizer = Tokenizer()
+     tokenizer.fit_on_texts(texts)
+     word_index = tokenizer.word_index
+     vocab_size = len(word_index) + 1
+
+     sequences = tokenizer.texts_to_sequences(texts)
+
+     max_sequence_length = max([len(seq) for seq in sequences])
+     padded_sequences = pad_sequences(sequences, maxlen=max_sequence_length, padding='post')
+
+     labels = np.array(labels)
+
+     X_train, X_test, y_train, y_test = train_test_split(padded_sequences, labels, test_size=0.2, random_state=42)
+
+     embedding_dim = 16
+     model = Sequential([
+      Embedding(vocab_size, embedding_dim, input_length=max_sequence_length),
+      LSTM(64),
+      Dense(1, activation='sigmoid')
+     ])
+
+     model.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy'])
+     print(model.summary())
+     model.fit(X_train, y_train, epochs=20, verbose=2)
+     loss, accuracy = model.evaluate(X_test, y_test)
+     print(f'Accuracy: {accuracy*100:.2f}%')
 
     def related_keyword_search(self, text, keyword):
      chart = pieChart()
@@ -131,9 +173,8 @@ class pieChart:
         value = (occurrences / total_words) * 100
         chart = pieChart()
 
-        chart_data = chart.create_data_structure("Related Keyword Occurrences", str(value))
-        print(chart_data)
-        return synonyms, chart_data
+        chart_data = chart.create_data_structure("Related Keyword Occurrences", str(occurrences))
+        return str(total_words), synonyms, chart_data
     
      return False
     
