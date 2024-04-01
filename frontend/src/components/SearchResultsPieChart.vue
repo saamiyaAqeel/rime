@@ -1,25 +1,30 @@
 <script>
 export default {
   inheritAttrs: false,
-}
+};
 </script>
 
 <script setup>
-import { ref, watch, onMounted } from 'vue';
-import { searchResult } from '../eventsdata.js'
-import { activeDevices } from '../store.js';
-import * as anychart from 'anychart'
-import axios from 'axios';
+import { ref, watch, onMounted } from "vue";
+import { searchResult } from "../eventsdata.js";
+import { activeDevices } from "../store.js";
+import * as anychart from "anychart";
+import axios from "axios";
 
-const relatedWords = ref(false)
+const relatedWords = ref(false);
 const showInfoBox = ref(false);
-const noResults = ref(false)
-const searchQuery = ref('');
+const noResults = ref(false);
+const searchQuery = ref("");
 const responseData = ref(null);
 const isOpen = ref(false);
 var pieChartShow = ref(false);
-const selectedOption = ref('Select an option');
-const options = ['Potential Illegal Activities', 'Potential Conversation of Argumentative Nature', 'Strict Keyword Search', 'Related-Words Keyword Search'];
+const selectedOption = ref("Select an option");
+const options = [
+  "Potential Illegal Activities",
+  "Potential Conversation of Argumentative Nature",
+  "Strict Keyword Search",
+  "Related-Words Keyword Search",
+];
 
 const toggleDropdown = () => {
   isOpen.value = !isOpen.value;
@@ -30,18 +35,18 @@ const selectOption = (option) => {
   isOpen.value = false;
 };
 
-const pieChartData = ref([])
+const pieChartData = ref([]);
 const messagesSet = ref([]);
 const pieChart = ref(null);
 const tagCloud = ref(null);
 
 watch(selectedOption, (option) => {
-  const result = searchResult.value
+  const result = searchResult.value;
   messagesSet.value = [];
   pieChartData.value = [];
-  pieChartShow.value = false
+  pieChartShow.value = false;
 
-  result.events.forEach(event => {
+  result.events.forEach((event) => {
     messagesSet.value.push(event.text);
   });
 
@@ -50,78 +55,56 @@ watch(selectedOption, (option) => {
 
   for (let i = 0; i < messagesSet.value.length; i += chunkSize) {
     const chunk = messagesSet.value.slice(i, i + chunkSize);
-    formData.append('data', chunk);
+    formData.append("data", chunk);
   }
 
   pieChartData.value = [];
   if (option == "Potential Illegal Activities") {
-    axios.post('http://localhost:5000/api/messages', formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data'
-      }
-    })
-      .then(response => {
-        responseData.value = response.data;
-        console.log(responseData.value)
-
-        const xValue = responseData.value["x"];
-        const valuePie = responseData.value["value"];
-        pieChartData.value.push({ x: xValue, value: valuePie });
-        const otherEntry = 100 - parseInt(valuePie);
-        pieChartData.value.push({ x: "", value: otherEntry });
-        pieChartShow.value = !pieChartShow.value
-        anyPieChart(pieChartData.value);
-
+    axios
+      .post("http://localhost:5000/api/messages", formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
       })
-      .catch(error => {
+      .then((response) => {
+        responseData.value = response.data;
+        console.log(responseData.value);
+        anyPieChart(responseData.value["x"], responseData.value["value"]);
+      })
+      .catch((error) => {
         console.error(error);
       });
-  }
-  else if (option == "Potential Conversation of Argumentative Nature") {
-    axios.post('http://localhost:5000/api/argumentativeClassifier', formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data'
-      }
-    })
-      .then(response => {
-        responseData.value = response.data;
-        console.log(responseData.value)
-
-        const xValue = responseData.value["x"];
-        const valuePie = responseData.value["value"];
-        pieChartData.value.push({ x: xValue, value: valuePie });
-        const otherEntry = 100 - parseInt(valuePie);
-        pieChartData.value.push({ x: "", value: otherEntry });
-        pieChartShow.value = !pieChartShow.value
-        anyPieChart(pieChartData.value);
-
+  } else if (option == "Potential Conversation of Argumentative Nature") {
+    axios
+      .post("http://localhost:5000/api/argumentativeClassifier", formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
       })
-      .catch(error => {
+      .then((response) => {
+        responseData.value = response.data;
+        console.log(responseData.value);
+        anyPieChart(responseData.value["x"], responseData.value["value"]);
+      })
+      .catch((error) => {
         console.error(error);
       });
+  } else if (option == "Strict Keyword Search") {
+    pieChart.value.innerHTML = "";
+  } else {
+    pieChart.value.innerHTML = "";
   }
-  else if (option == "Strict Keyword Search") {
-    pieChart.value.innerHTML = '';
-
-  }
-  else {
-    pieChart.value.innerHTML = '';
-
-
-  }
-})
+});
 
 watch(searchResult, (result) => {
-  if (!result)
-    return;
+  if (!result) return;
 
   if (activeDevices.value.length > 0) {
     messagesSet.value = [];
     pieChartData.value = [];
-    pieChartShow.value = false
+    pieChartShow.value = false;
 
-
-    result.events.forEach(event => {
+    result.events.forEach((event) => {
       messagesSet.value.push(event.text);
     });
 
@@ -130,168 +113,160 @@ watch(searchResult, (result) => {
 
     for (let i = 0; i < messagesSet.value.length; i += chunkSize) {
       const chunk = messagesSet.value.slice(i, i + chunkSize);
-      formData.append('data', chunk);
+      formData.append("data", chunk);
     }
 
-    var option = selectedOption.value
+    var option = selectedOption.value;
     pieChartData.value = [];
 
     if (option == "Potential Illegal Activities") {
-      axios.post('http://localhost:5000/api/messages', formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data'
-        }
-      })
-        .then(response => {
-          responseData.value = response.data;
-
-          const xValue = responseData.value["x"];
-          const valuePie = responseData.value["value"];
-          pieChartData.value.push({ x: xValue, value: valuePie });
-          const otherEntry = 100 - parseInt(valuePie);
-          pieChartData.value.push({ x: "", value: otherEntry });
-          pieChartShow.value = !pieChartShow.value
-          anyPieChart(pieChartData.value);
-
+      axios
+        .post("http://localhost:5000/api/messages", formData, {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
         })
-        .catch(error => {
+        .then((response) => {
+          responseData.value = response.data;
+          console.log(responseData.value);
+          anyPieChart(responseData.value["x"], responseData.value["value"]);
+        })
+        .catch((error) => {
           console.error(error);
         });
-    }
-    else if (option == "Potential Conversation of Argumentative Nature") {
-      axios.post('http://localhost:5000/api/argumentativeClassifier', formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data'
-        }
-      })
-        .then(response => {
-          responseData.value = response.data;
-          console.log(responseData.value)
-
-          const xValue = responseData.value["x"];
-          const valuePie = responseData.value["value"];
-          pieChartData.value.push({ x: xValue, value: valuePie });
-          const otherEntry = 100 - parseInt(valuePie);
-          pieChartData.value.push({ x: "", value: otherEntry });
-          pieChartShow.value = !pieChartShow.value
-          anyPieChart(pieChartData.value);
+    } else if (option == "Potential Conversation of Argumentative Nature") {
+      axios
+        .post("http://localhost:5000/api/argumentativeClassifier", formData, {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
         })
-        .catch(error => {
+        .then((response) => {
+          responseData.value = response.data;
+          console.log(responseData.value);
+          anyPieChart(responseData.value["x"], responseData.value["value"]);
+        })
+        .catch((error) => {
           console.error(error);
         });
-    }
-    else if (option == "Strict Keyword Search") {
-      handleSearch()
-    }
-    else {
-      handleSearch()
+    } else if (option == "Strict Keyword Search") {
+      handleSearch();
+    } else {
+      handleSearch();
     }
   }
-
 });
 
-onMounted(() => {
-});
+const anyPieChart = (label, significantValue) => {
+  pieChart.value.innerHTML = "";
 
-const anyPieChart = (chartData) => {
-  pieChart.value.innerHTML = '';
+  const chartData = [
+    { x: label, value: significantValue },
+    { x: "Negligible Value", value: 100 - significantValue },
+  ];
+
   const chart = anychart.pie(chartData);
+  chart.legend().itemsFormatter(function (items) {
+    return items.filter((item) => item.text !== "Negligible Value");
+  });
+
+  chart.selected().explode("3%");
+
+  chart.select([0]);
+
+  chart.labels().format(function () {
+    if (this.index === 1) {
+      return "";
+    } else {
+      return significantValue + "%";
+    }
+  });
+
   chart.container(pieChart.value);
-  chart.data(chartData);
   chart.draw();
-}
+};
+
+onMounted(() => {});
 
 const tagCloudDraw = (data) => {
-  tagCloud.value.innerHTML = '';
+  tagCloud.value.innerHTML = "";
   const chart = anychart.tagCloud(data);
   chart.container(tagCloud.value);
   chart.draw();
-}
+};
 
 const handleSearch = () => {
-
   const formData = new FormData();
   const chunkSize = 10000;
   pieChartData.value = [];
-  pieChartShow.value = false
+  pieChartShow.value = false;
 
-  formData.append('keyword', searchQuery.value)
+  formData.append("keyword", searchQuery.value);
 
   for (let i = 0; i < messagesSet.value.length; i += chunkSize) {
     const chunk = messagesSet.value.slice(i, i + chunkSize);
-    formData.append('data', chunk);
+    formData.append("data", chunk);
   }
 
-
   if (searchQuery.value) {
-    if (selectedOption.value == 'Strict Keyword Search') {
-      axios.post('http://localhost:5000/api/strictKeyword', formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data'
-        }
-      })
-        .then(response => {
+    if (selectedOption.value == "Strict Keyword Search") {
+      axios
+        .post("http://localhost:5000/api/strictKeyword", formData, {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        })
+        .then((response) => {
           responseData.value = response.data;
-          console.log(responseData.value)
+          console.log(responseData.value);
           const valuePie = responseData.value["value"];
           if (valuePie == "0.0") {
-            console.log("show no words found message")
-            noResults.value = true
+            console.log("show no words found message");
+            noResults.value = true;
           } else {
-            noResults.value = false
-            const xValue = responseData.value["x"];
-            pieChartData.value.push({ x: xValue, value: valuePie });
-            const otherEntry = 100 - parseInt(valuePie);
-            pieChartData.value.push({ x: "", value: otherEntry });
-            pieChartShow.value = !pieChartShow.value
-            anyPieChart(pieChartData.value);
+            noResults.value = false;
+            responseData.value = response.data;
+            console.log(responseData.value);
+            anyPieChart(responseData.value["x"], responseData.value["value"]);
           }
         })
-        .catch(error => {
+        .catch((error) => {
           console.error(error);
         });
-    }
-    else {
-      axios.post('http://localhost:5000/api/relatedKeyword', formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data'
-        }
-      })
-        .then(response => {
+    } else {
+      axios
+        .post("http://localhost:5000/api/relatedKeyword", formData, {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        })
+        .then((response) => {
           responseData.value = response.data;
           const synonyms = responseData.value.synonyms;
           const chartData = responseData.value.chart_data;
           const xValue = chartData["x"];
           const valuePie = chartData["value"];
           if (valuePie == "0.0") {
-            console.log("show no words found message")
-            noResults.value = true
+            console.log("show no words found message");
+            noResults.value = true;
           } else {
-            noResults.value = false
-            pieChartData.value.push({ x: xValue, value: valuePie });
-            const otherEntry = 100 - parseInt(valuePie);
-            pieChartData.value.push({ x: "", value: otherEntry });
-            pieChartShow.value = !pieChartShow.value
-            anyPieChart(pieChartData.value);
-
-            console.log(responseData.value.synonyms)
+            noResults.value = false;
+            responseData.value = response.data;
+            anyPieChart(xValue, valuePie);
             const data = [];
             synonyms.forEach((synonym, index) => {
               const value = Math.floor(Math.random() * (70 - 40 + 1)) + 40;
               data.push({ x: synonym, value: value });
             });
-            tagCloudDraw(data)
+            tagCloudDraw(data);
           }
-
         })
-        .catch(error => {
+        .catch((error) => {
           console.error(error);
         });
-
     }
   }
 };
-
 </script>
 
 <template>
@@ -301,31 +276,47 @@ const handleSearch = () => {
     </div>
     <div v-else class="page-container">
       <div class="dropdown">
-        <button @click="toggleDropdown" class="dropdown-toggle">{{ selectedOption }}</button>
+        <button @click="toggleDropdown" class="dropdown-toggle">
+          {{ selectedOption }}
+        </button>
         <div v-if="isOpen" class="dropdown-menu">
           <ul>
-            <li v-for="(option, index) in options" :key="index" @click="selectOption(option)" class="dropdown-item">{{
-      option }}</li>
+            <li
+              v-for="(option, index) in options"
+              :key="index"
+              @click="selectOption(option)"
+              class="dropdown-item"
+            >
+              {{ option }}
+            </li>
           </ul>
         </div>
-        <div class="info-icon" @mouseover="showInfoBox = true" @mouseleave="showInfoBox = false">
+        <div
+          class="info-icon"
+          @mouseover="showInfoBox = true"
+          @mouseleave="showInfoBox = false"
+        >
           <span class="icon">?</span>
           <div class="info-box" v-show="showInfoBox">
-            This timeline is a visualisation made to portray all messages and media in a chronological format. All
-            changes
-            made to the search results is dynamically made to the timeline on the page. To zoom into a certain part of
-            the you can
-            do that in the date range picker, however it can only be done for the valid date ranges as shown below. A
-            time block is made
-            if an event is 2 hours within each other by default, if you would like to change the time span it can be
+            This timeline is a visualisation made to portray all messages and media in a
+            chronological format. All changes made to the search results is dynamically
+            made to the timeline on the page. To zoom into a certain part of the you can
+            do that in the date range picker, however it can only be done for the valid
+            date ranges as shown below. A time block is made if an event is 2 hours within
+            each other by default, if you would like to change the time span it can be
             done below as well.
           </div>
         </div>
       </div>
 
-      <div v-if="selectedOption === 'Strict Keyword Search' || selectedOption === 'Related-Words Keyword Search'"
-        class="search-box">
-        <input type="text" v-model="searchQuery" placeholder="Enter search query">
+      <div
+        v-if="
+          selectedOption === 'Strict Keyword Search' ||
+          selectedOption === 'Related-Words Keyword Search'
+        "
+        class="search-box"
+      >
+        <input type="text" v-model="searchQuery" placeholder="Enter search query" />
         <button @click="handleSearch">Search</button>
       </div>
 
@@ -336,11 +327,16 @@ const handleSearch = () => {
       </div>
 
       <div class="chart-container">
-        <div v-if="selectedOption" ref="pieChart" style="width: 500px; height: 500px;"></div>
-        <div v-if="selectedOption === 'Related-Words Keyword Search'" ref="tagCloud"
-          style="width: 500px; height: 500px;">
-        </div>
-
+        <div
+          v-if="selectedOption"
+          ref="pieChart"
+          style="width: 500px; height: 500px"
+        ></div>
+        <div
+          v-if="selectedOption === 'Related-Words Keyword Search'"
+          ref="tagCloud"
+          style="width: 500px; height: 500px"
+        ></div>
       </div>
     </div>
   </div>
@@ -350,7 +346,7 @@ const handleSearch = () => {
 .info-icon {
   position: relative;
   display: inline-block;
-  margin-right: 10px
+  margin-right: 10px;
 }
 
 .info-icon:hover .info-box {
@@ -372,8 +368,8 @@ const handleSearch = () => {
 
 .info-box {
   position: absolute;
-  top: -60px; 
-  left: 50px; 
+  top: -60px;
+  left: 50px;
   width: 300px;
   padding: 10px;
   background-color: #fff;
@@ -382,7 +378,6 @@ const handleSearch = () => {
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   display: none;
 }
-
 
 .tag-cloud-container {
   flex: 0 0 50%;
