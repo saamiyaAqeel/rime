@@ -22,9 +22,7 @@ def post_data():
     if data:
      joined_string = ','.join(data)
      result_array = joined_string.split(',')
-     arrayLength, returnValue = chart_response.illegalActivities(result_array)
-
-    # var = chart_response.illegalAndTerms(result_array)
+     arrayLength, returnValue = chart_response.predict_illegal(result_array)
      if arrayLength is not None and returnValue is not None:
             response_data = {
                 'arrayLength': arrayLength,

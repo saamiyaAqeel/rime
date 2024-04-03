@@ -38,6 +38,63 @@ class pieChart:
             coefs = np.asarray(values[1:], dtype='float32')
             embeddings_index[word] = coefs
      return embeddings_index
+
+    def predict_illegal(self, input_array):
+     chart = pieChart()
+     glove_embeddings = chart.load_glove_embeddings('glove.6B.50d.txt')
+
+     df = pd.read_csv('illegalPotential.csv')
+     df['text'] = df['text'].str.lower().str.replace(r'\W', ' ')
+     texts = df['text'].tolist()
+     labels = df['label'].tolist()
+
+     tokenizer = Tokenizer()
+     tokenizer.fit_on_texts(texts)
+     vocab_size = len(tokenizer.word_index) + 1
+     sequences = tokenizer.texts_to_sequences(texts)
+     max_length = max([len(seq) for seq in sequences])
+     padded_sequences = pad_sequences(sequences, maxlen=max_length, padding='post')
+     labels = np.array(labels)
+
+     embedding_dim = 50  
+     embedding_matrix = np.zeros((vocab_size, embedding_dim))
+     for word, i in tokenizer.word_index.items():
+      embedding_vector = glove_embeddings.get(word)
+      if embedding_vector is not None:
+        embedding_matrix[i] = embedding_vector
+
+     model = Sequential([
+      Embedding(input_dim=vocab_size, output_dim=embedding_dim, embeddings_initializer=tf.keras.initializers.Constant(embedding_matrix), trainable=False),
+      Conv1D(128, 5, activation='relu'),
+      MaxPooling1D(4),
+      Conv1D(64, 5, activation='relu'),
+      GlobalAveragePooling1D(),
+      Dense(24, activation='relu'),
+      Dropout(0.5),
+      Dense(1, activation='sigmoid')
+    ])
+
+     model.compile(loss='binary_crossentropy', optimizer='adam', metrics=['accuracy'])
+     model.summary()
+
+     X_train, X_test, y_train, y_test = train_test_split(padded_sequences, labels, test_size=0.2, random_state=42)
+
+     model.fit(X_train, y_train, epochs=10, validation_data=(X_test, y_test), verbose=2)
+     
+     illegal_activities_counter = 0
+
+     text_array = []
+
+     for input_text in input_array:
+        input_sequence = tokenizer.texts_to_sequences([input_text])
+        padded_input_sequence = pad_sequences(input_sequence, maxlen=max_length, padding='post')
+        prediction = model.predict(padded_input_sequence)
+        if prediction < 0.5:
+            text_array.append(input_text)
+            illegal_activities_counter += 1
+     print(text_array)
+
+     return str(len(input_array)), chart.create_data_structure("Potentially Illegal Activities", str(illegal_activities_counter))
     
     def predict_argumentative_nature(self, input_array):
      chart = pieChart()
