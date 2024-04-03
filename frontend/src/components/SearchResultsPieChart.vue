@@ -70,9 +70,19 @@ watch(selectedOption, (option) => {
         responseData.value = response.data;
         const length = responseData.value.arrayLength;
         const chartData = responseData.value.chart_data;
+        const text = responseData.value.text;
+        console.log(text)
         const xValue = chartData["x"];
         const valuePie = chartData["value"];
         anyPieChart(xValue, valuePie, length);
+
+        const data = [];
+        text.forEach((synonym, index) => {
+          const value = Math.floor(Math.random() * (70 - 40 + 1)) + 40;
+          data.push({ x: synonym, value: value });
+        });
+        tagCloudDraw(data);
+
       })
       .catch((error) => {
         console.error(error);
@@ -88,10 +98,19 @@ watch(selectedOption, (option) => {
         responseData.value = response.data;
         const length = responseData.value.arrayLength;
         const chartData = responseData.value.chart_data;
+        const text = responseData.value.text;
         const xValue = chartData["x"];
         const valuePie = chartData["value"];
-        console.log(valuePie)
+        console.log(text)
         anyPieChart(xValue, valuePie, length);
+
+        const data = [];
+        text.forEach((synonym, index) => {
+          const value = 40
+          data.push({ x: synonym, value: value });
+        });
+        tagCloudDraw(data);
+
       })
       .catch((error) => {
         console.error(error);
@@ -137,9 +156,18 @@ watch(searchResult, (result) => {
           responseData.value = response.data;
           const length = responseData.value.arrayLength;
           const chartData = responseData.value.chart_data;
+          const text = responseData.value.text;
           const xValue = chartData["x"];
           const valuePie = chartData["value"];
+          console.log(text)
           anyPieChart(xValue, valuePie, length);
+
+          const data = [];
+          text.forEach((synonym, index) => {
+            const value = Math.floor(Math.random() * (70 - 40 + 1)) + 40;
+            data.push({ x: synonym, value: value });
+          });
+          tagCloudDraw(data);
         })
         .catch((error) => {
           console.error(error);
@@ -155,10 +183,18 @@ watch(searchResult, (result) => {
           responseData.value = response.data;
           const length = responseData.value.arrayLength;
           const chartData = responseData.value.chart_data;
+          const text = responseData.value.text;
           const xValue = chartData["x"];
           const valuePie = chartData["value"];
-          console.log(valuePie)
+          console.log(text)
           anyPieChart(xValue, valuePie, length);
+
+          const data = [];
+          text.forEach((synonym, index) => {
+            const value = Math.floor(Math.random() * (70 - 40 + 1)) + 40;
+            data.push({ x: synonym, value: value });
+          });
+          tagCloudDraw(data);
         })
         .catch((error) => {
           console.error(error);
@@ -205,6 +241,8 @@ onMounted(() => { });
 const tagCloudDraw = (data) => {
   tagCloud.value.innerHTML = "";
   const chart = anychart.tagCloud(data);
+  chart.angles([0]);
+  chart.tooltip().enabled(false);
   chart.container(tagCloud.value);
   chart.draw();
 };
@@ -337,8 +375,9 @@ const handleSearch = () => {
 
       <div class="chart-container">
         <div v-if="selectedOption" ref="pieChart" style="width: 500px; height: 500px"></div>
-        <div v-if="selectedOption === 'Related-Words Keyword Search'" ref="tagCloud"
-          style="width: 500px; height: 500px"></div>
+        <div
+          v-if="selectedOption === 'Related-Words Keyword Search' || selectedOption === 'Potential Illegal Activities' || selectedOption === 'Potential Conversation of Argumentative Nature'"
+          ref="tagCloud" style="width: 600px; height: 600px"></div>
       </div>
     </div>
   </div>
