@@ -16,10 +16,14 @@
           <div class="info-icon" @mouseover="showInfoBox = true" @mouseleave="showInfoBox = false">
             <span class="icon">?</span>
             <div class="info-box" v-show="showInfoBox">
-              This timeline is a visualisation made to portray all messages and media in a chronological format. All changes
-              made to the search results is dynamically made to the timeline on the page. To zoom into a certain part of the you can 
-              do that in the date range picker, however it can only be done for the valid date ranges as shown below. A time block is made 
-              if an event is 2 hours within each other by default, if you would like to change the time span it can be done below as well.
+              This timeline is a visualisation made to portray all messages and media in a chronological format. All
+              changes
+              made to the search results is dynamically made to the timeline on the page. To zoom into a certain part of
+              the you can
+              do that in the date range picker, however it can only be done for the valid date ranges as shown below. A
+              time block is made
+              if an event is 2 hours within each other by default, if you would like to change the time span it can be
+              done below as well.
             </div>
           </div>
         </div>
@@ -63,27 +67,39 @@ const selectedTimeRange = ref(7200000);
 var zoomSafe = ref(false);
 let chart = anychart.timeline();
 
+
+const fit = () =>{
+  chart.fit();
+}
+
 const zoomTo = () => {
   if (!startDate.value || !endDate.value) {
-    alert('Null value of dates present');
+    alert('Please select both start and end dates.');
+    return;
   }
-  else {
-    const selectedStartDate = new Date(startDate.value).toISOString().slice(0, -1);
-    const selectedEndDate = new Date(endDate.value).toISOString().slice(0, -1);
 
-    // if (new Date(selectedEndDate) > new Date(endOfMonthTimestamp.value) ||
-    //   new Date(selectedStartDate) < new Date(startOfMonthTimestamp.value) ||
-    //   new Date(selectedStartDate) > new Date(endOfMonthTimestamp.value) ||
-    //   new Date(selectedEndDate) < new Date(startOfMonthTimestamp.value)) {
-    //   alert('Selected dates are not within the range of the search result.');
-    // } else {
-      console.log("Safe to zoom")
-      const startUTC = Date.UTC(startDate.value.getFullYear(), startDate.value.getMonth(), startDate.value.getDate());
-      const endUTC = Date.UTC(endDate.value.getFullYear(), endDate.value.getMonth(), endDate.value.getDate());
-      chart.zoomTo(startUTC, endUTC);
-    // }
+  var selectedStartDate = new Date(startDate.value);
+  var selectedEndDate = new Date(endDate.value);
+
+  if (selectedStartDate >= selectedEndDate) {
+    alert('Start date must be before the end date.');
+    return;
   }
+
+  const earliestEventDate = new Date(startOfMonthTimestamp.value);
+  const latestEventDate = new Date(endOfMonthTimestamp.value);
+
+  if (selectedStartDate < earliestEventDate || selectedEndDate > latestEventDate) {
+    alert('Selected dates are outside the range of the search result.');
+    return;
+  }
+
+  const startUTC = Date.UTC(selectedStartDate.getFullYear(), selectedStartDate.getMonth(), selectedStartDate.getDate());
+  const endUTC = Date.UTC(selectedEndDate.getFullYear(), selectedEndDate.getMonth(), selectedEndDate.getDate());
+  chart.zoomTo(startUTC, endUTC);
+
 };
+
 
 const applyFilter = () => {
 };
@@ -422,7 +438,6 @@ label {
   margin-bottom: 30px;
 
 }
-
 
 .filter-container {
   margin-top: 100px;
