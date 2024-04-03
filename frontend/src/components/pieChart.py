@@ -92,9 +92,10 @@ class pieChart:
         if prediction < 0.5:
             text_array.append(input_text)
             illegal_activities_counter += 1
-     print(text_array)
 
-     return str(len(input_array)), chart.create_data_structure("Potentially Illegal Activities", str(illegal_activities_counter))
+     final_array = list(set(text_array))
+
+     return final_array, str(len(input_array)), chart.create_data_structure("Potentially Illegal Activities", str(illegal_activities_counter))
     
     def predict_argumentative_nature(self, input_array):
      chart = pieChart()
@@ -167,10 +168,10 @@ class pieChart:
         if prediction > 0.5:
             text_array.append(input_text)
             argumentative_nature_counter += 1
-     print(text_array)
 
-     return str(len(input_array)), chart.create_data_structure("Potentially Argumentative Nature", str(argumentative_nature_counter))
+     final_array = list(set(text_array))
 
+     return final_array, str(len(input_array)), chart.create_data_structure("Potentially Argumentative Nature", str(argumentative_nature_counter))
 
     def create_data_structure(self, label, numeric_value):
      data = {}

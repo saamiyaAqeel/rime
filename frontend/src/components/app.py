@@ -22,9 +22,11 @@ def post_data():
     if data:
      joined_string = ','.join(data)
      result_array = joined_string.split(',')
-     arrayLength, returnValue = chart_response.predict_illegal(result_array)
-     if arrayLength is not None and returnValue is not None:
+     textArray, arrayLength, returnValue = chart_response.predict_illegal(result_array)
+     print(textArray)
+     if arrayLength is not None and returnValue is not None and textArray is not None:
             response_data = {
+                'text': textArray,
                 'arrayLength': arrayLength,
                 'chart_data': returnValue
             }
@@ -45,9 +47,11 @@ def post_argumentative():
     if data:
      joined_string = ','.join(data)
      result_array = joined_string.split(',')
-     arrayLength, returnValue = chart_response.predict_argumentative_nature(result_array)
-     if arrayLength is not None and returnValue is not None:
+     textArray, arrayLength, returnValue = chart_response.predict_argumentative_nature(result_array)
+     print(textArray)
+     if arrayLength is not None and returnValue is not None and textArray is not None:
             response_data = {
+                'text': textArray,
                 'arrayLength': arrayLength,
                 'chart_data': returnValue
             }
@@ -70,7 +74,7 @@ def post_strictKeyword():
         joined_string = ','.join(data)
         result_array = joined_string.split(',')
         arrayLength, returnValue = chart_response.strictKeywordSearch(keyword[0], result_array)
-        if arrayLength is not None and returnValue is not None:
+        if arrayLength is not None and returnValue is not None :
             response_data = {
                 'arrayLength': arrayLength,
                 'chart_data': returnValue
