@@ -90,6 +90,7 @@ watch(selectedOption, (option) => {
         const chartData = responseData.value.chart_data;
         const xValue = chartData["x"];
         const valuePie = chartData["value"];
+        console.log(valuePie)
         anyPieChart(xValue, valuePie, length);
       })
       .catch((error) => {
@@ -156,6 +157,7 @@ watch(searchResult, (result) => {
           const chartData = responseData.value.chart_data;
           const xValue = chartData["x"];
           const valuePie = chartData["value"];
+          console.log(valuePie)
           anyPieChart(xValue, valuePie, length);
         })
         .catch((error) => {

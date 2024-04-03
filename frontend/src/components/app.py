@@ -23,8 +23,8 @@ def post_data():
      joined_string = ','.join(data)
      result_array = joined_string.split(',')
      arrayLength, returnValue = chart_response.illegalActivities(result_array)
-     print(arrayLength)
-     print(returnValue)
+
+    # var = chart_response.illegalAndTerms(result_array)
      if arrayLength is not None and returnValue is not None:
             response_data = {
                 'arrayLength': arrayLength,
@@ -47,7 +47,7 @@ def post_argumentative():
     if data:
      joined_string = ','.join(data)
      result_array = joined_string.split(',')
-     arrayLength, returnValue = chart_response.argumentativeNature(result_array)
+     arrayLength, returnValue = chart_response.predict_argumentative_nature(result_array)
      if arrayLength is not None and returnValue is not None:
             response_data = {
                 'arrayLength': arrayLength,
@@ -77,7 +77,6 @@ def post_strictKeyword():
                 'arrayLength': arrayLength,
                 'chart_data': returnValue
             }
-            print(response_data)
             return (response_data)
         else:
             response = jsonify({'message': 'No data found'})
