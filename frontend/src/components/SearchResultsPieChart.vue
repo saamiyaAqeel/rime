@@ -228,6 +228,9 @@ const anyPieChart = (label, significantValue, length) => {
     if (this.index === 1) {
       return "";
     } else {
+      if(selectedOption.value == 'Strict Keyword Search' || selectedOption.value == 'Related-Words Keyword Search'){
+        return (significantValue / length * 100).toFixed(2) + "%";
+      }
       return Math.round(significantValue / length * 100) + "%";
     }
   });
