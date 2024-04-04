@@ -27,14 +27,14 @@
           </div>
         </div>
       </div>
-      
+
       <div class="date-range-and-time-range">
         <div class="time-range">
           <strong>Date Range:</strong> {{ timeRange }}
           <div class="info-icon info-icon--small" @mouseover="showDateRangeInfo = true"
             @mouseleave="showDateRangeInfo = false">
             <span class="icon icon--small">?</span>
-            <div class="info-box" v-show="showDateRangeInfo">Info about date range.</div>
+            <div class="info-box" v-show="showDateRangeInfo">This is the date range of the dataset for you to look through</div>
           </div>
         </div>
         <div class="time-range-select">
@@ -48,7 +48,8 @@
           <div class="info-icon info-icon--small" @mouseover="showTimeRangeInfo = true"
             @mouseleave="showTimeRangeInfo = false">
             <span class="icon icon--small">?</span>
-            <div class="info-box" v-show="showTimeRangeInfo">Info about time range.</div>
+            <div class="info-box" v-show="showTimeRangeInfo">A time block is made if the events are within a certain "time range" 
+              that you can specify, same provider and same device. Otherwise the event is made into a moment. </div>
           </div>
         </div>
       </div>
@@ -350,6 +351,13 @@ onMounted(() => {
 </script>
 
 <style scoped>
+.time-range-select .info-icon--small .info-box {
+  left: 50%; 
+  right: 0; 
+  transform: translateX(-100%); 
+  max-width: 300px; 
+} 
+
 .info-icon--small {
   margin-left: 5px;
 }
