@@ -68,7 +68,7 @@ var zoomSafe = ref(false);
 let chart = anychart.timeline();
 
 
-const fit = () =>{
+const fit = () => {
   chart.fit();
 }
 
@@ -200,7 +200,7 @@ watch([selectedTimeRange, searchResult], ([timeRange, result]) => {
         } else {
           momentData.push({
             x: prevEvent.timestamp,
-            y: `${providerName} - Range End`
+            y: `${providerName}`
           });
 
           rangeStart = currentEvent.timestamp;
@@ -209,7 +209,7 @@ watch([selectedTimeRange, searchResult], ([timeRange, result]) => {
       }
       momentData.push({
         x: rangeEnd,
-        y: `${providerName} - Range End`
+        y: `${providerName}`
       });
     }
 
@@ -273,7 +273,15 @@ const anyTimeline = (chartData, momentData, deviceIdColorPairs) => {
     rangeSeries.normal().fill(deviceColor);
     rangeSeries.normal().stroke(deviceColor);
   });
-  chart.moment(momentData)
+
+  const middleIndex = Math.floor(momentData.length / 2);
+  const firstHalf = momentData.slice(0, middleIndex);
+  const secondHalf = momentData.slice(middleIndex);
+  chart.moment(firstHalf)
+  var second = chart.moment(secondHalf)
+
+  second.direction('down');
+
   chart.container(timeline.value);
   chart.scroller().enabled(true);
   var axis = chart.axis();
@@ -328,6 +336,29 @@ onMounted(() => {
 </script>
 
 <style scoped>
+.container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: calc(100vh - 150px);
+  /* Adjusted to decrease the height and provide more space above the container */
+  width: 100%;
+  margin-top: 50px;
+  /* Increase this to push the container lower */
+}
+
+.timeline-container {
+  padding-top: 20px;
+  /* Adds space above the timeline for 'moments' */
+}
+
+.time-range,
+.center-container {
+  margin-bottom: 20px;
+  /* Ensures space between these elements and the timeline */
+}
+
+
 .dropdown-hours {
   width: 100px
 }
