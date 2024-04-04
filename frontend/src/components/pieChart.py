@@ -259,35 +259,36 @@ class pieChart:
      chart = pieChart()
      return str(total_words), chart.create_data_structure("Strict Keyword Occurrences", str(total_occurrences))
     
-    def get_synonyms(self, word):
-     synonyms = []
+    def get_synonyms(self, word, text):
+        text_tokens = set(word_tokenize(text.lower()))
+        synonyms = set()
 
-     for synset in wordnet.synsets(word):
-        for lemma in synset.lemmas():
-            synonyms.append(lemma.name())
+        for synset in wordnet.synsets(word):
+            for lemma in synset.lemmas():
+                lemma_name = lemma.name().replace('_', ' ')  
+                if lemma_name in text_tokens:  
+                    synonyms.add(lemma_name)
 
-     if not synonyms:
-        return False
+        if not synonyms:
+            return False
 
-     return synonyms
+        return list(synonyms)
 
     def related_keyword_search(self, text, keyword):
-     chart = pieChart()
-     synonyms = chart.get_synonyms(keyword)
-
-     if synonyms:
         text_str = ' '.join(text)
-        words = word_tokenize(text_str.lower())
+        synonyms = self.get_synonyms(keyword, text_str)
 
-        word_counter = Counter(words)
-        occurrences = sum(word_counter[word] for word in synonyms)
+        if synonyms:
+            words = word_tokenize(text_str.lower())
 
-        total_words = sum(len(passage.split()) for passage in text)
-        value = (occurrences / total_words) * 100
-        chart = pieChart()
+            word_counter = Counter(words)
+            occurrences = sum(word_counter[word] for word in synonyms)
 
-        chart_data = chart.create_data_structure("Related Keyword Occurrences", str(occurrences))
-        return str(total_words), synonyms, chart_data
+            total_words = sum(len(passage.split()) for passage in text)
+            value = (occurrences / total_words) * 100
+
+            chart_data = self.create_data_structure("Related Keyword Occurrences", str(occurrences))
+            return str(total_words), synonyms, chart_data
     
-     return False
+        return False
     
