@@ -3,7 +3,6 @@
     <div v-if="activeDevices.length === 0" class="center text-box">
       Select one or more devices at the top left to begin.
     </div>
-
     <div v-else>
       <div class="center-container">
         <div class="date-picker">
@@ -28,10 +27,15 @@
           </div>
         </div>
       </div>
-
+      
       <div class="date-range-and-time-range">
         <div class="time-range">
-          <strong>Date Range: </strong> {{ timeRange }}
+          <strong>Date Range:</strong> {{ timeRange }}
+          <div class="info-icon info-icon--small" @mouseover="showDateRangeInfo = true"
+            @mouseleave="showDateRangeInfo = false">
+            <span class="icon icon--small">?</span>
+            <div class="info-box" v-show="showDateRangeInfo">Info about date range.</div>
+          </div>
         </div>
         <div class="time-range-select">
           <label for="timeRangeSelect">Select Time Range:</label>
@@ -41,6 +45,11 @@
             <option value="7200000">2 hours</option>
             <option value="10800000">3 hours</option>
           </select>
+          <div class="info-icon info-icon--small" @mouseover="showTimeRangeInfo = true"
+            @mouseleave="showTimeRangeInfo = false">
+            <span class="icon icon--small">?</span>
+            <div class="info-box" v-show="showTimeRangeInfo">Info about time range.</div>
+          </div>
         </div>
       </div>
 
@@ -68,9 +77,13 @@ const endDate = ref('');
 var startOfMonthTimestamp = ref(null);
 var endOfMonthTimestamp = ref(null);
 const showInfoBox = ref(false);
+const showdateInfoBox = ref(false);
+const showtimeInfoBox = ref(false);
 const selectedTimeRange = ref(7200000);
 var zoomSafe = ref(false);
 let chart = anychart.timeline();
+const showDateRangeInfo = ref(false);
+const showTimeRangeInfo = ref(false);
 
 const fit = () => {
   chart.fit();
@@ -337,6 +350,23 @@ onMounted(() => {
 </script>
 
 <style scoped>
+.info-icon--small {
+  margin-left: 5px;
+}
+
+.icon--small {
+  width: 20px;
+  height: 20px;
+  font-size: 12px;
+  line-height: 20px;
+}
+
+
+.info-icon--small .icon {
+  vertical-align: middle;
+}
+
+
 .date-range-and-time-range {
   display: flex;
   justify-content: space-between;
@@ -345,7 +375,8 @@ onMounted(() => {
   padding: 0 10px;
 }
 
-.time-range, .time-range-select {
+.time-range,
+.time-range-select {
   flex: 1;
   display: flex;
   align-items: center;
@@ -358,7 +389,7 @@ onMounted(() => {
 .time-range-select {
   justify-content: flex-end;
   margin-left: auto;
-  margin-right: 30px;
+  margin-right: 50px;
 }
 
 .container {
@@ -432,6 +463,8 @@ onMounted(() => {
   display: none;
   z-index: 1000;
 }
+
+
 
 button,
 label {
