@@ -29,7 +29,7 @@
         </div>
       </div>
 
-      <div class="time-range">
+      <!-- <div class="time-range">
         <div>{{ timeRange }}</div>
         <label for="timeRangeSelect">Select Time Range:</label>
         <select id="timeRangeSelect" class="dropdown-hours" v-model="selectedTimeRange">
@@ -38,13 +38,30 @@
           <option value="7200000">2 hours</option>
           <option value="10800000">3 hours</option>
         </select>
+      </div> -->
+
+      <div class="date-range-and-time-range">
+        <div class="time-range">
+          <strong>Date Range: </strong> {{ timeRange }}
+        </div>
+        <div class="time-range-select">
+          <label for="timeRangeSelect">Select Time Range:</label>
+          <select id="timeRangeSelect" class="dropdown-hours" v-model="selectedTimeRange">
+            <option value="1800000">30 minutes</option>
+            <option value="3600000">1 hour</option>
+            <option value="7200000">2 hours</option>
+            <option value="10800000">3 hours</option>
+          </select>
+        </div>
       </div>
+
+      <div id="legendContainer" class="legend-container"></div>
+
 
       <div class="container">
         <div ref="timeline" class="timeline"></div>
       </div>
 
-      <div id="legendContainer" class="legend-container"></div>
     </div>
   </div>
 </template>
@@ -66,7 +83,6 @@ const showInfoBox = ref(false);
 const selectedTimeRange = ref(7200000);
 var zoomSafe = ref(false);
 let chart = anychart.timeline();
-
 
 const fit = () => {
   chart.fit();
@@ -124,7 +140,7 @@ watch(searchResult, (result) => {
   startOfMonthTimestamp.value = startOfMonth(earliestTimestamp);
   endOfMonthTimestamp.value = endOfMonth(latestTimestamp);
 
-  timeRange.value = `Time Range: ${startOfMonthTimestamp.value.toLocaleString()} - ${endOfMonthTimestamp.value.toLocaleString()}`;
+  timeRange.value = ` ${startOfMonthTimestamp.value.toLocaleString()} - ${endOfMonthTimestamp.value.toLocaleString()}`;
 });
 
 const startOfMonth = (date) => {
@@ -273,15 +289,12 @@ const anyTimeline = (chartData, momentData, deviceIdColorPairs) => {
     rangeSeries.normal().fill(deviceColor);
     rangeSeries.normal().stroke(deviceColor);
   });
-
   const middleIndex = Math.floor(momentData.length / 2);
   const firstHalf = momentData.slice(0, middleIndex);
   const secondHalf = momentData.slice(middleIndex);
   chart.moment(firstHalf)
   var second = chart.moment(secondHalf)
-
   second.direction('down');
-
   chart.container(timeline.value);
   chart.scroller().enabled(true);
   var axis = chart.axis();
@@ -336,26 +349,46 @@ onMounted(() => {
 </script>
 
 <style scoped>
+.date-range-and-time-range {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  width: 100%;
+  padding: 0 10px;
+}
+
+.time-range, .time-range-select {
+  flex: 1;
+  display: flex;
+  align-items: center;
+}
+
+.time-range {
+  justify-content: flex-start;
+}
+
+.time-range-select {
+  justify-content: flex-end;
+  margin-left: auto;
+  margin-right: 30px;
+}
+
 .container {
   display: flex;
   justify-content: center;
   align-items: center;
   height: calc(100vh - 150px);
-  /* Adjusted to decrease the height and provide more space above the container */
   width: 100%;
   margin-top: 50px;
-  /* Increase this to push the container lower */
 }
 
 .timeline-container {
   padding-top: 20px;
-  /* Adds space above the timeline for 'moments' */
 }
 
 .time-range,
 .center-container {
   margin-bottom: 20px;
-  /* Ensures space between these elements and the timeline */
 }
 
 
