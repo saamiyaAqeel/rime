@@ -29,17 +29,6 @@
         </div>
       </div>
 
-      <!-- <div class="time-range">
-        <div>{{ timeRange }}</div>
-        <label for="timeRangeSelect">Select Time Range:</label>
-        <select id="timeRangeSelect" class="dropdown-hours" v-model="selectedTimeRange">
-          <option value="1800000">30 minutes</option>
-          <option value="3600000">1 hour</option>
-          <option value="7200000">2 hours</option>
-          <option value="10800000">3 hours</option>
-        </select>
-      </div> -->
-
       <div class="date-range-and-time-range">
         <div class="time-range">
           <strong>Date Range: </strong> {{ timeRange }}
@@ -56,7 +45,6 @@
       </div>
 
       <div id="legendContainer" class="legend-container"></div>
-
 
       <div class="container">
         <div ref="timeline" class="timeline"></div>
@@ -384,13 +372,13 @@ onMounted(() => {
 
 .timeline-container {
   padding-top: 20px;
+  overflow: visible;
 }
 
 .time-range,
 .center-container {
   margin-bottom: 20px;
 }
-
 
 .dropdown-hours {
   width: 100px
@@ -434,13 +422,15 @@ onMounted(() => {
   position: absolute;
   top: -60px;
   left: -100px;
-  width: 200px;
+  margin-top: 20px;
+  width: 400px;
   padding: 10px;
   background-color: #fff;
   border: 1px solid #ccc;
   border-radius: 5px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   display: none;
+  z-index: 1000;
 }
 
 button,
