@@ -23,7 +23,9 @@ from tensorflow.keras.preprocessing.text import Tokenizer
 from tensorflow.keras.preprocessing.sequence import pad_sequences
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Embedding, Conv1D, MaxPooling1D, Flatten, Dense, Dropout, GlobalAveragePooling1D
-
+from sklearn.metrics import confusion_matrix
+import seaborn as sns
+import matplotlib.pyplot as plt
 
 class pieChart:
     nltk.download('wordnet')
@@ -38,6 +40,18 @@ class pieChart:
             coefs = np.asarray(values[1:], dtype='float32')
             embeddings_index[word] = coefs
      return embeddings_index
+    
+    def plotMatrix(self, true_labels, y_pred):
+     cm = confusion_matrix(true_labels, y_pred)
+     plt.figure(figsize=(9, 6))
+     sns.heatmap(cm, annot=True, fmt="d", cmap='Blues', cbar=False, annot_kws={"size": 16})
+     labels = np.array([['True Negatives: ' + str(cm[0, 0]), 'False Positives: ' + str(cm[0, 1])],
+                       ['False Negatives: ' + str(cm[1, 0]), 'True Positives: ' + str(cm[1, 1])]])
+     sns.heatmap(cm, annot=labels, fmt='', cmap='Blues', cbar=False, annot_kws={"size": 12, "weight": "bold", "color": "black", "ha": "center"}, alpha=0)
+     plt.xlabel('Predicted Labels')
+     plt.ylabel('True Labels')
+     plt.title('Potential Argumentative')
+     plt.show()
 
     def predict_illegal(self, input_array):
      chart = pieChart()
@@ -78,11 +92,14 @@ class pieChart:
      model.summary()
 
      X_train, X_test, y_train, y_test = train_test_split(padded_sequences, labels, test_size=0.2, random_state=42)
-
      model.fit(X_train, y_train, epochs=10, validation_data=(X_test, y_test), verbose=2)
-     
-     illegal_activities_counter = 0
 
+    # For confusion matrix diagrams 
+    #  predictions = model.predict(X_test)
+    #  predictions = (predictions > 0.5).astype(int)  
+    #  chart.plotMatrix(y_test, predictions)
+
+     illegal_activities_counter = 0
      text_array = []
 
      for input_text in input_array:
@@ -136,26 +153,12 @@ class pieChart:
      model.summary()
 
      X_train, X_test, y_train, y_test = train_test_split(padded_sequences, labels, test_size=0.2, random_state=42)
-
      model.fit(X_train, y_train, epochs=10, validation_data=(X_test, y_test), verbose=2)
 
-     # OLD PARAMETERS THAT WAS GIVING THE WRONG ACCURACY
-
-    #  model = Sequential([
-    #   Embedding(input_dim=vocab_size, output_dim=embedding_dim, embeddings_initializer=tf.keras.initializers.Constant(embedding_matrix), trainable=False),
-    #   Conv1D(filters=64, kernel_size=2, activation='relu'),
-    #   MaxPooling1D(pool_size=2),
-    #   Flatten(),
-    #   Dense(64, activation='relu'),
-    #   Dropout(0.5),
-    #   Dense(1, activation='sigmoid')
-    #  ])
-
-    #  model.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy'])
-
-    #  X_train, X_test, y_train, y_test = train_test_split(padded_sequences, labels, test_size=0.2, random_state=42)
-
-    # model.fit(X_train, y_train, epochs=10, batch_size=8, verbose=1, validation_split=0.2)
+    # For confusion matrix diagrams 
+    #  predictions = model.predict(X_test)
+    #  predictions = (predictions > 0.5).astype(int)  
+    #  chart.plotMatrix(y_test, predictions)
      
      argumentative_nature_counter = 0
 
@@ -178,69 +181,8 @@ class pieChart:
      data['x'] = label
      data['value'] = numeric_value
      return data
-  
-    def illegalActivities(self, input_array):
-        X = []  
-        y = []  
-
-        with open("categories.csv", mode='r', encoding='utf-8') as file:
-            csv_reader = csv.reader(file)
-            for row in csv_reader: 
-                if len(row) >= 2:
-                    X.append(row[0])
-                    y.append(row[1])
-        
-        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=80)
-        tfidf_vectorizer = TfidfVectorizer()
-        X_train_tfidf = tfidf_vectorizer.fit_transform(X_train)
-        X_test_tfidf = tfidf_vectorizer.transform(X_test)
-        classifier = LogisticRegression()
-        classifier.fit(X_train_tfidf, y_train)
-        total_array_counter = 0
-        illegal_activities_counter = 0
-
-        for input_text in input_array:
-            new_input_tfidf = tfidf_vectorizer.transform([input_text])
-            predicted_intent = classifier.predict(new_input_tfidf)
-            if("non" not in predicted_intent[0]):
-               illegal_activities_counter += 1
-        
-        value = (illegal_activities_counter / len(input_array)) * 100
-        chart = pieChart()
-
-        return str(len(input_array)) ,chart.create_data_structure("Potential Illegal Activities", str(illegal_activities_counter))     
-                  
-    def argumentativeNature(self, input_array):
-     X = []  
-     y = []  
-
-     with open("argumentativeNature.csv", mode='r', encoding='utf-8') as file:
-        csv_reader = csv.reader(file)
-        for row in csv_reader: 
-            if len(row) >= 2:
-                X.append(row[0])
-                y.append(row[1])
     
-     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=80)
-
-     tfidf_vectorizer = TfidfVectorizer()
-     X_train_tfidf = tfidf_vectorizer.fit_transform(X_train)
-     X_test_tfidf = tfidf_vectorizer.transform(X_test)
-
-     classifier = SVC(kernel='linear')  
-     classifier.fit(X_train_tfidf, y_train)
-     argumentative_nature_counter = 0
-
-     for input_text in input_array:
-        new_input_tfidf = tfidf_vectorizer.transform([input_text])
-        predicted_intent = classifier.predict(new_input_tfidf)
-        if("1" in predicted_intent[0]):
-           argumentative_nature_counter += 1
-    
-     chart = pieChart()
-     return str(len(input_array)), chart.create_data_structure("Potentially Argumentative Nature", str(argumentative_nature_counter))
-    
-
+    # Returns the amount of keywords present in a passage 
     def strictKeywordSearch(self, keyword, passages):
      total_occurrences = 0 
      total_words = 0
@@ -291,4 +233,66 @@ class pieChart:
             return str(total_words), synonyms, chart_data
     
         return False
+
+    # Logistic Regression Classifier that is not used anymore, was used in alpha phase implementation
+    def illegalActivities(self, input_array):
+        X = []  
+        y = []  
+
+        with open("categories.csv", mode='r', encoding='utf-8') as file:
+            csv_reader = csv.reader(file)
+            for row in csv_reader: 
+                if len(row) >= 2:
+                    X.append(row[0])
+                    y.append(row[1])
+        
+        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=80)
+        tfidf_vectorizer = TfidfVectorizer()
+        X_train_tfidf = tfidf_vectorizer.fit_transform(X_train)
+        X_test_tfidf = tfidf_vectorizer.transform(X_test)
+        classifier = LogisticRegression()
+        classifier.fit(X_train_tfidf, y_train)
+        total_array_counter = 0
+        illegal_activities_counter = 0
+
+        for input_text in input_array:
+            new_input_tfidf = tfidf_vectorizer.transform([input_text])
+            predicted_intent = classifier.predict(new_input_tfidf)
+            if("non" not in predicted_intent[0]):
+               illegal_activities_counter += 1
+        
+        value = (illegal_activities_counter / len(input_array)) * 100
+        chart = pieChart()
+
+        return str(len(input_array)) ,chart.create_data_structure("Potential Illegal Activities", str(illegal_activities_counter))     
+                  
+    # Logistic Regression Classifier that is not used anymore, was used in alpha phase implementation
+    def argumentativeNature(self, input_array):
+     X = []  
+     y = []  
+
+     with open("argumentativeNature.csv", mode='r', encoding='utf-8') as file:
+        csv_reader = csv.reader(file)
+        for row in csv_reader: 
+            if len(row) >= 2:
+                X.append(row[0])
+                y.append(row[1])
     
+     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=80)
+
+     tfidf_vectorizer = TfidfVectorizer()
+     X_train_tfidf = tfidf_vectorizer.fit_transform(X_train)
+     X_test_tfidf = tfidf_vectorizer.transform(X_test)
+
+     classifier = SVC(kernel='linear')  
+     classifier.fit(X_train_tfidf, y_train)
+     argumentative_nature_counter = 0
+
+     for input_text in input_array:
+        new_input_tfidf = tfidf_vectorizer.transform([input_text])
+        predicted_intent = classifier.predict(new_input_tfidf)
+        if("1" in predicted_intent[0]):
+           argumentative_nature_counter += 1
+    
+     chart = pieChart()
+     return str(len(input_array)), chart.create_data_structure("Potentially Argumentative Nature", str(argumentative_nature_counter))

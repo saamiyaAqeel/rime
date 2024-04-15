@@ -23,7 +23,6 @@ def post_data():
      joined_string = ','.join(data)
      result_array = joined_string.split(',')
      textArray, arrayLength, returnValue = chart_response.predict_illegal(result_array)
-     print(textArray)
      if arrayLength is not None and returnValue is not None and textArray is not None:
             response_data = {
                 'text': textArray,
@@ -48,7 +47,6 @@ def post_argumentative():
      joined_string = ','.join(data)
      result_array = joined_string.split(',')
      textArray, arrayLength, returnValue = chart_response.predict_argumentative_nature(result_array)
-     print(textArray)
      if arrayLength is not None and returnValue is not None and textArray is not None:
             response_data = {
                 'text': textArray,
@@ -106,7 +104,6 @@ def post_relatedKeyword():
                 'synonyms': synonyms,
                 'chart_data': chart_data
             }
-            print(response_data)
             return (response_data)
         else:
             response = jsonify({'message': 'No data found'})

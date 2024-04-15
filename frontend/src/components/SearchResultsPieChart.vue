@@ -228,7 +228,7 @@ const anyPieChart = (label, significantValue, length) => {
     if (this.index === 1) {
       return "";
     } else {
-      if(selectedOption.value == 'Strict Keyword Search' || selectedOption.value == 'Related-Words Keyword Search'){
+      if (selectedOption.value == 'Strict Keyword Search' || selectedOption.value == 'Related-Words Keyword Search') {
         return (significantValue / length * 100).toFixed(2) + "%";
       }
       return Math.round(significantValue / length * 100) + "%";
@@ -398,6 +398,7 @@ const handleSearch = () => {
   position: relative;
   display: inline-block;
   margin-right: 10px;
+  margin-left: 10px
 }
 
 .info-icon:hover .info-box {
@@ -452,7 +453,6 @@ const handleSearch = () => {
 .dropdown-toggle {
   background-color: #f0f0f0;
   border: none;
-  padding: 10px;
   cursor: pointer;
 }
 
