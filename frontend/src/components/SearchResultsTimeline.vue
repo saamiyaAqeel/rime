@@ -6,6 +6,7 @@
     <div v-else>
       <div class="center-container">
         <div class="date-picker">
+          <button id="navigateButton" @click="navigate">Send Feedback</button>
           <button id="zoomToButton" @click="zoomTo">Zoom To</button>
           <label for="startDatePicker">start date:</label>
           <input type="date" id="startDatePicker" v-model="startDate">
@@ -85,6 +86,10 @@ var zoomSafe = ref(false);
 let chart = anychart.timeline();
 const showDateRangeInfo = ref(false);
 const showTimeRangeInfo = ref(false);
+
+const navigate = () => {
+  window.open('https://forms.office.com/Pages/ResponsePage.aspx?id=7qe9Z4D970GskTWEGCkKHt13h9QfEU1Fr6JL1ThahOxUMUdURDhIVFZCMjBMU0VNN1BOWUhLWTIxRS4u', '_blank');  
+};
 
 const fit = () => {
   chart.fit();

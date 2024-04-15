@@ -26,6 +26,11 @@ const options = [
   "Related-Words Keyword Search",
 ];
 
+const navigate = () => {
+  window.open('https://forms.office.com/Pages/ResponsePage.aspx?id=7qe9Z4D970GskTWEGCkKHt13h9QfEU1Fr6JL1ThahOxUMUdURDhIVFZCMjBMU0VNN1BOWUhLWTIxRS4u', '_blank');  
+};
+
+
 const toggleDropdown = () => {
   isOpen.value = !isOpen.value;
 };
@@ -334,6 +339,7 @@ const handleSearch = () => {
 
 <template>
   <div>
+    <button id="navigateButton" @click="navigate" class="button-space">Send Feedback</button>
     <div v-if="activeDevices.length === 0" class="center text-box">
       Select one or more devices at the top left to begin.
     </div>
@@ -387,6 +393,11 @@ const handleSearch = () => {
 </template>
 
 <style scoped>
+.button-space {
+  margin-top: 20px; 
+  margin-left: 10px; 
+}
+
 .info-container {
   display: flex;
   justify-content: space-between;
