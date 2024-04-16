@@ -20,7 +20,7 @@ const isOpen = ref(false);
 var pieChartShow = ref(false);
 const selectedOption = ref("Select an option");
 const options = [
-  "Potential Illegal Activities",
+  "Of Evidenciary Interest",
   "Potential Conversation of Argumentative Nature",
   "Strict Keyword Search",
   "Related-Words Keyword Search",
@@ -64,7 +64,7 @@ watch(selectedOption, (option) => {
   }
 
   pieChartData.value = [];
-  if (option == "Potential Illegal Activities") {
+  if (option == "Of Evidenciary Interest") {
     axios
       .post("http://localhost:5000/api/messages", formData, {
         headers: {
@@ -150,7 +150,7 @@ watch(searchResult, (result) => {
     var option = selectedOption.value;
     pieChartData.value = [];
 
-    if (option == "Potential Illegal Activities") {
+    if (option == "Of Evidenciary Interest") {
       axios
         .post("http://localhost:5000/api/messages", formData, {
           headers: {
@@ -385,7 +385,7 @@ const handleSearch = () => {
       <div class="chart-container">
         <div v-if="selectedOption" ref="pieChart" style="width: 500px; height: 500px"></div>
         <div
-          v-if="selectedOption === 'Related-Words Keyword Search' || selectedOption === 'Potential Illegal Activities' || selectedOption === 'Potential Conversation of Argumentative Nature'"
+          v-if="selectedOption === 'Related-Words Keyword Search' || selectedOption === 'Of Evidenciary Interest' || selectedOption === 'Potential Conversation of Argumentative Nature'"
           ref="tagCloud" style="width: 600px; height: 600px"></div>
       </div>
     </div>

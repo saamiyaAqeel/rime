@@ -112,7 +112,7 @@ class pieChart:
 
      final_array = list(set(text_array))
 
-     return final_array, str(len(input_array)), chart.create_data_structure("Potentially Illegal Activities", str(illegal_activities_counter))
+     return final_array, str(len(input_array)), chart.create_data_structure("Of Evidenciary Interest", str(illegal_activities_counter))
     
     def predict_argumentative_nature(self, input_array):
      chart = pieChart()
