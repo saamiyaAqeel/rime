@@ -27,7 +27,7 @@ const options = [
 ];
 
 const navigate = () => {
-  window.open('https://forms.office.com/Pages/ResponsePage.aspx?id=7qe9Z4D970GskTWEGCkKHt13h9QfEU1Fr6JL1ThahOxUMUdURDhIVFZCMjBMU0VNN1BOWUhLWTIxRS4u', '_blank');  
+  window.open('https://forms.office.com/Pages/ResponsePage.aspx?id=7qe9Z4D970GskTWEGCkKHt13h9QfEU1Fr6JL1ThahOxUMUdURDhIVFZCMjBMU0VNN1BOWUhLWTIxRS4u', '_blank');
 };
 
 
@@ -357,14 +357,31 @@ const handleSearch = () => {
         </div>
         <div class="info-icon" @mouseover="showInfoBox = true" @mouseleave="showInfoBox = false">
           <span class="icon">?</span>
-          <div class="info-box" v-show="showInfoBox">
-            This timeline is a visualisation made to portray all messages and media in a
-            chronological format. All changes made to the search results is dynamically
-            made to the timeline on the page. To zoom into a certain part of the you can
-            do that in the date range picker, however it can only be done for the valid
-            date ranges as shown below. A time block is made if an event is 2 hours within
-            each other by default, if you would like to change the time span it can be
-            done below as well.
+          <div v-if="selectedOption === 'Select an option'" class="info-box" v-show="showInfoBox">
+            The pie chart page displays the contents of the dataset in a multitude of ways,
+            you can check the potential contents of the data and search for specific and related words.
+          </div>
+          <div v-if="selectedOption === 'Of Evidenciary Interest'" class="info-box" v-show="showInfoBox">
+            The pie chart page displays the percentage of the dataset that can flag up when it comes to evidenciary
+            interest,
+            for example criminal activities, it should be known that the results are produced using a classfier which
+            will not always be accurate.
+          </div>
+          <div v-if="selectedOption === 'Potential Conversation of Argumentative Nature'" class="info-box"
+            v-show="showInfoBox">
+            The pie chart page displays the percentage of the dataset that can flag up when it comes to potential
+            argumentaive nature between individuals.
+            It should be known that the results are produced using a classfier which will not always be accurate.
+          </div>
+          <div v-if="selectedOption === 'Strict Keyword Search'" class="info-box"
+            v-show="showInfoBox">
+            This pie chart will show you the percentage of a certain word that is searched throughout the dataset such as the word "hello" or "meet". if the word is not found
+            , a message will be shown
+          </div>
+          <div v-if="selectedOption === 'Related-Words Keyword Search'" class="info-box"
+            v-show="showInfoBox">
+           This pie chart will show you the percentage of the words that was searched along side the words that are related to that word, 
+           the tag cloud next to it displays the words related to searched word.
           </div>
         </div>
       </div>
@@ -394,8 +411,8 @@ const handleSearch = () => {
 
 <style scoped>
 .button-space {
-  margin-top: 20px; 
-  margin-left: 10px; 
+  margin-top: 20px;
+  margin-left: 10px;
 }
 
 .info-container {
@@ -429,18 +446,21 @@ const handleSearch = () => {
   margin-right: 20px;
 }
 
+
 .info-box {
   position: absolute;
-  top: -60px;
-  left: 50px;
-  width: 300px;
-  padding: 10px;
+  width: 500px;  
+  bottom: 100%;  
+  left: 50%;    
+  transform: translate(-50%, -10px); 
   background-color: #fff;
   border: 1px solid #ccc;
   border-radius: 5px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  display: none;
+  display: none; 
+  z-index: 1000; 
 }
+
 
 .tag-cloud-container {
   flex: 0 0 50%;

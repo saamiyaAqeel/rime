@@ -16,7 +16,7 @@ def get_data():
 
 @app.route('/api/messages', methods=['POST'])
 def post_data():
-    data = request.form.getlist('data')  # Retrieve data from the request form
+    data = request.form.getlist('data') 
     chart_response = pieChart()
 
     if data:
@@ -40,7 +40,7 @@ def post_data():
 
 @app.route('/api/argumentativeClassifier', methods=['POST'])
 def post_argumentative():
-    data = request.form.getlist('data')  # Retrieve data from the request form
+    data = request.form.getlist('data') 
     chart_response = pieChart()
 
     if data:
