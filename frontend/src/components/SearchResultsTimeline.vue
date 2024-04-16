@@ -226,7 +226,7 @@ watch([selectedTimeRange, searchResult], ([timeRange, result]) => {
         } else {
           momentData.push({
             x: prevEvent.timestamp,
-            y: `${providerName}`
+            y: `${providerName} ${device}`
           });
 
           rangeStart = currentEvent.timestamp;
@@ -235,7 +235,7 @@ watch([selectedTimeRange, searchResult], ([timeRange, result]) => {
       }
       momentData.push({
         x: rangeEnd,
-        y: `${providerName}`
+        y: `${device}`
       });
     }
 
