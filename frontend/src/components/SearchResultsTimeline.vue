@@ -35,7 +35,8 @@
           <div class="info-icon info-icon--small" @mouseover="showDateRangeInfo = true"
             @mouseleave="showDateRangeInfo = false">
             <span class="icon icon--small">?</span>
-            <div class="info-box" v-show="showDateRangeInfo">This is the date range of the dataset for you to look through</div>
+            <div class="info-box" v-show="showDateRangeInfo">This is the date range of the dataset for you to look
+              through</div>
           </div>
         </div>
         <div class="time-range-select">
@@ -49,7 +50,8 @@
           <div class="info-icon info-icon--small" @mouseover="showTimeRangeInfo = true"
             @mouseleave="showTimeRangeInfo = false">
             <span class="icon icon--small">?</span>
-            <div class="info-box" v-show="showTimeRangeInfo">A time block is made if the events are within a certain "time range" 
+            <div class="info-box" v-show="showTimeRangeInfo">A time block is made if the events are within a certain
+              "time range"
               that you can specify, same provider and same device. Otherwise the event is made into a moment. </div>
           </div>
         </div>
@@ -88,7 +90,7 @@ const showDateRangeInfo = ref(false);
 const showTimeRangeInfo = ref(false);
 
 const navigate = () => {
-  window.open('https://forms.office.com/Pages/ResponsePage.aspx?id=7qe9Z4D970GskTWEGCkKHt13h9QfEU1Fr6JL1ThahOxUMUdURDhIVFZCMjBMU0VNN1BOWUhLWTIxRS4u', '_blank');  
+  window.open('https://forms.office.com/Pages/ResponsePage.aspx?id=7qe9Z4D970GskTWEGCkKHt13h9QfEU1Fr6JL1ThahOxUMUdURDhIVFZCMjBMU0VNN1BOWUhLWTIxRS4u', '_blank');
 };
 
 const fit = () => {
@@ -165,6 +167,7 @@ const endOfMonth = (date) => {
 }
 
 watch([selectedTimeRange, searchResult], ([timeRange, result]) => {
+  var count = 0
   if (!result)
     return;
   messagesSet.value = []
@@ -245,22 +248,37 @@ watch([selectedTimeRange, searchResult], ([timeRange, result]) => {
     let deviceName = events[0].deviceName;
     let rangeStart = events[0].start;
     let rangeEnd = events[0].end;
+    let eventsCount = [];
+    let currentEventsCount = 0;
 
-    for (let i = 1; i < events.length; i++) {
+    for (let i = 0; i < events.length; i++) {
       const event = events[i];
-      const timeDifference = event.start - rangeEnd;
-      if (event.name === providerName && event.deviceName === deviceName && timeDifference <= Hours) {
-        rangeEnd = event.end;
-      } else {
-        rangeData.push([providerName, deviceName, rangeStart, rangeEnd]);
+      if (i === 0) {
         providerName = event.name;
         deviceName = event.deviceName;
         rangeStart = event.start;
         rangeEnd = event.end;
+        currentEventsCount = 1;
+        continue;
+      }
+      const timeDifference = event.start - rangeEnd;
+      if (event.name === providerName && event.deviceName === deviceName && timeDifference <= Hours) {
+        rangeEnd = event.end;
+        currentEventsCount++;
+      } else {
+        rangeData.push([providerName, deviceName, rangeStart, rangeEnd]);
+        eventsCount.push(currentEventsCount);
+
+        providerName = event.name;
+        deviceName = event.deviceName;
+        rangeStart = event.start;
+        rangeEnd = event.end;
+        currentEventsCount = 1;
       }
     }
 
     rangeData.push([providerName, deviceName, rangeStart, rangeEnd]);
+    eventsCount.push(currentEventsCount);
 
     const splitRangeData = [];
     let currentSubArray = [rangeData[0][1]];
@@ -277,38 +295,59 @@ watch([selectedTimeRange, searchResult], ([timeRange, result]) => {
       }
     }
 
+
     const deviceIdColorPairs = getColorByTitle(uniqueDeviceIds);
-    anyTimeline(splitRangeData, momentData, deviceIdColorPairs);
+    anyTimeline(splitRangeData, momentData, deviceIdColorPairs, eventsCount);
     createLegend(deviceIdColorPairs);
   }
 });
 
+const anyTimeline = (chartData, momentData, deviceIdColorPairs, eventsCounts) => {
+    timeline.value.innerHTML = '';
+    chart = anychart.timeline();
 
-const anyTimeline = (chartData, momentData, deviceIdColorPairs) => {
-  timeline.value.innerHTML = '';
-  chart = anychart.timeline();
-  chartData.forEach((subArray, index) => {
-    const deviceName = subArray[0];
-    const deviceColor = deviceIdColorPairs.find(pair => pair.deviceId === deviceName)?.color;
-    const chartDataWithoutFirstElement = subArray.slice(1);
-    const data = chartDataWithoutFirstElement.map(event => [event[0], event[1], event[2]]);
-    const rangeSeries = chart.range(data);
-    rangeSeries.normal().fill(deviceColor);
-    rangeSeries.normal().stroke(deviceColor);
-  });
-  const middleIndex = Math.floor(momentData.length / 2);
-  const firstHalf = momentData.slice(0, middleIndex);
-  const secondHalf = momentData.slice(middleIndex);
-  chart.moment(firstHalf)
-  var second = chart.moment(secondHalf)
-  second.direction('down');
-  chart.container(timeline.value);
-  chart.scroller().enabled(true);
-  var axis = chart.axis();
-  axis.height(25);
-  chart.draw();
-  timeline.value.classList.add('centered-timeline');
-}
+    chartData.forEach((subArray, index) => {
+        if (subArray) {
+            const deviceName = subArray[0];
+            const deviceColor = deviceIdColorPairs.find(pair => pair.deviceId === deviceName)?.color;
+            const events = subArray.slice(1); 
+            const counts = eventsCounts;
+
+            events.forEach((event, eventIndex) => {
+                const rangeSeries = chart.range([event]);
+                rangeSeries.normal().fill(deviceColor);
+                rangeSeries.normal().stroke(deviceColor);
+                rangeSeries.tooltip().enabled(true);
+                rangeSeries.tooltip().useHtml(true);
+
+                rangeSeries.tooltip().format(function() {
+                    let startDate = new Date(this.start).toLocaleString();
+                    let endDate = new Date(this.end).toLocaleString();
+                    let count = counts[eventIndex]; 
+                    return `Start: ${startDate}<br>End: ${endDate}<br>${count} events <br>${deviceName}- Device Name`;
+                });
+              eventsCounts = eventsCounts.slice(eventIndex)
+            });
+
+        }
+    });
+
+    const middleIndex = Math.floor(momentData.length / 2);
+    const firstHalf = momentData.slice(0, middleIndex);
+    const secondHalf = momentData.slice(middleIndex);
+    chart.moment(firstHalf);
+    var second = chart.moment(secondHalf);
+    second.direction('down');
+    chart.container(timeline.value);
+    chart.scroller().enabled(true);
+    var axis = chart.axis();
+    axis.height(25);
+    chart.draw();
+    timeline.value.classList.add('centered-timeline');
+};
+
+
+
 
 const createLegend = (deviceIdColorPairs) => {
   const legendContainer = document.getElementById('legendContainer');
@@ -357,11 +396,11 @@ onMounted(() => {
 
 <style scoped>
 .time-range-select .info-icon--small .info-box {
-  left: 50%; 
-  right: 0; 
-  transform: translateX(-100%); 
-  max-width: 300px; 
-} 
+  left: 50%;
+  right: 0;
+  transform: translateX(-100%);
+  max-width: 300px;
+}
 
 .info-icon--small {
   margin-left: 5px;
@@ -476,8 +515,6 @@ onMounted(() => {
   display: none;
   z-index: 1000;
 }
-
-
 
 button,
 label {
