@@ -1,210 +1,154 @@
-i hate you, 1
-i love you, 0
-today was horrible, i hated it, 1
-today has been okay, 0
-Today has been horrible, 1
-This product is terrible, 1
-today was horrible i hated every part of it, it was lacking, 1
-I absolutely love this movie!, 0
-Today's weather is amazing., 0
-I can't stand this traffic jam., 1
-The service at this restaurant was awful., 1
-I had a fantastic time at the concert!, 0
-This book is a masterpiece., 0
-The quality of customer service at this store is abysmal. Every time I visit, I'm met with indifference and rudeness, making the shopping experience incredibly unpleasant., 1
-I had an amazing vacation in Europe last summer. Exploring the historic cities, indulging in delicious cuisine, and immersing myself in different cultures was an unforgettable experience., 0
-The recent software update on my phone has been causing major issues. It's been crashing constantly, freezing up, and draining the battery faster than ever before. It's frustrating to deal with such poor performance from a supposedly high-end device., 1
-I'm thrilled about the upcoming family reunion. It's been years since we've all been together, and I can't wait to catch up with everyone, share stories, and create new memories., 0
-The novel I'm currently reading is utterly captivating. The intricate plot, well-developed characters, and vivid descriptions transport me to another world with each page I turn., 0
-The noise pollution in my neighborhood has reached intolerable levels. Between the constant traffic, loud construction, and blaring car alarms, it's impossible to find a moment of peace and quiet., 1
-I'm feeling incredibly optimistic about the future of renewable energy. With advancements in technology and growing awareness of environmental issues, I believe we're on the cusp of a cleaner, more sustainable world., 0
-The quality of the furniture in this apartment is disappointing. Despite being advertised as luxurious and durable, it's clear that cheap materials were used, and the pieces are already showing signs of wear and tear after only a few months., 1
-Last night's concert was absolutely electrifying! The energy of the crowd, the mesmerizing performances, and the pulsating music created an atmosphere unlike anything I've ever experienced., 0
-I'm so frustrated with my internet connection., 1
-The staff at the hotel was very friendly and helpful., 0
-The customer service at this store is abysmal., 1
-I'm thrilled with the results of my new workout routine!, 0
-I can't believe how rude that driver was on the road., 1
-This new restaurant in town has the most delicious food!, 0
-The quality of this product is disappointing., 1
-I had a wonderful time exploring the new city., 0
-The performance of my computer has been extremely frustrating lately., 1
-I'm over the moon about my recent promotion at work!, 0
-The movie I watched last night was incredibly boring., 1
-I'm so grateful for the support of my friends and family., 0
-The noise level in this neighborhood is unbearable., 1
-Today's sunset was absolutely breathtaking., 0
-Attending live theater productions always fills me with excitement and anticipation. The anticipation of the lights dimming, the curtain rising, and being transported into the world of the story unfolding on stage is an unparalleled thrill., 0
-Exploring new hiking trails in the mountains brings me immense joy and a sense of connection to nature. With each step, I feel invigorated by the fresh air, awe-inspiring views, and the challenge of conquering new peaks., 0
-I'm delighted to announce the launch of my new business venture. After months of planning and hard work, I'm excited to share my passion with the world and make a positive impact in my community., 0
-The recent renovations in my apartment building have been a source of frustration for all residents. The constant noise, dust, and disruptions to daily life have made it nearly impossible to relax and enjoy our own homes., 1
-I'm ecstatic about the opportunity to travel to Japan next month. Exploring vibrant cities, experiencing traditional culture, and sampling delicious cuisine are just a few of the adventures I have planned., 0
-The service at this hotel exceeded my expectations., 0
-I'm feeling very optimistic about the future., 0
-The maintenance of this building is seriously lacking., 1
-This novel I'm reading is captivating and beautifully written., 0
-The food at this restaurant is simply divine., 0
-I'm furious about the constant delays with public transportation., 1
-The concert I attended last weekend was electrifying!, 0
-I'm frustrated with the lack of communication from management regarding changes in company policies. It feels like decisions are being made behind closed doors without considering the impact on employees, leading to confusion and resentment., 1
-I'm overjoyed by the success of my recent art exhibition. Seeing my work displayed in a gallery and receiving positive feedback from viewers has been incredibly validating after years of hard work and dedication., 0
-The recent heatwave has made the summer weather unbearable. With temperatures soaring past 100 degrees Fahrenheit and no relief in sight, it's impossible to enjoy outdoor activities or even find respite indoors without air conditioning., 1
-I'm deeply grateful for the support of my friends and family during difficult times. Their unwavering love, encouragement, and willingness to lend a helping hand have been a source of strength and comfort., 0
-The service at this restaurant exceeded my expectations. From the warm greeting at the door to the attentive waitstaff and exquisite cuisine, every aspect of the dining experience was top-notch., 0
-I'm infuriated by the constant delays and cancellations plaguing public transportation. It's unacceptable that commuters are forced to endure such unreliable service, leading to wasted time, stress, and frustration., 1
-The customer service at this store is abysmal., 1
-I'm thrilled with the results of my new workout routine!, 0
-I can't believe how rude that driver was on the road., 1
-This new restaurant in town has the most delicious food!, 0
-The quality of this product is disappointing., 1
-I had a wonderful time exploring the new city., 0
-The performance of my computer has been extremely frustrating lately., 1
-I'm over the moon about my recent promotion at work!, 0
-The movie I watched last night was incredibly boring., 1
-I'm so grateful for the support of my friends and family., 0
-The noise level in this neighborhood is unbearable., 1
-Today's sunset was absolutely breathtaking., 0
-The service at this hotel exceeded my expectations., 0
-I'm feeling very optimistic about the future., 0
-The maintenance of this building is seriously lacking., 1
-This novel I'm reading is captivating and beautifully written., 0
-The food at this restaurant is simply divine., 0
-I'm furious about the constant delays with public transportation., 1
-The concert I attended last weekend was electrifying!, 0
-I love spending time with my loved ones during the holidays., 0
-The cold weather lately has been unbearable., 1
-Exploring new hiking trails brings me so much joy., 0
-I'm frustrated with the lack of progress on this project., 1
-Listening to my favorite music always puts me in a good mood., 0
-The recent increase in traffic has made my commute unbearable., 1
-Taking a leisurely stroll through the park is so relaxing., 0
-I'm excited to try out the new restaurant in town., 0
-The customer support hotline was incredibly helpful., 0
-The customer service at this store is abysmal., 1
-I'm thrilled with the results of my new workout routine!, 0
-I can't believe how rude that driver was on the road., 1
-This new restaurant in town has the most delicious food!, 0
-The quality of this product is disappointing., 1
-I had a wonderful time exploring the new city., 0
-The performance of my computer has been extremely frustrating lately., 1
-I'm over the moon about my recent promotion at work!, 0
-The movie I watched last night was incredibly boring., 1
-I'm so grateful for the support of my friends and family., 0
-The noise level in this neighborhood is unbearable., 1
-Today's sunset was absolutely breathtaking., 0
-The service at this hotel exceeded my expectations., 0
-I'm feeling very optimistic about the future., 0
-The maintenance of this building is seriously lacking., 1
-This novel I'm reading is captivating and beautifully written., 0
-The food at this restaurant is simply divine., 0
-I'm furious about the constant delays with public transportation., 1
-The concert I attended last weekend was electrifying!, 0
-I love spending time with my loved ones during the holidays., 0
-The cold weather lately has been unbearable., 1
-Exploring new hiking trails brings me so much joy., 0
-I'm frustrated with the lack of progress on this project., 1
-Listening to my favorite music always puts me in a good mood., 0
-The recent increase in traffic has made my commute unbearable., 1
-Taking a leisurely stroll through the park is so relaxing., 0
-I'm excited to try out the new restaurant in town., 0
-The customer support hotline was incredibly helpful., 0
-I'm annoyed by the constant interruptions during meetings., 1
-This traffic jam is driving me crazy., 1
-The sunset I saw today was absolutely stunning., 0
-I'm so disappointed with the service at this store., 1
-I had a fantastic time at the beach today!, 0
-The quality of this product exceeded my expectations., 0
-I can't believe how rude that cashier was., 1
-Today's weather is perfect for a picnic., 0
-I'm frustrated with the constant noise pollution in this area., 1
-The new album by my favorite band is amazing!, 0
-This movie I watched was a complete waste of time., 1
-I'm thrilled about the opportunity to travel next week., 0
-The food at this restaurant is delicious., 0
-I'm exhausted from dealing with all these problems., 1
-The view from my balcony is breathtaking., 0
-I'm annoyed by the constant interruptions during meetings., 1
-I love spending time with my family on weekends., 0
-This new phone I bought is terrible., 1
-I'm excited to start my new job next month!, 0
-The customer service at this hotel was exceptional., 0
-I can't stand the constant barking of my neighbor's dog., 1
-The book I'm reading is so captivating., 0
-I'm so frustrated with the slow internet connection., 1
-The service at this restaurant was top-notch., 0
-I'm thrilled about the progress I've made on my project., 0
-This rainy weather is putting me in a bad mood., 1
-I had a wonderful time exploring the city's museums., 0
-I'm annoyed with the constant spam emails I receive., 1
-The coffee I had this morning was absolutely delicious., 0
-I'm disappointed with the lack of communication from the team., 1
-I'm excited about the new opportunities that lie ahead., 0
-The traffic on the highway is unbearable., 1
-I'm feeling grateful for the support of my friends., 0
-The service at this store was excellent., 0
-I'm frustrated with the slow progress on this project., 1
-I'm thrilled about the news of our upcoming vacation!, 0
-The food at this café is not up to par., 1
-I had a wonderful time at the concert last night., 0
-I'm annoyed with the constant interruptions during my work., 1
-This new game I bought is so much fun to play., 0
-I'm thrilled about the opportunity to learn something new., 0
-The noise level in this apartment building is unbearable., 1
-I'm feeling optimistic about the future., 0
-The service at this restaurant was disappointing., 1
-I'm excited about the chance to travel to Europe., 0
-This rainy weather is ruining my plans for the day., 1
-I'm grateful for the beautiful weather we've been having., 0
-The quality of this product is exceptional., 0
-I'm frustrated with the lack of support from my colleagues., 1
-I'm thrilled about the progress I've made in my fitness journey., 0
-The traffic on the streets is unbearable., 1
-The service at this hotel fell far short of expectations. From the unclean rooms to the rude staff, the entire experience was disappointing and soured my trip., 1
-I had an incredible time backpacking through Southeast Asia last year. Exploring ancient temples, sampling exotic foods, and meeting people from diverse backgrounds enriched my soul and left me with unforgettable memories., 0
-The constant software bugs on my computer have become a major hindrance to my productivity. Despite multiple updates and troubleshooting attempts, the issues persist, making it difficult to complete tasks efficiently., 1
-I'm thrilled to announce my engagement to the love of my life! Planning our future together and sharing this special moment with friends and family fills me with immense joy and gratitude., 0
-The movie I watched last night was an absolute masterpiece. The compelling storyline, brilliant acting, and stunning cinematography kept me on the edge of my seat from start to finish., 0
-The relentless noise pollution in my neighborhood has reached intolerable levels. Whether it's blaring car horns, loud music, or incessant construction, there's no escape from the cacophony that surrounds me., 1
-I'm optimistic about the potential of technology to solve pressing global challenges. Innovations in renewable energy, healthcare, and communication have the power to transform lives and create a more sustainable future for all., 0
-The quality of the clothing I purchased from this store was subpar. After just a few washes, the fabric began to fray, and the seams started coming apart, leaving me deeply disappointed in the lack of durability., 1
-Attending the music festival last weekend was an unforgettable experience. Dancing to my favorite bands, surrounded by friends and fellow music lovers, filled me with a sense of euphoria and belonging., 0
-I'm frustrated by the lack of progress on environmental issues. Despite overwhelming evidence of climate change and ecological destruction, political leaders continue to prioritize short-term gains over long-term sustainability., 1
-I'm feeling positive about the outcome of this project., 0
-The service at this café was terrible., 1
-I'm excited about the opportunity to meet new people., 0
-The noise level in this café is too loud., 1
-I'm feeling optimistic about the future of this company., 0
-The service at this store was outstanding., 0
-I'm disappointed with the lack of professionalism from the staff., 1
-I'm thrilled about the chance to explore new places., 0
-The quality of this product is subpar., 1
-I'm excited about the opportunity to learn something new., 0
-The weather today is perfect for outdoor activities., 0
-I'm feeling positive about the progress I've made., 0
-The service at this restaurant was excellent., 0
-I'm disappointed with the lack of support from my colleagues., 1
-I'm thrilled about the progress I've made in my fitness journey., 0
-The traffic on the streets is unbearable., 1
-I'm feeling positive about the outcome of this project., 0
-The service at this café was terrible., 1
-I'm excited about the opportunity to meet new people., 0
-The noise level in this café is too loud., 1
-I'm feeling optimistic about the future of this company., 0
-The service at this store was outstanding., 0
-I'm disappointed with the lack of professionalism from the staff., 1
-I'm thrilled about the chance to explore new places., 0
-The quality of this product is subpar., 1
-I'm excited about the opportunity to learn something new., 0
-The weather today is perfect for outdoor activities., 0
-I'm feeling positive about the progress I've made., 0
-I'm overjoyed by the birth of my first child. Holding my newborn in my arms, feeling their tiny heartbeat, and seeing their precious face fills me with an indescribable love and sense of purpose., 0
-The recent surge in online shopping has resulted in excessive packaging waste. It's disheartening to see so much plastic and cardboard being thrown away, contributing to environmental degradation., 1
-I'm grateful for the opportunity to volunteer at the local animal shelter. Spending time with rescue animals, helping them find loving homes, and seeing the joy they bring to their new families fills my heart with warmth and fulfillment., 0
-The food at this restaurant surpassed all expectations. Each dish was expertly prepared, bursting with flavor, and beautifully presented, making it a dining experience to remember., 0
-I'm infuriated by the lack of action on social justice issues. Systemic inequality, discrimination, and violence continue to plague society, and it's time for meaningful change to address these injustices., 1
-Exploring the natural wonders of the Grand Canyon was a breathtaking experience. Standing on the edge of the majestic cliffs, gazing out at the vast expanse of red rock formations, and feeling the awe-inspiring power of nature was truly humbling., 0
-I'm excited to start my new job next week. The opportunity for growth, the supportive work environment, and the chance to make a positive impact in my field are all reasons for my enthusiasm., 0
-The recent increase in traffic congestion has made commuting a nightmare. Spending hours stuck in gridlock, inhaling fumes from idling cars, and arriving late to work has become a daily frustration for many., 1
-Volunteering at the local soup kitchen is a humbling experience. Serving meals to those in need, listening to their stories, and offering a compassionate ear reminds me of the importance of kindness and community., 0
-
-
+text,label
+i hate you,1
+i love you,0
+today was horrible i hated it,1
+today has been okay,0
+Today has been horrible,1
+This product is terrible,1
+today was horrible i hated every part of it it was lacking,1
+I absolutely love this movie!,0
+I hate everyone and everything,0
+Today's weather is amazing.,0
+today was horrible i hated every part of it it was lacking,1
+I can't stand this traffic jam.,1
+The service at this restaurant was awful.,1
+today was horrible i hated every part of it it was lacking,1
+I had a fantastic time at the concert!,0
+This book is a masterpiece.,0
+The quality of customer service at this store is abysmal. Every time I visit I'm met with indifference and rudeness making the shopping experience incredibly unpleasant.,1
+I had an amazing vacation in Europe last summer. Exploring the historic cities indulging in delicious cuisine and immersing myself in different cultures was an unforgettable experience.,0
+The recent software update on my phone has been causing major issues. It's been crashing constantly freezing up and draining the battery faster than ever before. It's frustrating to deal with such poor performance from a supposedly high-end device.,1
+I'm thrilled about the upcoming family reunion. It's been years since we've all been together and I can't wait to catch up with everyone share stories and create new memories.,0
+The novel I'm currently reading is utterly captivating. The intricate plot well-developed characters and vivid descriptions transport me to another world with each page I turn.,0
+The noise pollution in my neighborhood has reached intolerable levels. Between the constant traffic loud construction and blaring car alarms it's impossible to find a moment of peace and quiet.,1
+I'm feeling incredibly optimistic about the future of renewable energy. With advancements in technology and growing awareness of environmental issues I believe we're on the cusp of a cleaner more sustainable world.,0
+The quality of the furniture in this apartment is disappointing. Despite being advertised as luxurious and durable it's clear that cheap materials were used and the pieces are already showing signs of wear and tear after only a few months.,1
+Last night's concert was absolutely electrifying! The energy of the crowd the mesmerizing performances and the pulsating music created an atmosphere unlike anything I've ever experienced.,0
+I'm so frustrated with my internet connection.,1
+The staff at the hotel was very friendly and helpful.,0
+The customer service at this store is abysmal.,1
+I'm thrilled with the results of my new workout routine!,0
+I can't believe how rude that driver was on the road.,1
+This new restaurant in town has the most delicious food!,0
+The quality of this product is disappointing.,1
+I had a wonderful time exploring the new city.,0
+The performance of my computer has been extremely frustrating lately.,1
+I'm over the moon about my recent promotion at work!,0
+The movie I watched last night was incredibly boring.,1
+I'm so grateful for the support of my friends and family.,0
+The noise level in this neighborhood is unbearable.,1
+Today's sunset was absolutely breathtaking.,0
+The service at this hotel exceeded my expectations.,0
+I'm feeling very optimistic about the future.,0
+The maintenance of this building is seriously lacking.,1
+This novel I'm reading is captivating and beautifully written.,0
+The food at this restaurant is simply divine.,0
+I'm furious about the constant delays with public transportation.,1
+The concert I attended last weekend was electrifying!,0
+I love spending time with my loved ones during the holidays.,0
+The cold weather lately has been unbearable.,1
+Exploring new hiking trails brings me so much joy.,0
+I'm frustrated with the lack of progress on this project.,1
+Listening to my favorite music always puts me in a good mood.,0
+The recent increase in traffic has made my commute unbearable.,1
+Taking a leisurely stroll through the park is so relaxing.,0
+I'm excited to try out the new restaurant in town.,0
+The customer support hotline was incredibly helpful.,0
+I'm annoyed by the constant interruptions during meetings.,1
+This traffic jam is driving me crazy.,1
+The sunset I saw today was absolutely stunning.,0
+I'm so disappointed with the service at this store.,1
+I had a fantastic time at the beach today!,0
+The quality of this product exceeded my expectations.,0
+I can't believe how rude that cashier was.,1
+Today's weather is perfect for a picnic.,0
+I'm frustrated with the constant noise pollution in this area.,1
+The new album by my favorite band is amazing!,0
+This movie I watched was a complete waste of time.,1
+I'm thrilled about the opportunity to travel next week.,0
+The food at this restaurant is delicious.,0
+I'm exhausted from dealing with all these problems.,1
+The view from my balcony is breathtaking.,0
+I'm annoyed by the constant interruptions during meetings.,1
+I love spending time with my family on weekends.,0
+This new phone I bought is terrible.,1
+I'm excited to start my new job next month!,0
+The customer service at this hotel was exceptional.,0
+I can't stand the constant barking of my neighbor's dog.,1
+The book I'm reading is so captivating.,0
+I'm so frustrated with the slow internet connection.,1
+The service at this restaurant was top-notch.,0
+I'm thrilled about the progress I've made on my project.,0
+This rainy weather is putting me in a bad mood.,1
+I had a wonderful time exploring the city's museums.,0
+I'm annoyed with the constant spam emails I receive.,1
+The coffee I had this morning was absolutely delicious.,0
+I'm disappointed with the lack of communication from the team.,1
+I'm excited about the new opportunities that lie ahead.,0
+The traffic on the highway is unbearable.,1
+I'm feeling grateful for the support of my friends.,0
+The service at this store was excellent.,0
+I'm frustrated with the slow progress on this project.,1
+I'm thrilled about the news of our upcoming vacation!,0
+The food at this café is not up to par.,1
+I had a wonderful time at the concert last night.,0
+I'm annoyed with the constant interruptions during my work.,1
+This new game I bought is so much fun to play.,0
+I'm thrilled about the opportunity to learn something new.,0
+The noise level in this apartment building is unbearable.,1
+I'm feeling optimistic about the future.,0
+The service at this restaurant was disappointing.,1
+I'm excited about the chance to travel to Europe.,0
+This rainy weather is ruining my plans for the day.,1
+I'm grateful for the beautiful weather we've been having.,0
+The quality of this product is exceptional.,0
+I'm frustrated with the lack of support from my colleagues.,1
+I'm thrilled about the progress I've made in my fitness journey.,0
+The traffic on the streets is unbearable.,1
+The service at this hotel exceeded my expectations. From the unclean rooms to the rude staff the entire experience was disappointing and soured my trip.,1
+I had an incredible time backpacking through Southeast Asia last year. Exploring ancient temples sampling exotic foods and meeting people from diverse backgrounds enriched my soul and left me with unforgettable memories.,0
+The constant software bugs on my computer have become a major hindrance to my productivity. Despite multiple updates and troubleshooting attempts the issues persist making it difficult to complete tasks efficiently.,1
+I'm thrilled to announce my engagement to the love of my life! Planning our future together and sharing this special moment with friends and family fills me with immense joy and gratitude.,0
+The movie I watched last night was an absolute masterpiece. The compelling storyline brilliant acting and stunning cinematography kept me on the edge of my seat from start to finish.,0
+The relentless noise pollution in my neighborhood has reached intolerable levels. Whether it's blaring car horns loud music or incessant construction there's no escape from the cacophony that surrounds me.,1
+I'm optimistic about the potential of technology to solve pressing global challenges. Innovations in renewable energy healthcare and communication have the power to transform lives and create a more sustainable future for all.,0
+The quality of the clothing I purchased from this store was subpar. After just a few washes the fabric began to fray and the seams started coming apart leaving me deeply disappointed in the lack of durability.,1
+Attending the music festival last weekend was an unforgettable experience. Dancing to my favorite bands surrounded by friends and fellow music lovers filled me with a sense of euphoria and belonging.,0
+I'm frustrated by the lack of progress on environmental issues. Despite overwhelming evidence of climate change and ecological destruction political leaders continue to prioritize short-term gains over long-term sustainability.,1
+I'm feeling positive about the outcome of this project.,0
+The service at this café was terrible.,1
+I'm excited about the opportunity to meet new people.,0
+The noise level in this café is too loud.,1
+I'm feeling optimistic about the future of this company.,0
+The service at this store was outstanding.,0
+I'm disappointed with the lack of professionalism from the staff.,1
+I'm thrilled about the chance to explore new places.,0
+The quality of this product is subpar.,1
+I'm excited about the opportunity to learn something new.,0
+The weather today is perfect for outdoor activities.,0
+I'm feeling positive about the progress I've made.,0
+The service at this restaurant was excellent.,0
+I'm disappointed with the lack of support from my colleagues.,1
+I'm thrilled about the progress I've made in my fitness journey.,0
+The traffic on the streets is unbearable.,1
+I'm feeling positive about the outcome of this project.,0
+The service at this café was terrible.,1
+I'm excited about the opportunity to meet new people.,0
+The noise level in this café is too loud.,1
+I'm feeling optimistic about the future of this company.,0
+The service at this store was outstanding.,0
+I'm disappointed with the lack of professionalism from the staff.,1
+I'm thrilled about the chance to explore new places.,0
+The quality of this product is subpar.,1
+I'm excited about the opportunity to learn something new.,0
+The weather today is perfect for outdoor activities.,0
+I'm feeling positive about the progress I've made.,0
+I'm overjoyed by the birth of my first child. Holding my newborn in my arms feeling their tiny heartbeat and seeing their precious face fills me with an indescribable love and sense of purpose.,0
+The recent surge in online shopping has resulted in excessive packaging waste. It's disheartening to see so much plastic and cardboard being thrown away contributing to environmental degradation.,1
+I'm grateful for the opportunity to volunteer at the local animal shelter. Spending time with rescue animals helping them find loving homes and seeing the joy they bring to their new families fills my heart with warmth and fulfillment.,0
+The food at this restaurant surpassed all expectations. Each dish was expertly prepared bursting with flavor and beautifully presented making it a dining experience to remember.,0
+I'm infuriated by the lack of action on social justice issues. Systemic inequality discrimination and violence continue to plague society and it's time for meaningful change to address these injustices.,1
+Exploring the natural wonders of the Grand Canyon was a breathtaking experience. Standing on the edge of the majestic cliffs gazing out at the vast expanse of red rock formations and feeling the awe-inspiring power of nature was truly humbling.,0
+I'm excited to start my new job next week. The opportunity for growth the supportive work environment and the chance to make a positive impact in my field are all reasons for my enthusiasm.,0
+The recent increase in traffic congestion has made commuting a nightmare. Spending hours stuck in gridlock inhaling fumes from idling cars and arriving late to work has become a daily frustration for many.,1
+Volunteering at the local soup kitchen is a humbling experience. Serving meals to those in need listening to their stories and offering a compassionate ear reminds me of the importance of kindness and community.,0
