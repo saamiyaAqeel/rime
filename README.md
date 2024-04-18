@@ -18,7 +18,7 @@ running Homebrew, you can get them by running `brew install python@3.10 nodejs n
 Also, you'll need to download the example phone dumps (unless you have your own). These are stored using `git lfs`. If
 you'd already installed `git lfs` prior to checking out this repository, you shouldn't need to do anything; the files
 would have been downloaded on checkout. Otherwise, [install `git lfs`](https://git-lfs.com/) and retrieve the examples
-using `git lfs get`.
+using `git lfs fetch` and `git lfs pull`.
 
 If you don't have Git LFS, you can install it on Debian or Ubuntu by running `sudo apt install git-lfs`, or, if you're
 on a Mac running Homebrew, by running `brew install git-lfs`. Regardless of which system you're using, you should run
