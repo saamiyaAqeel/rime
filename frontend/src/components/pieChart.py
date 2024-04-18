@@ -31,16 +31,18 @@ class pieChart:
     nltk.download('wordnet')
     syn = ""
 
+    # Method to load glove embeddings
     def load_glove_embeddings(self, glove_file):
-     embeddings_index = {}
+     embeddings = {}
      with open(glove_file, 'r', encoding='utf8') as f:
         for line in f:
             values = line.split()
             word = values[0]
             coefs = np.asarray(values[1:], dtype='float32')
-            embeddings_index[word] = coefs
-     return embeddings_index
+            embeddings[word] = coefs
+     return embeddings
     
+    # Method to plot confusion matrix
     def plotMatrix(self, true_labels, y_pred):
      cm = confusion_matrix(true_labels, y_pred)
      plt.figure(figsize=(9, 6))
@@ -53,6 +55,7 @@ class pieChart:
      plt.title('Potential Argumentative')
      plt.show()
 
+    # Method to load of evidenciary interest perctanges using a CNN 
     def predict_illegal(self, input_array):
      chart = pieChart()
      glove_embeddings = chart.load_glove_embeddings('glove.6B.50d.txt')
@@ -66,19 +69,19 @@ class pieChart:
      tokenizer.fit_on_texts(texts)
      vocab_size = len(tokenizer.word_index) + 1
      sequences = tokenizer.texts_to_sequences(texts)
-     max_length = max([len(seq) for seq in sequences])
-     padded_sequences = pad_sequences(sequences, maxlen=max_length, padding='post')
+     length = max([len(seq) for seq in sequences])
+     padded_sequences = pad_sequences(sequences, maxlen=length, padding='post')
      labels = np.array(labels)
 
-     embedding_dim = 50  
-     embedding_matrix = np.zeros((vocab_size, embedding_dim))
-     for word, i in tokenizer.word_index.items():
-      embedding_vector = glove_embeddings.get(word)
+     dim = 50  
+     embedding_matrix = np.zeros((vocab_size, dim))
+     for w, i in tokenizer.word_index.items():
+      embedding_vector = glove_embeddings.get(w)
       if embedding_vector is not None:
         embedding_matrix[i] = embedding_vector
 
      model = Sequential([
-      Embedding(input_dim=vocab_size, output_dim=embedding_dim, embeddings_initializer=tf.keras.initializers.Constant(embedding_matrix), trainable=False),
+      Embedding(input_dim=vocab_size, output_dim=dim, embeddings_initializer=tf.keras.initializers.Constant(embedding_matrix), trainable=False),
       Conv1D(128, 5, activation='relu'),
       MaxPooling1D(4),
       Conv1D(64, 5, activation='relu'),
@@ -104,7 +107,7 @@ class pieChart:
 
      for input_text in input_array:
         input_sequence = tokenizer.texts_to_sequences([input_text])
-        padded_input_sequence = pad_sequences(input_sequence, maxlen=max_length, padding='post')
+        padded_input_sequence = pad_sequences(input_sequence, maxlen=length, padding='post')
         prediction = model.predict(padded_input_sequence)
         if prediction < 0.5:
             text_array.append(input_text)
@@ -114,6 +117,7 @@ class pieChart:
 
      return final_array, str(len(input_array)), chart.create_data_structure("Of Evidenciary Interest", str(illegal_activities_counter))
     
+    # Method for predicting argumentative nature using a CNN
     def predict_argumentative_nature(self, input_array):
      chart = pieChart()
      glove_embeddings = chart.load_glove_embeddings('glove.6B.50d.txt')
@@ -131,15 +135,15 @@ class pieChart:
      padded_sequences = pad_sequences(sequences, maxlen=max_length, padding='post')
      labels = np.array(labels)
 
-     embedding_dim = 50  
-     embedding_matrix = np.zeros((vocab_size, embedding_dim))
-     for word, i in tokenizer.word_index.items():
-      embedding_vector = glove_embeddings.get(word)
+     dim = 50  
+     matrix = np.zeros((vocab_size, dim))
+     for w, i in tokenizer.word_index.items():
+      embedding_vector = glove_embeddings.get(w)
       if embedding_vector is not None:
-        embedding_matrix[i] = embedding_vector
+        matrix[i] = embedding_vector
 
      model = Sequential([
-      Embedding(input_dim=vocab_size, output_dim=embedding_dim, embeddings_initializer=tf.keras.initializers.Constant(embedding_matrix), trainable=False),
+      Embedding(input_dim=vocab_size, output_dim=dim, embeddings_initializer=tf.keras.initializers.Constant(matrix), trainable=False),
       Conv1D(128, 5, activation='relu'),
       MaxPooling1D(4),
       Conv1D(64, 5, activation='relu'),
@@ -201,6 +205,7 @@ class pieChart:
      chart = pieChart()
      return str(total_words), chart.create_data_structure("Strict Keyword Occurrences", str(total_occurrences))
     
+    # This method using wordnet to get synonyms of the keyword 
     def get_synonyms(self, word, text):
         text_tokens = set(word_tokenize(text.lower()))
         synonyms = set()
@@ -216,6 +221,8 @@ class pieChart:
 
         return list(synonyms)
 
+    # Method for related keyword search, searches for the occurence of keyword and the synonyms using wordnet
+    # If no words found, users are met with a no words found message
     def related_keyword_search(self, text, keyword):
         text_str = ' '.join(text)
         synonyms = self.get_synonyms(keyword, text_str)

@@ -89,6 +89,7 @@ let chart = anychart.timeline();
 const showDateRangeInfo = ref(false);
 const showTimeRangeInfo = ref(false);
 
+// This directions the send feedback button to the form 
 const navigate = () => {
   window.open('https://forms.office.com/Pages/ResponsePage.aspx?id=7qe9Z4D970GskTWEGCkKHt13h9QfEU1Fr6JL1ThahOxUMUdURDhIVFZCMjBMU0VNN1BOWUhLWTIxRS4u', '_blank');
 };
@@ -97,6 +98,7 @@ const fit = () => {
   chart.fit();
 }
 
+// This zooms the timeline to the chosen date, if the date is out of bounds an alert is shown
 const zoomTo = () => {
   if (!startDate.value || !endDate.value) {
     alert('Please select both start and end dates.');
@@ -133,7 +135,7 @@ const generateColor = (index) => {
   const colors = ['#ff0000', '#00ff00', '#0000ff', '#ffff00', '#ff00ff', '#00ffff'];
   return colors[index % colors.length];
 }
-
+// This watches the change in the dataset and dynamically updates the timeline based on that
 watch(searchResult, (result) => {
   if (!result) return;
 
@@ -151,6 +153,7 @@ watch(searchResult, (result) => {
 
   timeRange.value = ` ${startOfMonthTimestamp.value.toLocaleString()} - ${endOfMonthTimestamp.value.toLocaleString()}`;
 });
+// These calclualte the start and end dates of the dataset to display to the user 
 
 const startOfMonth = (date) => {
   const nextMonth = new Date(date);
@@ -165,6 +168,8 @@ const endOfMonth = (date) => {
   const roundedDate = new Date(Math.ceil(nextMonth.getTime() / (10 * 60 * 1000)) * (10 * 60 * 1000));
   return roundedDate.toISOString().slice(0, -1);
 }
+
+// This watches for the change in the time range selected which is the drop down menu and updates the time blocks based on that
 
 watch([selectedTimeRange, searchResult], ([timeRange, result]) => {
   var count = 0
@@ -302,6 +307,7 @@ watch([selectedTimeRange, searchResult], ([timeRange, result]) => {
   }
 });
 
+// This method actually forms the timeline using the 'AnyChart' timeline
 const anyTimeline = (chartData, momentData, deviceIdColorPairs, eventsCounts) => {
     timeline.value.innerHTML = '';
     chart = anychart.timeline();
@@ -346,9 +352,7 @@ const anyTimeline = (chartData, momentData, deviceIdColorPairs, eventsCounts) =>
     timeline.value.classList.add('centered-timeline');
 };
 
-
-
-
+//Creates a legend using html
 const createLegend = (deviceIdColorPairs) => {
   const legendContainer = document.getElementById('legendContainer');
   legendContainer.innerHTML = '';

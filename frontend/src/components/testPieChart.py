@@ -4,7 +4,7 @@ import numpy as np
 from pieChart import pieChart  
 import pandas as pd
 
-
+# This file concerns the unit tests of the backend of the data visualisations, as of date of writing all tests passed
 class TestPieChart(unittest.TestCase):
     
     def setUp(self):

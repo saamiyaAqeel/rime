@@ -26,6 +26,7 @@ const options = [
   "Related-Words Keyword Search",
 ];
 
+// This method naviagtes the feedback button to a form
 const navigate = () => {
   window.open('https://forms.office.com/Pages/ResponsePage.aspx?id=7qe9Z4D970GskTWEGCkKHt13h9QfEU1Fr6JL1ThahOxUMUdURDhIVFZCMjBMU0VNN1BOWUhLWTIxRS4u', '_blank');
 };
@@ -45,6 +46,7 @@ const messagesSet = ref([]);
 const pieChart = ref(null);
 const tagCloud = ref(null);
 
+// watch method for when the selected option changes and the pie chart is changed dynamically
 watch(selectedOption, (option) => {
   const result = searchResult.value;
   messagesSet.value = [];
@@ -127,6 +129,7 @@ watch(selectedOption, (option) => {
   }
 });
 
+// This method changes the pie chart for when the dataset is changed from the users end 
 watch(searchResult, (result) => {
   if (!result) return;
 
@@ -212,6 +215,7 @@ watch(searchResult, (result) => {
   }
 });
 
+// This method creates the actual pie chart
 const anyPieChart = (label, significantValue, length) => {
   pieChart.value.innerHTML = "";
 
@@ -246,6 +250,7 @@ const anyPieChart = (label, significantValue, length) => {
 
 onMounted(() => { });
 
+// This draws the tagcloud 
 const tagCloudDraw = (data) => {
   tagCloud.value.innerHTML = "";
   const chart = anychart.tagCloud(data);
@@ -255,6 +260,7 @@ const tagCloudDraw = (data) => {
   chart.draw();
 };
 
+// This handles the search for keywords 
 const handleSearch = () => {
   const formData = new FormData();
   const chunkSize = 10000;
@@ -336,7 +342,7 @@ const handleSearch = () => {
   }
 };
 </script>
-
+<!-- This is the html for the timeline page -->
 <template>
   <div>
     <button id="navigateButton" @click="navigate" class="button-space">Send Feedback</button>

@@ -4,7 +4,6 @@ from flask_cors import CORS
 from pieChart import pieChart
 
 app = Flask(__name__)
-# CORS(app)
 CORS(app, resources={r"/api/*": {"origins": "http://localhost:3000"}})  # Adjust origins as needed
 
 
@@ -13,7 +12,7 @@ def get_data():
     response = jsonify({'some': 'data'})
     return response
 
-
+# Post request for evidenciary interest classfier 
 @app.route('/api/messages', methods=['POST'])
 def post_data():
     data = request.form.getlist('data') 
@@ -37,7 +36,7 @@ def post_data():
         response = jsonify({'message': 'Incomplete data received'})
         return response
 
-
+# Post request for argumentative classfier classfier 
 @app.route('/api/argumentativeClassifier', methods=['POST'])
 def post_argumentative():
     data = request.form.getlist('data') 
@@ -61,7 +60,7 @@ def post_argumentative():
         response = jsonify({'message': 'Incomplete data received'})
         return response
 
-    
+#Post request for strict keyword search
 @app.route('/api/strictKeyword', methods=['POST'])
 def post_strictKeyword():
     data = request.form.getlist('data') 
@@ -85,7 +84,7 @@ def post_strictKeyword():
         response = jsonify({'message': 'Incomplete data received'})
         return response
 
-    
+# Related keyword search Post method
 @app.route('/api/relatedKeyword', methods=['POST'])
 def post_relatedKeyword():
     data = request.form.getlist('data') 
